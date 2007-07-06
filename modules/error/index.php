@@ -1,0 +1,1 @@
+<?php defined('_VALID_SSC') or die('Restricted access'); include_once($sscConfig_absPath . '/modules/error/' . $_GET['cont'].'.php'); ?>
