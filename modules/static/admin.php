@@ -17,7 +17,7 @@ echo '<img class="panel-icon-img" src="', $sscConfig_adminImages, '/text.png" al
 
 //kill a page
 if(isset($_POST['del'],$_POST['del-id'])){
-	$loop = count($_POST['del-id'])
+	$loop = count($_POST['del-id']);
 	for($i = 0; $i < $loop;$i++){
 		$delID = intval($_POST['del-id'][$i]);
 		if($delID <= 0){
@@ -63,90 +63,85 @@ if(isset($_GET['edit'])){
 	require_once($sscConfig_absPath . "/includes/sscEdit.php");
 	$edID = intval($_GET['edit']);
 	if(isset($_POST['submit'])){
-		if(isset($_POST['title'],$_POST['nav'], $_POST['cont'])){
-			if($_POST['title'] != '' && $_POST['nav'] != '' && $_POST['cont'] != ''){
+
+		if(isset($_POST['title'],$_POST['nav'], $_POST['cont'], $_POST['uri'])){
+			if($_POST['title'] != '' && $_POST['nav'] != '' && $_POST['cont'] != '' && $_POST['uri'] != ''){
 				$database->setQuery("SELECT id FROM #__modules WHERE filename = 'static' LIMIT 1");
 				$database->query();
 				if($data = $database->getAssoc()){
-					//hmm.  lot of error checking here ;)
-					$mid = $data['id'];
-					
-					/* Yay - fun!  If new ($edID == 0), then set $nid -1 if hiding, else 0
-					 * if not new, then get data
-					 */
+					$mid = $data['id'];	//retrieve module id number
 					
 					if($edID == 0){
+						//was a "new" page that we are saving
+						//assign a temporary nav id (used to indicate new page)
 						if(isset($_POST['sub'])){
-							$nid=-1;
-						}else{$nid=0;}
-						$sid = 0;
-					}else{
-						$database->setQuery("SELECT nav_id AS nid, id AS sid FROM #__static WHERE #__static.id = $edID LIMIT 1");
-						$database->query();					
-						if($data = $database->getAssoc()){
-							$nid = $data['nid'];
-							$sid = $data['sid'];
+							//we are a sub page...
+							$nid = -1;
 						}else{
-							echo error("Page ID '$edID' does not exist!");
+							$nid = 0;
 						}
+					}else{
+						//re-saving old...
+						$nid = $edID;
+					}
+					
+					//first step - add or ensure the navigation bar up to date
+					//if we are new...
+					if($nid <= 0){
+						$database->setQuery(sprintf("INSERT INTO #__navigation (module_id, name, uri, position, hidden) VALUES (%d, '%s', 50,%d)",$mid, $database->escapeString($_POST['nav'], substr($database->escapeString($_GET['uri']),1),abs($nid))));
+						if($database->query()){
+							$nid = $database->getLastInsertID();
+						}else{
+							$nid = -1;
+						}
+					}else{
+						//updating old
+						$database->setQuery(sprintf("UPDATE #__navigation SET name = '%s', uri = '%s', hidden = %d WHERE id = %d LIMIT 1", $database->escapeString($_POST['nav'], substr($database->escapeString($_GET['uri']),1),(isset($_POST['sub'])?1:0), $nid)));
+						$database->query();
 					}
 
-					if(isset($nid,$sid)){
-						//ok.. lets get updating/adding
-						if($nid == 0 || ($nid < 0 && !isset($_POST['sub']))){
-							//either new or changing from sub to non-sub
-							$database->setQuery(sprintf("INSERT INTO #__navigation (module_id, name, position, hidden) VALUES (%d, '%s', 50,0)",$mid, $database->escapeString($_POST['nav']))); 						
-							$database->query();
-							$database->setQuery(sprintf("SELECT id FROM #__navigation WHERE module_id = %d AND name = '%s' AND position = 50 LIMIT 1",$mid, $database->escapeString($_POST['nav'])));
-							$database->query();
-							$data = $database->getAssoc();
-							$nid = $data['id'];
-						}elseif($nid > 0){
-							//exists.  remove if turning into subpage
-							if(isset($_POST['sub'])){
-								$database->setQuery("DELETE FROM #__navigation WHERE id = $nid LIMIT 1");
-								$database->query();
-								$nid=-1;
-							}else{
-								$database->setQuery(sprintf("UPDATE #__navigation SET name = '%s' WHERE id = %d",$database->escapeString($_POST['nav']),$nid));
-								$database->query();
-							}
-						}else{$nid = -1;}
-						
-						if($sid == 0){
-							$database->setQuery(sprintf("INSERT INTO #__static (nav_id, title, access, content) VALUES (%d, '%s', '%s', '%s')",$nid, $database->escapeString($_POST['title']),$database->escapeString($_POST['nav']),$database->escapeString($_POST['cont'])));
+					//now we update the content of the actual page
+					
+					if($nid > 0){
+						//ensure there was no insert errors
+						//new page?
+						if($edID == 0){
+							$database->setQuery(sprintf("INSERT INTO #__static (nav_id, title, content) VALUES (%d, '%s', '%s')",$nid, $database->escapeString($_POST['title']),$database->escapeString($_POST['cont'])));
 						}else{
-							$database->setQuery(sprintf("UPDATE #__static SET nav_id = '%d', title = '%s', access = '%s', content = '%s' WHERE id = %d LIMIT 1",$nid, $database->escapeString($_POST['title']),$database->escapeString($_POST['nav']),$database->escapeString($_POST['cont']),$sid));
+							$database->setQuery(sprintf("UPDATE #__static SET nav_id = '%d', title = '%s', content = '%s' WHERE id = %d LIMIT 1",$nid, $database->escapeString($_POST['title']),$database->escapeString($_POST['cont']),$edID));
 						}
 						if($database->query()){
-							echo message("Page contents successfully saved");
+							echo message('Page was updated successfully');
 						}else{
-							echo error("Error saving page<br />".$database->getErrorMessage());
+							echo error('There was a problem updating page contents');
 						}
-					}					
+						
+					}else{
+						echo error('Something bad happened.  There was an error updating navigation bar details');
+					}
+					
 				}else{echo error("Unexpected error retrieving module ID");}
 			}else{echo error("One or more required fields were not filled in");}
 		}else{echo error("One or more required fields were not filled in");}
 		echo '<br />';
+		
 	}elseif(isset($_POST['preview'],$_POST['cont'])){
-		echo "<h2>Page preview</h2>",sscEdit::parseToHTML(stripslashes($_POST['cont']));
+		//preview... so generate it
+		echo "<h2>Page preview</h2>",sscEdit::parseToHTML($database->stripString($_POST['cont']));
 	}
-	if(isset($_POST['preview']) || isset($_POST['submit'])){		
-		$database->setQuery("SELECT id FROM #__static WHERE access = '".$database->escapeString($_POST['nav'])."' LIMIT 1");
-		$database->query();
-		if($data=$database->getAssoc()){
-			$edID = $data['id'];
-		}
-		$data['title'] = stripslashes($_POST['title']);
-		$data['name'] = stripslashes($_POST['nav']);
-		$data['content'] = stripslashes($_POST['cont']);
+	if(isset($_POST['preview']) || isset($_POST['submit'])){
+		//not new so keep old data if applicable
+		$data['title'] = $database->stripString($_POST['title']);
+		$data['name'] = $database->stripString($_POST['nav']);
+		$data['content'] = $database->stripString($_POST['cont']);
+		$data['uri'] = $database->stripString($_POST['uri']);
 		if(isset($_POST['sub'])){
 			$data['sub'] = -1;
 		}else{$data['sub']=0;}
 	}else{
-		$database->setQuery("SELECT id, nav_id AS sub, title, access AS name, content FROM #__static WHERE id = $edID LIMIT 1");
+		$database->setQuery("SELECT #__static.id, nav_id AS sub, title, title AS name, uri, content FROM #__static, #__navigation WHERE #__static.id = $edID AND #__navigation.id = nav_id LIMIT 1");
 		$database->query();
-		echo $database->getErrorMessage();
+		//echo $database->getErrorMessage();
 		//page exist?
 		if($database->getNumberRows()==1){
 			$data = $database->getAssoc();
@@ -158,15 +153,13 @@ if(isset($_GET['edit'])){
 			$data['name'] = '';
 			$data['content'] = '';
 			$data['sub'] = 0;
+			$data['uri'] = '/';
+			$edID = 0;
 		}
 	}
-	//now display our form
-	if($data['title']==''){
-		echo '<form action="',$sscConfig_adminURI,'" method="post"><fieldset><legend>';
-	}else{
-		echo '<form action="',$sscConfig_adminURI,'/../',$edID,'" method="post"><fieldset><legend>';
-	}
-	
+	//now display our form - ensure always correct id
+	echo '<form action="',$sscConfig_adminURI,'/../',$edID,'" method="post"><fieldset><legend>';
+		
 	//minor semantics...
 	if($edID == 0){
 		echo 'Create new static page';
@@ -175,30 +168,30 @@ if(isset($_GET['edit'])){
 	}
 	
 	//populate form stuffs
-	echo '</legend><!--[if IE]><br /><![endif]--><div><label for="title">Page Title: </label><input type="text" maxlength="50" name="title" id="title" value="',$data['title'],'" /></div><br /><div><label for="nav">Nav/URI Text: </label><input type="text" maxlength="30" name="nav" id="nav" value="',$data['name'],'" /></div><br /><div><label for="sub"><span class="popup" title="Prevents navigation item being created">Make subpage:</span></label><input type="checkbox" name="sub" id="sub" value="-1" ';
+	echo '</legend><!--[if IE]><br /><![endif]--><div><label for="title">Page Title: </label><input type="text" maxlength="50" name="title" id="title" value="',$data['title'],'" /></div><br /><div><label for="nav">Navbar label: </label><input type="text" maxlength="30" name="nav" id="nav" value="',$data['name'],'" /></div><br /><div><label for="sub"><span class="popup" title="Prevents navigation item being created">Make subpage:</span></label><input type="checkbox" name="sub" id="sub" value="-1" ';
 	if($data['sub'] < 0){echo 'checked="checked" ';}
-	echo '/></div><br /><div><label for="cont">Page Contents: </label>';
+	echo '/></div><br /><div><label for="uri"><span class="popup" title=""></span></label><input type="text" maxlength="100" name="uri" id="uri" value="'.$data['uri'].'" /><br /><div><label for="cont">Page Contents: </label>';
 	sscEdit::placeEditor('cont',$data['content']);
 	echo '</div><br /><div class="btn"><input type="submit" value="',($edID==0?'Create':'Save'),' Page" name="submit" id="submit" /><input type="submit" value="Preview Page" name="preview" id="preview" /></div>';
 	echo '</fieldset></form><br class="clear" /><br /><h2>Editor Help</h2>',sscEdit::placeHelp(3),'<br /><a class="small-ico" href="',$sscConfig_adminURI,'/../../"><img src="',$sscConfig_adminImages,'/back.png" alt="" />Return</a> to static page list';
 }else{
 //guess not.  display pages belonging to this module
-$database->setQuery("SELECT id, nav_id, access, title, content FROM #__static");
+$database->setQuery("SELECT #__static.id, nav_id, uri, title, content FROM #__static, #__navigation WHERE #__navigation.id = nav_id");
 if($database->query()){
-if($database->getNumberRows() > 0){
-	echo '<form action="',$sscConfig_adminURI,'" method="post"><table class="tab-admin" summary="Details of pages controlled by this module"><tr><th>ID</th><th>&nbsp;<img src="',$sscConfig_adminImages,'/delete.png" alt="Delete" /></th><th>Page Title</th><th><span class="popup" title="If page type is a subpage, must be accessed as subpage (eg /URI/Sub-URI)">URI Text</span></th><th class="w-70">Contents</th></tr>';
-	while($data = $database->getAssoc()){
-		echo '<tr><td>',$data['id'],'</td><td><input type="checkbox" value="',$data['id'],'" name="del-id[]" /></td><td><a href="',$sscConfig_adminURI,'/edit/',$data['id'],'" title="Edit page contents">',$data['title'],'</a></td><td>',$data['access'];
-		if($data['nav_id'] <= 0){echo '<br />(subpage)';} echo'</td><td>';
-		if(strlen($data['content']) > 150){
-			echo substr($data['content'],0,150),'...';
-		}else{
-			echo $data['content'];
+	if($database->getNumberRows() > 0){
+		echo '<form action="',$sscConfig_adminURI,'" method="post"><table class="tab-admin" summary="Details of pages controlled by this module"><tr><th>ID</th><th>&nbsp;<img src="',$sscConfig_adminImages,'/delete.png" alt="Delete" /></th><th>Page Title</th><th><span class="popup" title="Path to access page">URI Text</span></th><th class="w-70">Contents</th></tr>';
+		while($data = $database->getAssoc()){
+			echo '<tr><td>',$data['id'],'</td><td><input type="checkbox" value="',$data['id'],'" name="del-id[]" /></td><td><a href="',$sscConfig_adminURI,'/edit/',$data['id'],'" title="Edit page contents">',$data['title'],'</a></td><td>/',$data['uri'];
+			if($data['nav_id'] <= 0){echo '<br />(subpage)';} echo'</td><td>';
+			if(strlen($data['content']) > 150){
+				echo substr($data['content'],0,150),'...';
+			}else{
+				echo $data['content'];
+			}
+			echo '</td></tr>';
 		}
-		echo '</td></tr>';
-	}
-	echo '</table><p><button type="submit" name="del" value="delete">Delete selected&nbsp;<img src="',$sscConfig_adminImages, '/delete.png" alt="" class="small-ico" /></button></p></form>';
-}else{echo message("There are no static pages set up yet."),'<br />';}echo '<a title="Create a new static page" class="small-ico" href="',$sscConfig_adminURI,'/edit/0"><img src="',$sscConfig_adminImages,'/new.png" alt="Add" /><span>New static page</span></a><br />';}else{echo error("Unexpected database error: ". $database->getErrorMessage());}
+		echo '</table><p><button type="submit" name="del" value="delete">Delete selected&nbsp;<img src="',$sscConfig_adminImages, '/delete.png" alt="" class="small-ico" /></button></p></form>';
+	}else{echo message("There are no static pages set up yet."),'<br />';}echo '<a title="Create a new static page" class="small-ico" href="',$sscConfig_adminURI,'/edit/0"><img src="',$sscConfig_adminImages,'/new.png" alt="Add" /><span>New static page</span></a><br />';}else{echo error("Unexpected database error: ". $database->getErrorMessage());}
 }
 echo '</div>';
 ?>
