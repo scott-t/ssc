@@ -38,6 +38,9 @@ class sscDatabase{
 	/** @var int Internal variable to hold number of queries executed */
 	var $queries = 0;
 	
+	/** @var int Internal variable to hold MagicEscape thing */
+	var $escStatus = 0;
+	
 	/**
 	 * Database object constructor - initiate contact to server
 	 * @param string $host Database server to connect to
@@ -67,6 +70,16 @@ class sscDatabase{
 	
 		$this->prefix = $prefix;
 		
+		if(get_magic_quotes_gpc()){
+			if(ini_get('magic_quotes_sysbase')){
+				$this->escStatus = 2;
+			}else{
+				$this->escStatus = 1;
+			}
+		}else{
+			$this->escStatus = 0;
+		}
+		
 		/*  UTF support?  */
 		$verParts = explode( '.', $this->getVersion() );
 		if ($verParts[0] == 5 || ($verParts[0] == 4 && $verParts[1] == 1 && (int)$verParts[2] >= 2)) {
@@ -83,9 +96,29 @@ class sscDatabase{
 	 */
 	 
 	function escapeString($str){
+		$this->stripString($str);
 		return mysql_real_escape_string($str);
 	}
 	
+	/**
+	 * Undoes the effects of magic quotes (both gpc and sybase)
+	 * @param string $str String to strip
+	 * @return string The stripped string
+	 */
+	 
+	function stripString($str){
+		if($this->escStatus > 0){
+			if($this->escStatus == 1){
+				//normal
+				$str = stripslashes($str);
+			}else{
+				//sybase
+				$str = str_replace("''","'",$str);
+			}
+		}
+		return $str;
+	}
+	 
 	/**
 	 * Encodes $str for storing sensitive data in a table
 	 * @param string $str String to encode
