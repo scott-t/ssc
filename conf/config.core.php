@@ -144,13 +144,13 @@ function sscPlaceNavigation($image = false){
 	
 	echo '<ul id="bar">';
 	
-	$database->setQuery('SELECT name FROM #__navigation WHERE hidden = 0 ORDER BY position ASC, name ASC');
+	$database->setQuery('SELECT name, uri FROM #__navigation WHERE hidden = 0 ORDER BY position ASC, name ASC');
 	if(!$database->query()){
 	echo $database->getErrorNumber(), " - ", $database->getErrorMessage();
 	}
 	
 	while ($dat = $database->getAssoc()){
-		echo '<li><a href="',$sscConfig_webPath,'/', str_replace(' ','-',strtolower($dat['name'])), '" >';
+		echo '<li><a href="',$sscConfig_webPath,'/', $dat['uri'], '" >';
 		if($image){ echo '<img src="', $sscConfig_themeWeb, '/nav.png" alt="" />';
 		}
 		echo '<span>', $dat['name'], '</span></a></li>';
