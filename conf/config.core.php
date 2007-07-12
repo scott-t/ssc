@@ -208,4 +208,17 @@ function message($str){
 	return '<div class="message"><img src="'.$sscConfig_webPath.'/themes/admin/info.png" alt="Information:" /><span>'.$str.'</span><hr /></div>';
 }
 
+/**
+ * Parse ambiguous dates for AU/UK (dd/mm/yy) as formatting rather than US (mm/dd/yy)
+ * @param string Date to rewrite
+ * @return string Rewritten date
+ */
+function parseDate($value)
+{
+    //see: http://www.php.net/manual/fi/function.strtotime.php#59748
+    //switch day and month
+    $reformatted = preg_replace("/^\s*([0-9]{1,2})[\/\. -]+([0-9]{1,2})[\/\. -]+([0-9]{1,4})/", "\\2/\\1/\\3", $value);
+    return $reformatted;
+}
+
 ?>
