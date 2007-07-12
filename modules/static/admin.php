@@ -88,7 +88,7 @@ if(isset($_GET['edit'])){
 					//first step - add or ensure the navigation bar up to date
 					//if we are new...
 					if($nid <= 0){
-						$database->setQuery(sprintf("INSERT INTO #__navigation (module_id, name, uri, position, hidden) VALUES (%d, '%s', 50,%d)",$mid, $database->escapeString($_POST['nav'], $database->escapeString($_GET['uri']),abs($nid))));
+						$database->setQuery(sprintf("INSERT INTO #__navigation (module_id, name, uri, position, hidden) VALUES (%d, '%s', 50,%d)",$mid, $database->escapeString($_POST['nav'], $database->escapeString($_POST['uri']),abs($nid))));
 						if($database->query()){
 							$nid = $database->getLastInsertID();
 						}else{
@@ -96,7 +96,7 @@ if(isset($_GET['edit'])){
 						}
 					}else{
 						//updating old
-						$database->setQuery(sprintf("UPDATE #__navigation SET name = '%s', uri = '%s', hidden = %d WHERE id = %d LIMIT 1", $database->escapeString($_POST['nav'], substr($database->escapeString($_GET['uri']),1),(isset($_POST['sub'])?1:0), $nid)));
+						$database->setQuery(sprintf("UPDATE #__navigation SET name = '%s', uri = '%s', hidden = %d WHERE id = %d LIMIT 1", $database->escapeString($_POST['nav']), $database->escapeString($_POST['uri']),(isset($_POST['sub'])?1:0), $nid));
 						$database->query();
 					}
 
@@ -170,7 +170,7 @@ if(isset($_GET['edit'])){
 	//populate form stuffs
 	echo '</legend><!--[if IE]><br /><![endif]--><div><label for="title">Page Title: </label><input type="text" maxlength="50" name="title" id="title" value="',$data['title'],'" /></div><br /><div><label for="nav">Navbar label: </label><input type="text" maxlength="30" name="nav" id="nav" value="',$data['name'],'" /></div><br /><div><label for="sub"><span class="popup" title="Prevents navigation item being created">Make subpage:</span></label><input type="checkbox" name="sub" id="sub" value="-1" ';
 	if($data['sub'] < 0){echo 'checked="checked" ';}
-	echo '/></div><br /><div><label for="uri"><span class="popup" title="Address to access page from. eg weather\now">Access URI</span></label><input type="text" maxlength="100" name="uri" id="uri" value="'.$data['uri'].'" /></div><br /><div><label for="cont">Page Contents: </label>';
+	echo '/></div><br /><div><label for="uri"><span class="popup" title="Address to access page from. eg /weather/now">Access URI</span></label><input type="text" maxlength="100" name="uri" id="uri" value="'.$data['uri'].'" /></div><br /><div><label for="cont">Page Contents: </label>';
 	sscEdit::placeEditor('cont',$data['content']);
 	echo '</div><br /><div class="btn"><input type="submit" value="',($edID==0?'Create':'Save'),' Page" name="submit" id="submit" /><input type="submit" value="Preview Page" name="preview" id="preview" /></div>';
 	echo '</fieldset></form><br class="clear" /><br /><h2>Editor Help</h2>',sscEdit::placeHelp(3),'<br /><a class="small-ico" href="',$sscConfig_adminURI,'/../../"><img src="',$sscConfig_adminImages,'/back.png" alt="" />Return</a> to static page list';
