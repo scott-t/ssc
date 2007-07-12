@@ -42,19 +42,17 @@ if(isset($_GET['edit'])){
 			if($eid == 0){
 				//new
 				$database->setQuery(sprintf("INSERT INTO #__events (name, description, dt, uri, type) VALUES ('%s','%s','%s','%s', %d)",$database->escapeString($_POST['name']),$database->escapeString($_POST['desc']),date("Y-m-d",$_POST['date']),$database->escapeString($_POST['uri']),$_POST['type']));
-				$result = $database->query();
+				if($database->query())
+					echo message("Event was added"),'<br />';
 				$eid = $database->getLastInsertID();
 			}else{
 				//update
 				$database->setQuery(sprintf("UPDATE #__events SET name = '%s', description = '%s', dt = '%s', uri = '%s', type = %d WHERE id = %d LIMIT 1",$database->escapeString($_POST['name']),$database->escapeString($_POST['desc']),date("Y-m-d",$_POST['date']),$database->escapeString($_POST['uri']),$_POST['type'],$eid));
-				$result = $database->query();
+				if($database->query())
+					echo message("Event was updated"),'<br />';
 			}
 			
-			if($result){
-				//
-				echo message("Event updated");
-				$database->freeResult($result);
-			}
+			
 			
 			//use data that was submitted to re-fill form
 			$data['dt'] = date("d M Y", $_POST['date']);
@@ -88,7 +86,7 @@ if(isset($_GET['edit'])){
 		echo 'Edit existing event';
 	}
 	echo '</legend><!--[if IE]><br /><![endif]--><div><label for="name">Event Name</label><input type="text" name="name" maxlength="100" id="name" value="',$data['name'],'" /></div><br /><div><label for="desc"><span class="popup" title="Optional.  Default to blank">Brief description</span></label><input type="text" size="50" maxlength="250" name="desc" id="desc" value="',$data['description'],'" /></div><br />';
-	echo '<div><label for="date"><span class="popup" title="Optional. Defaults to today.  WARNING: Ambiguous dates may be wrongly interpreted.">Date</span></label><input type="text" name="date" id="date" value="',date("d M Y",strtotime($data['dt'])),'" /></div><br /><div><label for="uri"><span class="popup" title="Optional. Clickable link for further details on the event">Link for details</span></label><input type="text" maxlength="200" size="50" name="uri" id="uri" value="',$data['uri'],'" /></div><br /><div><label for="show"><span class="popup" title="Optional. Check if the \'more info\' link should be shown. Default yes if link entered">Show link</span></label><input type="checkbox" name="show" id="show" ',($data['type'] & 1?'checked="checked"':''),' /></div><br />';
+	echo '<div><label for="date"><span class="popup" title="Optional. Defaults to today.  WARNING: Ambiguous dates may be wrongly interpreted.">Date</span></label><input type="text" name="date" id="date" value="',date("d M Y",strtotime($data['dt'])),'" /></div><br /><div><label for="uri"><span class="popup" title="Optional. Clickable link for further details on the event. External links MUST start with http">Link for details</span></label><input type="text" maxlength="200" size="50" name="uri" id="uri" value="',$data['uri'],'" /></div><br /><div><label for="show"><span class="popup" title="Optional. Check if the \'more info\' link should be shown. Default yes if link entered">Show link</span></label><input type="checkbox" name="show" id="show" ',($data['type'] & 1?'checked="checked"':''),' /></div><br />';
 	echo '<br /><div class="btn"><input type="submit" value="',($eid==0?'Create':'Save'),' Event" name="submit" id="submit" /></div></fieldset></form><br class="clear" />';
 
 	echo '<a class="small-ico" href="',$sscConfig_adminURI,'/../../"><img src="',$sscConfig_adminImages,'/back.png" alt="" />Return</a> to events list';
