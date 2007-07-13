@@ -71,7 +71,7 @@ if(isset($_GET['edit'])){
 				if($data = $database->getAssoc()){
 					$mid = $data['id'];	//retrieve module id number
 					
-					if($edID == 0){
+					if($edID <= 0){
 						//was a "new" page that we are saving
 						//assign a temporary nav id (used to indicate new page)
 						if(isset($_POST['sub'])){
@@ -88,7 +88,7 @@ if(isset($_GET['edit'])){
 					//first step - add or ensure the navigation bar up to date
 					//if we are new...
 					if($nid <= 0){
-						$database->setQuery(sprintf("INSERT INTO #__navigation (module_id, name, uri, position, hidden) VALUES (%d, '%s', 50,%d)",$mid, $database->escapeString($_POST['nav'], $database->escapeString($_POST['uri']),abs($nid))));
+						$database->setQuery(sprintf("INSERT INTO #__navigation (module_id, name, uri, position, hidden) VALUES (%d, '%s', '%s', 50, %d)",$mid, $database->escapeString($_POST['nav'], $database->escapeString($_POST['uri']),abs($nid))));
 						if($database->query()){
 							$nid = $database->getLastInsertID();
 						}else{
@@ -176,7 +176,7 @@ if(isset($_GET['edit'])){
 	echo '</fieldset></form><br class="clear" /><br /><h2>Editor Help</h2>',sscEdit::placeHelp(3),'<br /><a class="small-ico" href="',$sscConfig_adminURI,'/../../"><img src="',$sscConfig_adminImages,'/back.png" alt="" />Return</a> to static page list';
 }else{
 //guess not.  display pages belonging to this module
-$database->setQuery("SELECT #__static.id, nav_id, uri, title, content FROM #__static, #__navigation WHERE #__navigation.id = nav_id");
+$database->setQuery("SELECT #__static.id, nav_id, uri, title, content FROM #__static, #__navigation WHERE #__navigation.id = nav_id ORDER BY uri ASC");
 if($database->query()){
 	if($database->getNumberRows() > 0){
 		echo '<form action="',$sscConfig_adminURI,'" method="post"><table class="tab-admin" summary="Details of pages controlled by this module"><tr><th>ID</th><th>&nbsp;<img src="',$sscConfig_adminImages,'/delete.png" alt="Delete" /></th><th>Page Title</th><th><span class="popup" title="Path to access page">URI Text</span></th><th class="w-70">Contents</th></tr>';
