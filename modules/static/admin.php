@@ -171,7 +171,7 @@ if(isset($_GET['edit'])){
 	echo '/></div><br /><div><label for="uri"><span class="popup" title="Address to access page from. eg /weather/now">Access URI</span></label><input type="text" maxlength="100" name="uri" id="uri" value="'.$data['uri'].'" /></div><br /><div><label for="cont">Page Contents: </label>';
 	sscEdit::placeEditor('cont',$data['content']);
 	echo '</div><br /><div class="btn"><input type="submit" value="',($edID==0?'Create':'Save'),' Page" name="submit" id="submit" /><input type="submit" value="Preview Page" name="preview" id="preview" /></div>';
-	echo '</fieldset></form><br class="clear" /><br /><h2>Editor Help</h2>',sscEdit::placeHelp(3),'<br /><a class="small-ico" href="',$sscConfig_adminURI,'/../../"><img src="',$sscConfig_adminImages,'/back.png" alt="" />Return</a> to static page list';
+	echo '</fieldset></form><br class="clear" /><br /><a class="small-ico" href="',$sscConfig_adminURI,'/../../"><img src="',$sscConfig_adminImages,'/back.png" alt="" />Return</a> to static page list<br /><h2>Editor Help</h2>',sscEdit::placeHelp(3);
 }else{
 //guess not.  display pages belonging to this module
 $database->setQuery("SELECT #__static.id, uri, title, content, hidden FROM #__static, #__navigation WHERE #__navigation.id = nav_id ORDER BY uri ASC");
