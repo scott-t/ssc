@@ -47,7 +47,10 @@ body {min-width:750px;height:100%;font-size:1em}
 
 				/* Formatting of error/notice outputs from admin section */
 			.float{float:left;}
+			.right{float:right;}
 			.clear{clear:both;}
+			.cfloat{float:left;clear:both;}
+			.cright{float:right;clear:both;}
 			.hide{display:none;}
 			.center{text-align:center;margin:0 auto;}
 			.bold{font-weight:bold;}
