@@ -86,7 +86,7 @@ function core_start(){
 		}else{
 			
 			while(1){		//infinte loop?  can't believe i'm doing this...
-				$database->setQuery("SELECT #__navigation.id, #__navigation.name, filename FROM #__navigation, #__modules WHERE module_id = #__modules.id AND uri = '" . $database->escapeString($tmp) . "' LIMIT 1");
+				$database->setQuery("SELECT #__navigation.id, #__navigation.name, filename FROM #__navigation, #__modules WHERE module_id = #__modules.id AND uri = '/" . $database->escapeString($tmp) . "' LIMIT 1");
 				if($database->query()){
 					if($data = $database->getAssoc()){
 						//got a result
@@ -150,7 +150,7 @@ function sscPlaceNavigation($image = false){
 	}
 	
 	while ($dat = $database->getAssoc()){
-		echo '<li><a href="',$sscConfig_webPath,'/', $dat['uri'], '" >';
+		echo '<li><a href="',$sscConfig_webPath, $dat['uri'], '" >';
 		if($image){ echo '<img src="', $sscConfig_themeWeb, '/nav.png" alt="" />';
 		}
 		echo '<span>', $dat['name'], '</span></a></li>';
