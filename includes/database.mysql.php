@@ -96,8 +96,7 @@ class sscDatabase{
 	 */
 	 
 	function escapeString($str){
-		$this->stripString($str);
-		return mysql_real_escape_string($str);
+		return mysql_real_escape_string($this->stripString($str));
 	}
 	
 	/**
