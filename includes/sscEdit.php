@@ -52,7 +52,7 @@ class sscEdit{
 	 * @return string Parsed text
 	 */
 	static function parseToHTML($text){
-		
+		global $sscConfig_webPath;
 		$text=htmlspecialchars($text);
 			
 		//replace headings.  Allow H2 - H4
@@ -79,7 +79,40 @@ class sscEdit{
 						}
 					}
 					break;
-				case "[[img":$sub = " !!do image parsing!! ";
+				case "[[img":
+					//only allow onsite for the time being?
+					if(isset($tmp[1])){
+						//first should ALWAYS be the link
+						echo '<img src="', $sscConfig_webPath, $tmp[1],'"';
+						if(isset($tmp[2])){
+							//2nd is the alt text
+							echo " alt=\"",$tmp[2],"\"";
+							if(isset($tmp[3])){
+								//3rd is (clear) floatability
+								switch(strtolower($tmp[3])){
+									case "left":
+										echo " class=\"float\"";
+										break;
+									case "right":
+										echo " class=\"right\"";
+										break;
+									case "cleft":
+										echo " class=\"cfloat\"";
+										break;
+									case "cright":
+										echo " class=\"cright\"";
+										break;
+								}
+								
+								if(isset($tmp[4])){
+									//4th is title
+									echo " title=\"",$tmp[4],"\"";
+								}
+							}
+						}
+						echo ' />';
+					}
+					//$sub = " !!do image parsing!! ";
 					break;
 			}
 			$text = substr_replace($text,$sub,$offset,$newOffset-$offset);
