@@ -16,6 +16,8 @@ defined('_VALID_SSC') or die('Restricted access');
 define('SSC_GALLERY_THUMB_WIDTH',150);//150px wide
 define('SSC_GALLERY_THUMB_SIZE',10240);//10kb big
 
+define('SSC_GALLERY_MEDIUM_WIDTH', 350);
+
 define('SSC_GALLERY_LARGE_WIDTH',1024);//1024px wide
 define('SSC_GALLERY_LARGE_SIZE',153600);//150kb?
 $sscGallery_path = $sscConfig_absPath . '/modules/gallery/photos/';//with trailing
@@ -158,6 +160,7 @@ if(isset($_GET['edit'])){
 				//perform content update
 				$keys_owner = array_keys($_POST['own']);
 				$keys_caption = array_keys($_POST['cap']);
+				$keys_medium = array_keys($_POST['gen-med']);
 				if(isset($_POST['del']))
 					$keys_delete = array_keys($_POST['del']);
 				else
@@ -165,8 +168,9 @@ if(isset($_GET['edit'])){
 				
 				$size = sizeof($keys_owner);
 				$del_size = sizeof($keys_delete);
+				$med_size = sizeof($keys_medium);
 				$pid = 0;
-				for($i = 0, $j = 0; $i < $size; $i++){
+				for($i = 0, $j = 0, $k = 0; $i < $size; $i++){
 					$pid = intval($keys_owner[$i]);
 					if($j < $del_size && $keys_owner[$i] == $keys_delete[$j]){
 						++$j;
@@ -178,6 +182,8 @@ if(isset($_GET['edit'])){
 							if(file_exists($photo)){unlink($photo);}
 							$photo = $sscConfig_absPath . '/modules/gallery/photos/'.$gid.'/'.$pid.'_thumb.jpg';
 							if(file_exists($photo)){unlink($photo);}
+							$photo = $sscConfig_absPath . '/modules/gallery/photos/'.$gid.'/'.$pid.'_med.jpg';
+							if(file_exists($photo)){unlink($photo);}
 						}else{
 							echo error('Unable to delete selected image with id '.$pid.'<br />'.$database->getErrorMessage());
 						}
@@ -185,6 +191,15 @@ if(isset($_GET['edit'])){
 						//update only
 						$database->setQuery(sprintf("UPDATE #__gallery_content SET owner = '%s', caption = '%s' WHERE id = %d LIMIT 1",$database->escapeString($_POST['own'][$pid]),$database->escapeString($_POST['cap'][$pid]),$pid));
 						$database->query();
+					}
+					
+					if($k < $med_size && $keys_owner[$i] == $keys_medium[$k]){
+						++$k;
+						//need to generate a medium level zoom
+						sscImage::resize($sscConfig_absPath . '/modules/gallery/photos/'.$gid.'/'.$pid.'.jpg',$sscConfig_absPath . '/modules/gallery/photos/'.$gid.'/'.$pid.'_med.jpg','jpg',SSC_GALLERY_MEDIUM_WIDTH,$sscConfig_imgWatermark);
+						$database->setQuery(sprintf("UPDATE #__gallery_content SET med = 1 WHERE id = %d LIMIT 1", $pid));
+						$database->query();
+						
 					}
 				}
 			}
@@ -293,11 +308,11 @@ if(isset($_GET['edit'])){
 	echo '</div></fieldset><fieldset><legend>Gallery Contents</legend><!--[if IE]><br /><![endif]-->';
 	if($gid > 0){
 		//display gallery contents
-		$database->setQuery("SELECT id, owner, caption FROM #__gallery_content WHERE gallery_id = $gid ORDER BY id ASC");
+		$database->setQuery("SELECT id, med, owner, caption FROM #__gallery_content WHERE gallery_id = $gid ORDER BY id ASC");
 		if($database->query()){
 			while($data = $database->getAssoc()){
 				$iid = $data['id'];
-				echo '<div class="clear"><img class="float" src="',$sscConfig_webPath,'/modules/gallery/photos/',$gid,'/',$iid,'_thumb.jpg" alt="" /><div class="noclear"><div><label for="owner-',$iid,'">Photographer: </label><input type="text" maxlength="50" value="',$data['owner'],'" name="own[',$iid,']" id="owner-',$iid,'" /></div><div><label for="cap-',$iid,'">Caption: </label><input type="text" maxlength="50" value="',$data['caption'],'" name="cap[',$iid,']" id="cap-',$iid,'" /></div><div><label>Delete: </label><input type="checkbox" name="del[',$iid,']" /></div></div></div>';
+				echo '<div class="clear"><img class="float" src="',$sscConfig_webPath,'/modules/gallery/photos/',$gid,'/',$iid,'_thumb.jpg" alt="" /><div class="noclear"><div><label for="owner-',$iid,'">Photographer: </label><input type="text" maxlength="50" value="',$data['owner'],'" name="own[',$iid,']" id="owner-',$iid,'" /></div><div><label for="cap-',$iid,'">Caption: </label><input type="text" maxlength="50" value="',$data['caption'],'" name="cap[',$iid,']" id="cap-',$iid,'" /></div><div><label>Delete: </label><input type="checkbox" name="del[',$iid,']" /></div><br /><div><label><span class="popup" title="Indicates a medium-zoom level exists for use elsewhere">Medium level?</span></label><input type="checkbox" name="gen-med[',$iid,']" ',($data['med']==1?'checked="checked" disabled="disabled" ':''),'id="gen-med-',$iid,'" /></div></div>';
 			}
 			$maxsize = ini_get('upload_max_filesize') * 1048576;
 			echo '</fieldset><fieldset><legend>Upload New Photos (jpg\'s only)</legend><!--[if IE]><br /><![endif]--><div>Images will be resized/recompressed if primary images are larger than 1024px wide or 150kb</div><div><label for="up-single">Upload single:</label><input type="hidden" name="MAX_FILE_SIZE" value="',$maxsize,'" /><input type="file" name="up-single" id="up-single" />',ini_get('upload_max_filesize'),' max</div>'
