@@ -12,15 +12,26 @@
  */
 defined('_VALID_SSC') or die('Restricted access');
 
-global $sscConfig_absPath;
+global $sscConfig_absPath, $database;
 
 include($sscConfig_absPath . '/modules/events/events.functions.php');
-
-echo '<h1>Events</h1><h2>Recent Events</h2>';
-showEvent(null,"Last week");
-echo '<h2>Current Events</h2>';
-showEvent("Last Week","Next Week");
-echo '<h2>Upcoming Events</h2>';
-showEvent("Next Week")
-
+$database->setQuery("SELECT `key`, value FROM #__module_config WHERE `key` LIKE 'events_%' ORDER BY id ASC");
+$database->query();
+for($i = 0; $i < 8; $i++){
+	$data=$database->getAssoc();
+	$d[$data['key']] = $data['value'];
+}
+echo '<h1>',$d['events_title'],'</h1>';
+if($d['events_title_recent'] != ''){
+	echo '<h2>',$d['events_title_recent'],'</h2>';
+	showEvent($d['events_recent_start'],$d['events_current_start']);
+}
+if($d['events_title_current'] != ''){
+	echo '<h2>',$d['events_title_current'],'</h2>';
+	showEvent($d['events_current_start'],$d['events_current_end']);
+}
+if($d['events_title_future'] != ''){
+	echo '<h2>',$d['events_title_future'],'</h2>';
+	showEvent($d['events_current_end'],$d['events_future_end']);
+}
 ?>
