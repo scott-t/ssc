@@ -187,7 +187,7 @@ if(isset($_GET['edit'])){
 	if(!($data = $database->getAssoc())){
 		echo error("Module installation error!");
 	}else{
-		$database->setQuery("SELECT id, 'key', value FROM #__module_config WHERE `key` LIKE 'events_%' ORDER BY id ASC");
+		$database->setQuery("SELECT id, value FROM #__module_config WHERE `key` LIKE 'events_%' ORDER BY id ASC");
 		$database->query();
 		if($database->getNumberRows() != 8){
 			echo error("Module installation error!");
