@@ -48,7 +48,7 @@ function showEvent($start = null, $end = null, $asc = 1){
 		}else{
 			//both fine
 			$end = date("Y-m-d",strtotime($end));
-			$database->setQuery("SELECT name, description, dt, uri, type FROM #__events WHERE dt between '".$start."' and '".$end."' ORDER BY dt $dir");
+			$database->setQuery("SELECT name, description, dt, uri, type FROM #__events WHERE dt > '".$start."' AND dt < '".$end."' ORDER BY dt $dir");
 			//$summary = "events between " . $start . " and " . $end;
 		}
 	}
