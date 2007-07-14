@@ -67,7 +67,7 @@ if(isset($_GET['edit'])){
 		if(isset($_POST['title'],$_POST['nav'], $_POST['nid'], $_POST['cont'], $_POST['uri'])){
 			if($_POST['title'] != '' && $_POST['nav'] != '' && $_POST['cont'] != '' && $_POST['uri'] != '' && $_POST['nid'] != ''){
 				//ensure leading '/'
-				if(substr($_POST['uri'],'/') !== 0)
+				if(strpos($_POST['uri'],'/') !== 0)
 					$_POST['uri'] = '/'.$_POST['uri'];
 				
 				$database->setQuery("SELECT id FROM #__modules WHERE filename = 'static' LIMIT 1");
