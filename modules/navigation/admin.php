@@ -61,7 +61,7 @@ if(isset($_POST['submit'])){
 //wrap us in a form element and display table
 echo '<form action="',$sscConfig_adminURI,'" method="post"><table class="tab-admin" summary="List of navigation items"><tr><th>ID</th><th>Item Name</th><th>Module Name</th><th>Hidden</th><th><span class="popup" title="A weighting of one will place the element at the top, 100 will place at the bottom">Weighting</span></th><th>Description</th></tr>';
 	
-	$database->setQuery('SELECT #__navigation.id, #__navigation.name, admin_text, hidden, position, admin_about FROM #__navigation, #__modules WHERE module_id = #__modules.id ORDER BY position ASC');
+	$database->setQuery('SELECT #__navigation.id, #__navigation.name, admin_text, hidden, position, admin_about FROM #__navigation, #__modules WHERE module_id = #__modules.id ORDER BY hidden ASC, position ASC');
 	$database->query();
 		
 	//fill table
