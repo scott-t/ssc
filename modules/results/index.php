@@ -18,7 +18,8 @@ global $database;
 $database->setQuery(sprintf("SELECT id, name, description FROM #__results_series WHERE nav_id = %d LIMIT 1",$_GET['pid']));
 if ($database->query() && $data = $database->getAssoc()){
 	echo '<h1>',$data['name'],'</h1>';
-	echo $data['description'],'<br />';
+	if($data['description']!='')echo $data['description'],'<br />';
+	echo 'Placings are only approximate';
 	$database->setQuery("SELECT no, skipper, crew, class, name, results, division FROM #__results_results, #__results_entries WHERE series_id = ".$data['id']." AND number = no ORDER BY division ASC, points ASC, no ASC");
 	$database->query();
 	if($database->getNumberRows() > 0){
@@ -26,9 +27,10 @@ if ($database->query() && $data = $database->getAssoc()){
 		$data = $database->getAssoc();
 		$curDiv = '\0';
 		$intable = false;
+		$rowNo = 0;$size = 0;
 		do{
 			//check for change in div
-			$size = 0;
+			
 			$results = explode(',',$data['results']);
 			if($curDiv != $data['division'])
 			{
@@ -36,7 +38,7 @@ if ($database->query() && $data = $database->getAssoc()){
 				if($intable){
 					echo '</table>';
 				}
-				echo '<h2>',$curDiv,'</h2><table summary="Results for ',$curDiv,'"><tr><th>Sail No</th><th>Class</th><th>Boat Name</th><th>Skipper</th>';
+				echo '<h2>',$curDiv,'</h2><table class="tab-highlight" summary="Results for ',$curDiv,'"><tr><th>Sail No</th><th>Class</th><th>Boat Name</th><th>Skipper</th>';
 				//number of races we have?
 				$size = count($results);
 				for($i = 1; $i <= $size; $i++){
@@ -44,8 +46,9 @@ if ($database->query() && $data = $database->getAssoc()){
 				}
 				echo '</tr>';
 				$intable = true;
+				$rowNo = 0;
 			}
-			echo '<tr><td>', substr($data['no'],0,strrchr($data['no'],'+')), '</td><td>', $data['class'], '</td><td>', $data['name'], '</td><td>';
+			echo '<tr class="alt-',($rowNo++ % 2),'"><td>', substr($data['no'],0,strpos($data['no'],'+')), '</td><td>', $data['class'], '</td><td>', $data['name'], '</td><td>';
 			if($data['crew'] == ''){
 				echo $data['skipper'];
 			}else{
