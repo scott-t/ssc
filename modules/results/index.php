@@ -38,7 +38,7 @@ if ($database->query() && $data = $database->getAssoc()){
 				if($intable){
 					echo '</table>';
 				}
-				echo '<h2>',$curDiv,'</h2><table class="tab-highlight" summary="Results for ',$curDiv,'"><tr><th>Sail No</th><th>Class</th><th>Boat Name</th><th>Skipper</th>';
+				echo '<h2>Division: ',$curDiv,'</h2><table class="tab-highlight" summary="Results for ',$curDiv,'"><tr><th>Sail No</th><th>Class</th><th>Boat Name</th><th>Skipper</th>';
 				//number of races we have?
 				$size = count($results);
 				for($i = 1; $i <= $size; $i++){
