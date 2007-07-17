@@ -375,7 +375,7 @@ if(isset($_GET['edit'])){
 	//display list of race series'
 	$database->setQuery("SELECT id, name, description, dt FROM #__results_series ORDER BY name ASC");
 	if($database->query() && $database->getNumberRows() > 0){
-		echo '<form action="',$sscConfig_adminUri,'" method="post"><table class="tab-admin" summary="List of race series\'"><tr><th>ID</th><th>&nbsp;<img src="',$sscConfig_adminImages,'/delete.png" alt="Delete" /></th><th>Name</th><th>Description</th><th><span class="popup" title="Determines order sorted by">Updated date</span></th></tr>';
+		echo '<form action="',$sscConfig_adminURI,'" method="post"><table class="tab-admin" summary="List of race series\'"><tr><th>ID</th><th>&nbsp;<img src="',$sscConfig_adminImages,'/delete.png" alt="Delete" /></th><th>Name</th><th>Description</th><th><span class="popup" title="Determines order sorted by">Updated date</span></th></tr>';
 		while($data=$database->getAssoc()){
 			echo '<tr><td>',$data['id'],'</td><td><input type="checkbox" value="',$data['id'],'" name="del-id[]" /></td><td><a href="', $sscConfig_adminURI,'/edit/',$data['id'],'">',$data['name'],'</a></td><td>',$data['description'],'</td><td>',$data['dt'],'</td></tr>';
 		}
