@@ -80,6 +80,15 @@ body {min-width:750px;height:100%;font-size:1em}
 			.tab-highlight tr:hover{background-color:#ccccff;}
 			.tab-highlight {width:100%;text-align:left;border-collapse:collapse}
 			
+			/* Popup messages - not used at present */
+			* > .popup{position:relative;z-index:1;text-decoration:none;border-bottom:#006600 1px dashed;}
+			.popup span{display: none;cursor:help;}
+			.popup:hover{font-size:1em;z-index:2;cursor:help;}
+			.popup:hover span{display:block;position:absolute;padding:1em;width:20em;top:0.8em;left:2em;border:#999999 1px dashed;background-color:#ffffcc;cursor:help;}
+							
+			popup{border-bottom:#006600 1px dashed;cursor:help;}
+			
+			
 			.five{width:5%;}
 			.ten{width:10%;}
 			.fifteen{width:15%;}
