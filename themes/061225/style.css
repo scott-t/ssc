@@ -76,4 +76,14 @@ body {min-width:750px;height:100%;font-size:1em}
 				.gal-img a{text-align:center;display:block;text-decoration:none;border:#dddddd 1px solid;border-bottom:#dddddd 2px solid;border-right:#dddddd 2px solid;background-color:#edf5fa;padding:15px 5px;margin:5px;width:14em;height:15em;padding-bottom:1em;}
 				.gal-img a:hover{border:#6666dd 1px solid;border-right:#6666dd 2px solid;border-bottom:#6666dd 2px solid;background-color:#eeeeff;}
 				.gal-img a:active{border:#6666dd 1px solid;border-top:#6666dd 2px solid;border-left:#6666dd 2px solid;background-color:#eeeeff;position:relative;top:2px;left:2px;}
-	
+
+			.tab-highlight tr:hover{background-color:#ccccff;}
+			.tab-highlight {width:100%;text-align:left}
+			
+			.five{width:5%;}
+			.ten{width:10%;}
+			.fifteen{width:15%;}
+			.twenty{width:20%;}
+			.twentyfive{width:25%;}	
+			
+			.w-70{width:70%;}

@@ -52,11 +52,7 @@
 						.panel-icon br{clear:both;}				
 				.panel-stats{float:right;width:45%;display:block;}
 				
-				.panel h1,.panel h2,.panel h3{color:#117700}
-				
-				.tab-admin{clear:both;width:100%;}
-					.tab-admin th{text-align:left;}
-					
+				.panel h1,.panel h2,.panel h3{color:#117700}		
 					
 					.small-ico span{float:left;line-height:22px;text-decoration:underline;cursor:pointer}
 			.small-ico img{float:left;}
@@ -74,20 +70,12 @@
 							
 			popup{border-bottom:#006600 1px dashed;cursor:help;}
 			
-	
+				.tab-admin{clear:both;width:100%;}
+				.tab-admin th{text-align:left;}
 				table{ border-collapse:collapse;}
 				th,td{padding:3px;}
 					th{padding-bottom:5px;}
 					td{border-top:#006600 1px solid;padding-bottom:5px;}
 					tr:hover{background-color:#ccccff;}
-
-
 					
-				.five{width:5%;}
-				.ten{width:10%;}
-				.fifteen{width:15%;}
-				.twenty{width:20%;}
-				.twentyfive{width:25%;}	
-				
-				.w-70{width:70%;}
 				
