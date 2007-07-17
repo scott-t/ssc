@@ -39,7 +39,7 @@ if(isset($_POST['submit'])){
 		if($database->getErrorNumber()){
 			echo error('There was an error while setting hidden status'),'<br />';
 		}else{
-			echo message('Visibility was set successfully<br /><br /><a href="'.$sscConfig_adminURI.'">Refresh</a> to view changes'),'<br />';
+			echo message('Visibility was set successfully<br /><br />You may need to <a href="'.$sscConfig_adminURI.'">refresh</a> to see changes'),'<br />';
 		}
 		$database->clearError();
 	}
@@ -54,7 +54,7 @@ if(isset($_POST['submit'])){
 	if($database->getErrorNumber()){
 		echo error('There was an error while setting order weighting'),'<br />';
 	}else{
-		echo message('Navigation order was set successfully<br /><br /><a href="'.$sscConfig_adminURI.'">Refresh</a> to view changes'),'<br />';
+		echo message('Navigation order was set successfully<br /><br />You may need to <a href="'.$sscConfig_adminURI.'">refresh</a> to see changes'),'<br />';
 	}
 }
 
