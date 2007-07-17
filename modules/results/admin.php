@@ -181,7 +181,7 @@ if(isset($_GET['edit'])){
 										
 										if(!$crit){
 											//so we know if some boats disappear from results
-											$database->setQuery("UPDATE #__results_results SET points = -1 WHERE series_id = " . $rid);
+											$database->setQuery("UPDATE #__results_results SET results = '' WHERE series_id = " . $rid);
 											$database->query();
 											
 											//now to parse the data
