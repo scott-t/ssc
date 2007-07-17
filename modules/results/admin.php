@@ -185,9 +185,10 @@ if(isset($_GET['edit'])){
 											$database->query();
 											
 											//now to parse the data
-											while(($line = fgetcsv($handle, 1024))!==FALSE){
+											while(($line = fgets($handle, 1024))!==FALSE){
+												$line = explode(',',htmlspecialchars($line)); 
+
 												if($line[$sail] != ''){
-													
 													//echo $line[$sail], ' - ';
 													$line[$sail] = substr($line[$sail],0,16);
 													$database->setQuery(sprintf("SELECT no, skipper, class, name, crew, club FROM #__results_entries WHERE no LIKE '%s+%%' ORDER BY no ASC", $database->escapeString($line[$sail])));
@@ -303,11 +304,6 @@ if(isset($_GET['edit'])){
 											$database->setQuery("DELETE FROM #__results_results WHERE series_id = $rid AND points = 0");
 											$database->query();
 											
-											//$rows = $database->getNumberRows();
-											//for($i = 0; $i < $rows; $i++){
-												//loop thru ea division
-												
-											//}
 										}
 										
 										break;
