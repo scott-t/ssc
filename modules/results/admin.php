@@ -56,7 +56,7 @@ if(isset($_GET['edit'])){
 						$database->setQuery(sprintf("UPDATE #__navigation SET name  = '%s', uri = '%s' WHERE id = %d LIMIT 1", $database->escapeString($_POST['nav-name']), $database->escapeString($_POST['nav-uri']), $nid));
 						$database->query();
 					}
-					
+
 					if($nid == 0){
 						echo warn("There was a problem updating the navigation bar.  Check for errors"),'<br />';
 					}else{
@@ -69,18 +69,266 @@ if(isset($_GET['edit'])){
 							$database->setQuery(sprintf("UPDATE #__results_series SET nav_id = %d, name = '%s', description = '%s', dt = '%s' WHERE id = %d LIMIT 1", $nid, $database->escapeString($_POST['name']), $database->escapeString($_POST['desc']), $database->escapeString($_POST['date']), $rid));
 							$database->query();
 						}
-						echo warn($database->getQuery().'<br />'.$database->getErrorMessage()),'<br />';
 						
 						if(isset($_POST['sub-up'])){
 							//race result parsing
-							echo warn("TODO: Result parsing");
-						}else{
-							if($rid > 0){
-								echo message("Series details updated");
+							//this is gonna be painful...
+							if(isset($_FILES['csv']['name'])){
+								//file was spec'd
+								switch ($_FILES['csv']['error']){
+									case UPLOAD_ERR_OK:
+										//upload successful
+										//hmm.  gotta parse things now (*cringe*)
+										$tmpFile = $_FILES['csv']['tmp_name'];
+										//for our own error parsing
+										$errStatus = 0;
+										$handle = fopen($tmpFile, 'r');
+										$line[0] = '';
+										//get past the header
+										do{
+											$line = fgetcsv($handle,1024);
+										}while ($line[0] == '');
+
+										//parse column headers...
+										$count = count($line);
+										//defaults
+										$div = -1;
+										$skipper = -2;
+										$crew = -3;
+										$class = -4;
+										$boat = -5;
+										$club = -6;
+										$sail = -7;
+										$results = -8;
+										for($i = 0; $i<$count; $i++){
+											switch(strtolower($line[$i])){
+												case 'div':
+												case 'division':
+													$div = $i;
+													break;
+												case 'skipper':
+													$skipper = $i;
+													break;
+												case 'crew':
+													$crew = $i;
+													break;
+												case 'club':
+													$club = $i;
+													break;
+												case 'class':
+													$class = $i;
+													break;
+												case 'name':
+												case 'boat':
+												case 'boat name':
+													$boat = $i;
+													break;
+												case 'sail':
+												case 'sail no.':
+												case 'sail no':
+												case 'sail number':
+													$sail = $i;
+													break;
+													
+												default:
+													if(intval($line[$i])>0){
+														$results = $i;
+														break 2;	
+													}
+											}
+										}
+										
+										//check which weren't detected
+										$missing = '';
+										$crit = false;
+										if($div < 0){
+											$missing .= 'Division, ';
+											$crit = true;
+										}
+										if($skipper < 0){
+											$missing .= 'Skipper, ';
+											$crit = true;
+										}
+										if($sail < 0){
+											$missing .= 'Sail Number, ';
+											$crit = true;
+										}
+										if($results < 0){
+											$missing .= 'Results, ';
+											$crit = true;
+										}
+										
+										//non critical
+										if($boat < 0)
+											$missing .= 'Boat Name, ';
+											
+										if($crew < 0)
+											$missing .= 'Crew, ';
+										
+										if($class < 0)
+											$missing .= 'Class, ';
+											
+										if($club < 0)
+											$missing .='Club, ';
+
+										if($missing != ''){
+											$msg = 'The following fields were not detected in the uploaded file: ' . substr($missing,0,-2);
+											if($crit)
+												echo error($msg . '<br /><br />Some of these were required.  Parsing will not continue.'), '<br />';
+											else
+												echo warn($msg), '<br />';
+										}
+										
+										if(!$crit){
+											//so we know if some boats disappear from results
+											$database->setQuery("UPDATE #__results_results SET points = -1 WHERE series_id = " . $rid);
+											$database->query();
+											
+											//now to parse the data
+											while(($line = fgetcsv($handle, 1024))!==FALSE){
+												if($line[$sail] != ''){
+													
+													//echo $line[$sail], ' - ';
+													$line[$sail] = substr($line[$sail],0,16);
+													$database->setQuery(sprintf("SELECT no, skipper, class, name, crew, club FROM #__results_entries WHERE no LIKE '%s+%%' ORDER BY no ASC", $database->escapeString($line[$sail])));
+													$database->query();
+													$pad = 0;
+													$match = false;
+													while($data = $database->getAssoc()){
+														//got rows... try to match up
+														$match = true;
+														if($crew >= 0 && $line[$crew] != $data['crew'])
+															$match = false;
+														
+														if($line[$skipper] != $data['skipper'])
+															$match = false;
+															
+														if($class >= 0 && $line[$class] != $data['class'])
+															$match = false;
+															
+														if($club >= 0 && $line[$club] != $data['club'])
+															$match = false;
+															
+														if($boat >= 0 && $line[$boat] != $data['name'])
+															$match = false;
+													
+														if($match == true){
+															//got thru our checks
+															$line[$sail] = $data['no'];
+														}else{
+															$pad++;
+														}
+													}
+													
+													if(!$match){
+														//need to insert new
+														$line[$sail] .= "+$pad";
+														if($crew < 0)
+															$line[$crew] = '';
+																												
+														if($class < 0)
+															$line[$class] = '';
+															
+														if($club < 0)
+															$line[$club] = '';
+															
+														if($boat < 0)
+															$line[$boat] = '';
+															
+														$database->setQuery(sprintf("INSERT INTO #__results_entries (no, skipper, class, name, crew, club) VALUES ('%s', '%s', '%s', '%s', '%s', '%s')",$database->escapeString($line[$sail]),$database->escapeString($line[$skipper]),$database->escapeString($line[$class]),$database->escapeString($line[$boat]),$database->escapeString($line[$crew]),$database->escapeString($line[$club])));
+														$database->query();
+													}
+													
+													//should now have a boat matching the description
+													//insert results for said boat
+													$database->setQuery(sprintf("SELECT id, number, results, points, division FROM #__results_results WHERE number = '%s' AND series_id = %d LIMIT 1",$database->escapeString($line[$sail]),$rid));
+													$database->query();
+													
+													$finish = implode(array_slice($line,$results),',');
+													//echo $finish;
+																											
+													if($data = $database->getAssoc()){
+														//update existing
+														$database->setQuery(sprintf("UPDATE #__results_results SET results = '%s', division = '%s' WHERE id = %d LIMIT 1",$database->escapeString($finish), $database->escapeString($line[$div]), $data['id']));
+														//$database->query();
+														
+													}else{
+														//new
+														$database->setQuery(sprintf("INSERT INTO #__results_results (number, series_id, results, points, division) VALUES ('%s', %d, '%s', 0, '%s')",$database->escapeString($line[$sail]),$rid,$database->escapeString($finish),$database->escapeString($line[$div])));
+														//$database->query();
+													}
+													$database->query();
+	
+													//results should now be in
+													//
+												}
+											}
+											
+											//finished with file now
+											fclose($handle);
+											
+											//work out approx placings
+											$database->setQuery("SELECT division, COUNT(division) AS entries FROM #__results_results WHERE series_id = $rid GROUP BY division ORDER BY division ASC");
+											$divResult = $database->query();
+											$curDiv = '\0';
+											
+											$database->setQuery("SELECT id, results, division FROM #__results_results WHERE series_id = $rid ORDER BY division ASC");
+											$resultResult = $database->query();
+											
+											$data = $database->getAssoc();
+											while($divData = $database->getAssoc($divResult)){
+												//loop thru each div
+												$curDiv = $divData['division'];
+												do{
+													if($curDiv != $data['division'])
+														continue 2;
+													
+													$finish = $data['results'];
+													if(preg_match("/[[:alpha:]]+/i",$finish) > 0)
+														$finish = preg_replace("/[[:alpha:]]+/i","" . $divData['entries'], $finish);
+													
+
+													$points = array_sum(explode(',',$finish));
+
+													$database->setQuery(sprintf("UPDATE #__results_results SET points = %d WHERE id = %d LIMIT 1", $points, $data['id']));
+													$database->query();
+												}while($data = $database->getAssoc($resultResult));
+												break;
+											}
+											
+											$database->freeResult($divResult);
+											$database->freeResult($resultResult);
+											
+											//clean up
+											$database->setQuery("DELETE FROM #__results_results WHERE series_id = $rid AND points = 0");
+											$database->query();
+											
+											//$rows = $database->getNumberRows();
+											//for($i = 0; $i < $rows; $i++){
+												//loop thru ea division
+												
+											//}
+										}
+										
+										break;
+									case UPLOAD_ERR_NO_FILE:
+										echo warn("No input file specified.  No results added"),'<br />';
+										break;
+									default:
+										echo error("There was a problem with the file upload.  Check the correct file was selected and try again"),'<br />';
+										break;
+								}
 							}else{
-								echo error('There was a problem updating series details');
+								echo warn("No input file specified.  No results added"),'<br />';
 							}
 						}
+						
+						if($rid > 0){
+							echo message("Series details updated");
+						}else{
+							echo error('There was a problem updating series details');
+						}
+						
 						echo '<br />';
 					}
 				}
