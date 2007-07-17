@@ -1,5 +1,5 @@
 /*  ID has the #!!  */
-body, html {margin:0;padding:0;height:100%;background-color:#edf5fa;color:#000000;font-family:"Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;}
+body, html {margin:0;padding:0;height:100%;background-color:#edf5fa;color:#003366;font-family:"Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;}
 body {min-width:750px;height:100%;font-size:1em}
 
 /* don't need to format body_block */
@@ -78,7 +78,7 @@ body {min-width:750px;height:100%;font-size:1em}
 				.gal-img a:active{border:#6666dd 1px solid;border-top:#6666dd 2px solid;border-left:#6666dd 2px solid;background-color:#eeeeff;position:relative;top:2px;left:2px;}
 
 			.tab-highlight tr:hover{background-color:#ccccff;}
-			.tab-highlight {width:100%;text-align:left}
+			.tab-highlight {width:100%;text-align:left;border-collapse:collapse}
 			
 			.five{width:5%;}
 			.ten{width:10%;}
