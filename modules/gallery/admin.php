@@ -196,7 +196,7 @@ if(isset($_GET['edit'])){
 					if($k < $med_size && $keys_owner[$i] == $keys_medium[$k]){
 						++$k;
 						//need to generate a medium level zoom
-						sscImage::resize($sscConfig_absPath . '/modules/gallery/photos/'.$gid.'/'.$pid.'.jpg',$sscConfig_absPath . '/modules/gallery/photos/'.$gid.'/'.$pid.'_med.jpg','jpg',SSC_GALLERY_MEDIUM_WIDTH,$sscConfig_imgWatermark);
+						sscImage::resize($sscConfig_absPath . '/modules/gallery/photos/'.$gid.'/'.$pid.'.jpg',$sscConfig_absPath . '/modules/gallery/photos/'.$gid.'/'.$pid.'_med','jpg',SSC_GALLERY_MEDIUM_WIDTH,$sscConfig_imgWatermark);
 						$database->setQuery(sprintf("UPDATE #__gallery_content SET med = 1 WHERE id = %d LIMIT 1", $pid));
 						$database->query();
 						

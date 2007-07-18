@@ -65,7 +65,7 @@ class sscEdit{
 		
 		//go [] searching
 		$offset = 0;
-		while($offset = strpos($text,"[",$offset)){
+		while(($offset = strpos($text,"[",$offset))!== false){
 			$newOffset = strpos($text,"]",$offset) + 2;
 			$sub = substr($text,$offset, $newOffset - $offset);
 			$tmp = explode("|",$sub);
@@ -85,34 +85,34 @@ class sscEdit{
 					//only allow onsite for the time being?
 					if(isset($tmp[1])){
 						//first should ALWAYS be the link
-						echo '<img src="', $sscConfig_webPath, $tmp[1],'"';
+						$sub = '<img src="'. $sscConfig_webPath. $tmp[1].'"';
 						if(isset($tmp[2])){
 							//2nd is the alt text
-							echo " alt=\"",$tmp[2],"\"";
+							$sub .= " alt=\"".$tmp[2]."\"";
 							if(isset($tmp[3])){
 								//3rd is (clear) floatability
 								switch(strtolower($tmp[3])){
 									case "left":
-										echo " class=\"float\"";
+										$sub .= " class=\"float\"";
 										break;
 									case "right":
-										echo " class=\"right\"";
+										$sub .= " class=\"right\"";
 										break;
 									case "cleft":
-										echo " class=\"cfloat\"";
+										$sub .= " class=\"cfloat\"";
 										break;
 									case "cright":
-										echo " class=\"cright\"";
+										$sub .= " class=\"cright\"";
 										break;
 								}
 								
 								if(isset($tmp[4])){
 									//4th is title
-									echo " title=\"",$tmp[4],"\"";
+									$sub .= " title=\"".$tmp[4]."\"";
 								}
 							}
 						}
-						echo ' />';
+						$sub .= ' />';
 					}
 					//$sub = " !!do image parsing!! ";
 					break;
