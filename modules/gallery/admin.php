@@ -160,11 +160,16 @@ if(isset($_GET['edit'])){
 				//perform content update
 				$keys_owner = array_keys($_POST['own']);
 				$keys_caption = array_keys($_POST['cap']);
-				$keys_medium = array_keys($_POST['gen-med']);
+				
 				if(isset($_POST['del']))
 					$keys_delete = array_keys($_POST['del']);
 				else
 					$keys_delete[0] = -1;
+				
+				if(isset($_POST['gen-med']))
+					$keys_medium = array_keys($_POST['gen-med']);
+				else
+					$keys_medium[0] = -1;
 				
 				$size = sizeof($keys_owner);
 				$del_size = sizeof($keys_delete);
@@ -211,7 +216,7 @@ if(isset($_GET['edit'])){
 					$ext = strtolower(sscImage::getExtension($_FILES['up-single']['name']));
 					if($ext != 'jpg' && $ext != 'jpeg'){echo error("Unknown file extension type $ext.  Ignoring...");break;}					
 					//insert it to db
-					$database->setQuery("INSERT INTO #__gallery_content (gallery_id,owner,caption) VALUES ($gid,'','')");
+					$database->setQuery("INSERT INTO #__gallery_content (gallery_id,owner,caption,med) VALUES ($gid,'','',0)");
 					$database->query();
 					$pid = $database->getLastInsertID();
 					
