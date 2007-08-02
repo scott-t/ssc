@@ -18,7 +18,7 @@ $database->setQuery(sprintf("SELECT content, title FROM #__static WHERE nav_id =
 if($database->query() && $data = $database->getAssoc()){
 	echo '<h1>',$data['title'],'</h1>';
 	include_once($sscConfig_absPath.'/includes/sscEdit.php');
-	echo sscEdit::parseToHTML($data['content']);
+	echo sscEdit::parseToHTML($data['content']),'<br class="clear" />';
 
 }else{ echo error("An unexpected error occurred. Please contact the webmaster with the link to this page</br >".$database->getErrorMessage());}
 

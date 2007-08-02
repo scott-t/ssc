@@ -39,30 +39,6 @@ $mytimerstart = round(microtime(),4); */
  $mytimerstart = explode(" ",microtime()); 
  $mytimerstart = $mytimerstart[0] + $mytimerstart[1]; 
 
-/* Parse our UIR
- * Takes the mod_rewritten uri and changes it to index.php?q=child/path
- * Sets first var as $_GET['cont'] and second as $_GET['sub']
- * All subsequent as $_GET[%i] = %i+1
- */
-if(isset($_GET['q'])){
-$tmp = explode('/',$_GET['q']);								//split up the "path"
-}
-if(isset($tmp[0]) && $tmp[0]!=''){							//set up what content to display. used for titles, etc
-	$_GET['cont'] = str_replace('-',' ',$tmp[0]);
-}else{
-	$_GET['cont'] = 'home';
-}
-
-if(isset($tmp[1]) && $tmp[1] != ''){						//sub  = some minor details (page number, page id, etc)
-	$_GET['sub'] = $tmp[1];
-}
-
-$i = 2;														//remainders
-while(isset($tmp[$i],$tmp[$i+1])){
-	$_GET[$tmp[$i]] = $tmp[$i+1];
-	$i+=2;
-}
-
 core_start();
 
 /*

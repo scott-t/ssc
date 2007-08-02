@@ -136,7 +136,7 @@ if(isset($_GET['edit'])){
 			$data['sub'] = 1;
 		}else{$data['sub']=0;}
 	}else{
-		$database->setQuery("SELECT #__static.id, nav_id, title, title AS name, uri, content, hidden AS sub FROM #__static, #__navigation WHERE #__static.id = $edID AND #__navigation.id = nav_id LIMIT 1");
+		$database->setQuery("SELECT #__static.id, nav_id, title, name, uri, content, hidden AS sub FROM #__static, #__navigation WHERE #__static.id = $edID AND #__navigation.id = nav_id LIMIT 1");
 		$database->query();
 		//echo $database->getErrorMessage();
 		//page exist?

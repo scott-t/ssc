@@ -12,7 +12,7 @@ echo "*{background-color:transparent;}#navigation a:hover span{text-decoration:u
 	/************* IE Mac CSS Only  works for Win too **************/
 * html div#content_wrap {margin: 0 -100% 0 0;}
 * html div#navigation {margin: 0;}
-
+	.panel{overflow-x:hidden}
 
 /* Admin fixes */
 				.login-text{width:44%;margin-left:5px;float:left;}

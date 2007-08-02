@@ -18,20 +18,6 @@ echo '<span class="header-l">Welcome '.$_SESSION['UserFullName'].'</span><span c
 //begin c-panel output
 echo '<div class="panel">';
 
-$tmp = explode('/',$_GET['q']);
-//set up the expected parameters as before
-if(isset($tmp[1])){
-	$_GET['sub'] = $tmp[1];
-	$num = count($tmp);
-	for($i = 2; $i < $num;){
-		if(isset($tmp[$i+1])){
-			//this plus next set... match them up
-			$_GET[$tmp[$i]] = $tmp[$i+1];
-		}
-		$i+= 2;
-	}
-}
-
 //if a selection been made...
 if(isset($_GET['sub'])){
 	//...show its subpanel

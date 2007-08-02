@@ -51,6 +51,8 @@ body {min-width:750px;height:100%;font-size:1em}
 			.clear{clear:both;}
 			.cfloat{float:left;clear:both;}
 			.cright{float:right;clear:both;}
+			img.cfloat, img.float{padding-right:1em;}
+			img.cright, img.right{padding-left:1em;}
 			.hide{display:none;}
 			.center{text-align:center;margin:0 auto;}
 			.bold{font-weight:bold;}

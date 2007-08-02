@@ -25,7 +25,7 @@ function createGalleryBox($url,$pid,$cap){
  
 if(isset($_GET['sub'])){
 	//get gallery details
-	$database->setQuery(sprintf("SELECT id, name FROM #__gallery WHERE name LIKE '%s' LIMIT 1",$database->escapeString(str_replace('-',' ',$_GET['sub']))));
+	$database->setQuery(sprintf("SELECT id, name FROM #__gallery WHERE name LIKE '%s' AND id > 1 LIMIT 1",$database->escapeString(str_replace('-',' ',$_GET['sub']))));
 	if($database->query() && $data = $database->getAssoc()){
 		echo '<h1>Photo Gallery</h1><h2>',$data['name'],'</h2>Click on an image to view an enlargement<br />';
 		$gid = $data['id'];
@@ -39,7 +39,7 @@ if(isset($_GET['sub'])){
 			$page_s = 0;
 			$page_f = 20;
 		}
-		$database->setQuery(sprintf("SELECT id, owner, caption FROM #__gallery_content WHERE gallery_id = %d  ORDER BY id ASC LIMIT %d,%d", $gid, $page_s, $page_f));
+		$database->setQuery(sprintf("SELECT id, owner, caption FROM #__gallery_content WHERE gallery_id = %d AND id > 1 ORDER BY id ASC LIMIT %d,%d", $gid, $page_s, $page_f));
 		if($database->query()){
 			echo '<div class="panel">';
 			//paging
@@ -70,7 +70,7 @@ if(isset($_GET['sub'])){
 
 }else{
 	//decide which gallery to open
-	$database->setQuery("SELECT #__gallery.id, #__gallery_content.id AS pid, name FROM #__gallery RIGHT JOIN #__gallery_content ON gallery_id = #__gallery.id GROUP BY gallery_id");
+	$database->setQuery("SELECT #__gallery.id, #__gallery_content.id AS pid, name FROM #__gallery RIGHT JOIN #__gallery_content ON gallery_id = #__gallery.id WHERE #__gallery.id > 1 GROUP BY gallery_id");
 	if($database->query()){
 		echo '<h1>Photo Gallery</h1>Choose a gallery to continue<br />';
 		echo '<div class="panel">';
