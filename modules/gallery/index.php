@@ -20,7 +20,7 @@ global $database, $sscConfig_webPath;
  
 function createGalleryBox($url,$pid,$cap){
 	global $sscConfig_webPath;
-	echo '<div class="gal-img"><a href="',$url,'"><div><img src="',$sscConfig_webPath, '/modules/gallery/photos/',$pid,'_thumb.jpg" alt="" /></div>',$cap,'</a><br class="clear" /></div>';
+	echo '<div class="gal-img"><a href="',$url,'"><span><img src="',$sscConfig_webPath, '/modules/gallery/photos/',$pid,'_thumb.jpg" alt="" /></span>',$cap,'</a><br class="clear" /></div>';
 }
  
 if(isset($_GET['sub'])){
