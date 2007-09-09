@@ -21,7 +21,6 @@ if($database->query() && $data = $database->getAssoc()){
 	echo sscEdit::parseToHTML($data['content']);
 	echo '<!--[if !IE 6]><div class="clear" /></div><![endif]-->';
 	echo '<br class="clear" />';
-
-}else{ echo error("An unexpected error occurred. Please contact the webmaster with the link to this page</br >".$database->getErrorMessage());}
+}else{ echo error("An unexpected error occurred. Please contact the webmaster with the link to this page<br />".$database->getErrorMessage());}
 
 ?>
