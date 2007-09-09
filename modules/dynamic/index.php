@@ -31,7 +31,7 @@ if($database->query() && $data = $database->getAssoc()){
 				$database->setQuery(sprintf("SELECT date, title, content, display FROM #__dynamic_content, #__users WHERE #__users.id = user_id AND date LIKE '%s%%' AND uri = '%s' LIMIT 1", date("Y-m-d",strtotime($yr."-".$str[1]."-".$str[2])), $database->escapeString($str[3])));
 				if($database->query() && $data = $database->getAssoc()){
 					//success
-					echo '<h2>', $data['title'], '</h2>Posted ', date("D, M d, Y \a\\t h:i a",strtotime($data['date'])), " by ", $data['display'], '<br /><br />';
+					echo '<h2>', $data['title'], '</h2>Posted ', date("D, M d, Y \a\\t h:i a",strtotime($data['date'])), " by ", $data['display'], '<br />';
 					echo sscEdit::parseToHTML($data['content']);
 				}else{
 					echo error("There was a problem accessing this post"),'<br />';

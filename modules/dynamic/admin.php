@@ -92,11 +92,11 @@ if(isset($_GET['edit'])){
 					$uID = $data['id'];
 					$res = 0;
 					if($pID == 0){
-						$database->setQuery(sprintf("INSERT INTO #__dynamic_content (blog_id, date, user_id, title, uri, content) VALUES (%d,'%s',%d,'%s','%s','%s')",$edID, date("Y-m-d H:s:i",strtotime($_POST['date'])), $uID, $database->escapeString($_POST['title']), $database->escapeString($_POST['uri']), $database->escapeString($_POST['cont'])));
+						$database->setQuery(sprintf("INSERT INTO #__dynamic_content (blog_id, date, user_id, title, uri, content) VALUES (%d,'%s',%d,'%s','%s','%s')",$edID, date("Y-m-d H:i:s",strtotime($_POST['date'])), $uID, $database->escapeString($_POST['title']), $database->escapeString($_POST['uri']), $database->escapeString($_POST['cont'])));
 						$res = $database->query();
 						$pID = $database->getLastInsertID();
 					}else{
-						$database->setQuery(sprintf("UPDATE #__dynamic_content SET date = '%s', title = '%s', uri = '%s', content = '%s' WHERE id = %d LIMIT 1", date("Y-m-d H:s:i",strtotime($_POST['date'])), $database->escapeString($_POST['title']), $database->escapeString($_POST['uri']), $database->escapeString($_POST['cont']),$pID));
+						$database->setQuery(sprintf("UPDATE #__dynamic_content SET date = '%s', title = '%s', uri = '%s', content = '%s' WHERE id = %d LIMIT 1", date("Y-m-d H:i:s",strtotime($_POST['date'])), $database->escapeString($_POST['title']), $database->escapeString($_POST['uri']), $database->escapeString($_POST['cont']),$pID));
 						$res = $database->query();
 					}
 					
@@ -110,7 +110,6 @@ if(isset($_GET['edit'])){
 				echo error("Not all fields were filled in!");
 			
 			echo '<br />';
-			echo warn("We wanna save our post!"),'<br />';
 		}
 		
 		if(isset($_POST['submit']) || isset($_POST['preview'])){
@@ -262,7 +261,7 @@ if(isset($_GET['edit'])){
 			if($database->query()){
 				echo '</div><img class="panel-icon-img" src="',$sscConfig_adminImages,'/text.png" alt="" /><span class="title">Page Posts</span><hr class="admin" /><div class="indent"><form action="',$sscConfig_adminURI,'" method="post"><table class="tab-admin" summary="Details of posts for the current dynamic page"><tr><th>ID</th><th>&nbsp;<img src="',$sscConfig_adminImages,'/delete.png" alt="Delete" /></th><th>Post Title</th><th>Posted Date</th><th class="w-70">Contents</th></tr>';
 				while($data = $database->getAssoc()){
-					echo '<tr><td>',$data['id'],'</td><td><input type="checkbox" value="',$data['id'],'" name="del-pid[]" /></td><td><a href="',$sscConfig_adminURI,'/../',$edID,'/post/',$data['id'],'">',$data['title'],'</a></td><td>',date("d-m-Y h:s a",strtotime($data['date'])),'</td><td>',$data['content'],'</td></tr>';
+					echo '<tr><td>',$data['id'],'</td><td><input type="checkbox" value="',$data['id'],'" name="del-pid[]" /></td><td><a href="',$sscConfig_adminURI,'/../',$edID,'/post/',$data['id'],'">',$data['title'],'</a></td><td>',date("d-m-Y h:i a",strtotime($data['date'])),'</td><td>',$data['content'],'</td></tr>';
 				
 					if(strlen($data['content']) > 150)
 						$data['content'] = substr($data['content'],0,150).'...';
@@ -282,12 +281,17 @@ if(isset($_GET['edit'])){
 	
 }else{
 //guess not.  display pages belonging to this module
-$database->setQuery("SELECT #__dynamic.id, #__navigation.uri, #__dynamic.title, COUNT(blog_id) AS posts FROM #__dynamic, #__dynamic_content, #__navigation WHERE #__navigation.id = nav_id GROUP BY #__dynamic_content.blog_id ORDER BY uri ASC");
+$database->setQuery("SELECT #__dynamic.id, #__navigation.uri, #__dynamic.title FROM #__dynamic, #__navigation WHERE #__navigation.id = nav_id ORDER BY uri ASC");
 if($database->query()){
 	if($database->getNumberRows() > 0){
 		echo '<form action="',$sscConfig_adminURI,'" method="post"><table class="tab-admin" summary="Details of pages controlled by this module"><tr><th>ID</th><th>&nbsp;<img src="',$sscConfig_adminImages,'/delete.png" alt="Delete" /></th><th>Page Title</th><th><span class="popup" title="Path to access page">URI Text</span></th><th>Posts</th></tr>';
 		while($data = $database->getAssoc()){
-			echo '<tr><td>',$data['id'],'</td><td><input type="checkbox" value="',$data['id'],'" name="del-id[]" /></td><td><a href="',$sscConfig_adminURI,'/edit/',$data['id'],'" title="Edit page contents">',$data['title'],'</a></td><td>',$data['uri'], '</td><td>',$data['posts'],'</td></tr>';
+			$database->setQuery("SELECT COUNT(blog_id) AS posts FROM #__dynamic_content WHERE blog_id = " . $data['id']);
+			if($database->query() && $dat = $database->getAssoc())
+			{
+				$data['posts'] = $dat['posts'];
+				echo '<tr><td>',$data['id'],'</td><td><input type="checkbox" value="',$data['id'],'" name="del-id[]" /></td><td><a href="',$sscConfig_adminURI,'/edit/',$data['id'],'" title="Edit page contents">',$data['title'],'</a></td><td>',$data['uri'], '</td><td>',$data['posts'],'</td></tr>';
+			}
 		}
 		echo '</table><p><input type="checkbox" name="yes-i-am-sure" id="yes-i-am-sure" />Yes, I am absolutely sure I wish to permanently delete the selected pages above and acknowledge that any mistake is irreversible<br /><br /><button type="submit" name="del" value="delete">Delete selected&nbsp;<img src="',$sscConfig_adminImages, '/delete.png" alt="" class="small-ico" /></button></p></form>';
 	}else{echo message("There are no dynamic pages set up yet."),'<br />';}echo '<a title="Create a new dynamic page" class="small-ico" href="',$sscConfig_adminURI,'/edit/0"><img src="',$sscConfig_adminImages,'/new.png" alt="Add" /><span>New dynamic page</span></a><br />';}else{echo error("Unexpected database error: ". $database->getErrorMessage());}
