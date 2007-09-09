@@ -63,60 +63,58 @@ function core_start(){
 	 */
 	 if(!isset($_GET['q'])){
 		//if not set, we go home
-		header("HTTP/1.0 404 Not Found");
-		$_GET['cont'] = 'Home';
-		$_GET['file'] = 'home';
+		$_GET['q'] = '';
+	}
+	
+	//06-Jul-07
+	//rewrite this to grab full uri from table
+	//eg. try /my/module/mod-specific/params
+	// 1st... match /my/module/mod-specific/params
+	// 2nd... try /my/module/mod-specific
+	// 3rd... try /my/module 
+	// etc
+	
+	// on hit, load required module (via mod_id) and pass it nav_id as the argument.  it can work out the rest
+	$tmp = $_GET['q'];
+	
+	//first we'll just check if its admin...
+	if(strpos($tmp,'admin') === 0){
+		$_GET['cont'] = 'Administration';
+		$_GET['file'] = 'admin';
+	
 	}else{
-		//06-Jul-07
-		//rewrite this to grab full uri from table
-		//eg. try /my/module/mod-specific/params
-		// 1st... match /my/module/mod-specific/params
-		// 2nd... try /my/module/mod-specific
-		// 3rd... try /my/module 
-		// etc
 		
-		// on hit, load required module (via mod_id) and pass it nav_id as the argument.  it can work out the rest
-		$tmp = $_GET['q'];
-		
-		//first we'll just check if its admin...
-		if(strpos($tmp,'admin') === 0){
-			$_GET['cont'] = 'Administration';
-			$_GET['file'] = 'admin';
-		
-		}else{
-			
-			while(1){		//infinte loop?  can't believe i'm doing this...
-				$database->setQuery("SELECT #__navigation.id, #__navigation.name, filename FROM #__navigation, #__modules WHERE module_id = #__modules.id AND uri = '/" . $database->escapeString($tmp) . "' LIMIT 1");
-				if($database->query()){
-					if($data = $database->getAssoc()){
-						//got a result
-						//assume to be right since it matched the uri
-						$_GET['cont'] = $data['name'];
-						$_GET['file'] = $data['filename'];
-						$_GET['pid']  = $data['id'];
-						break;
+		while(1){		//infinte loop?  can't believe i'm doing this...
+			$database->setQuery("SELECT #__navigation.id, #__navigation.name, filename FROM #__navigation, #__modules WHERE module_id = #__modules.id AND uri = '/" . $database->escapeString($tmp) . "' LIMIT 1");
+			if($database->query()){
+				if($data = $database->getAssoc()){
+					//got a result
+					//assume to be right since it matched the uri
+					$_GET['cont'] = $data['name'];
+					$_GET['file'] = $data['filename'];
+					$_GET['pid']  = $data['id'];
+					break;
+				}else{
+					//no matches.  drop back to parent
+					if(strpos($tmp, '/') !== false){
+						//can drop
+						$tmp = substr($tmp,0,strrpos($tmp, '/'));
 					}else{
-						//no matches.  drop back to parent
-						if(strpos($tmp, '/') !== false){
-							//can drop
-							$tmp = substr($tmp,0,strrpos($tmp, '/'));
-						}else{
-							//no parent to drop back to
-							//assume 404 from an sql problem
-							header("HTTP/1.0 404 Not Found");
-							$_GET['cont'] = 404;
-							$_GET['file'] = 'error';
-							break;	//exit loop
-						}
+						//no parent to drop back to
+						//assume 404 from an sql problem
+						header("HTTP/1.0 404 Not Found");
+						$_GET['cont'] = 404;
+						$_GET['file'] = 'error';
+						break;	//exit loop
 					}
-				}	
-				else{
-					//assume 404 from an sql problem
-					header("HTTP/1.0 404 Not Found");
-					$_GET['cont'] = 404;
-					$_GET['file'] = 'error';
-					break;	//exit loop
 				}
+			}	
+			else{
+				//assume 404 from an sql problem
+				header("HTTP/1.0 404 Not Found");
+				$_GET['cont'] = 404;
+				$_GET['file'] = 'error';
+				break;	//exit loop
 			}
 		}
 	}
@@ -173,8 +171,7 @@ function sscPlaceFooter(){
  $totaltime = ($endtime - $mytimerstart); 
 	
 	printf("xhtml and css valid - %.4f seconds - %d queries",round($totaltime,4),$database->queries);
-	$database->cleanUp();
-	//@mysql_close($conn);
+
 }
 
 
@@ -221,4 +218,12 @@ function parseDate($value)
     return $reformatted;
 }
 
+/**
+ * Convert an ordinary string into something uri friendly
+ * @param string URI to convert
+ * @return string The friendly version
+ */
+function urlify($str){
+	return strtolower(str_replace(array('?', '!', '@', '#', '$', '%', '^', '&', '*', '.', '<', '>', ',', '~', '`', '\'', '\"','[',']'),"",$str));
+}
 ?>
