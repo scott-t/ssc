@@ -101,7 +101,7 @@ if(isset($_GET['edit'])){
 	//are we saving changes?
 	if(isset($_POST['submit'])){
 		//all required fields set?
-		if(isset($_POST['pass'],$_POST['pass2'],$_POST['usr'],$_POST['fname'],$_POST['uid'],$_POST['gid'])){
+		if(isset($_POST['pass'],$_POST['pass2'],$_POST['usr'],$_POST['fname'],$_POST['dname'],$_POST['uid'],$_POST['gid'])){
 			//password confirmed correctly?
 			if($_POST['pass'] === $_POST['pass2']){
 				$gid = intval($_POST['gid']);
@@ -130,14 +130,14 @@ if(isset($_GET['edit'])){
 					//either add/update user
 					if($uid == 0){
 						//inserting new...
-						$database->setQuery(sprintf("INSERT INTO #__users (username, fullname, password, email,group_id,last_access) VALUES ('%s','%s','%s','%s','%d','%s')",$database->escapeString($_POST['usr']),$database->escapeString($_POST['fname']),$database->encodeString($database->escapeString($_POST['usr'].$_POST['pass'])),$database->escapeString($_POST['email']),$gid,date('Y-m-d H:i:s')));
+						$database->setQuery(sprintf("INSERT INTO #__users (username, fullname, display, password, email,group_id,last_access) VALUES ('%s','%s','%s','%s','%s','%d','%s')",$database->escapeString($_POST['usr']),$database->escapeString($_POST['fname']),$database->escapeString($_POST['dname']),$database->encodeString($database->escapeString($_POST['usr'].$_POST['pass'])),$database->escapeString($_POST['email']),$gid,date('Y-m-d H:i:s')));
 					}else{
 						//edit existing - update password?
 						if(strlen($_POST['pass'])){
 							//yes
-							$database->setQuery(sprintf("UPDATE #__users SET username = '%s', fullname = '%s', password = '%s', email = '%s', group_id = '%d' WHERE id = '%d' LIMIT 1",$database->escapeString($_POST['usr']),$database->escapeString($_POST['fname']),$database->encodeString($database->escapeString($_POST['usr'].$_POST['pass'])),$database->escapeString($_POST['email']),$gid,$uid));
+							$database->setQuery(sprintf("UPDATE #__users SET username = '%s', fullname = '%s', display = '%s', password = '%s', email = '%s', group_id = '%d' WHERE id = '%d' LIMIT 1",$database->escapeString($_POST['usr']),$database->escapeString($_POST['fname']),$database->escapeString($_POST['dname']),$database->encodeString($database->escapeString($_POST['usr'].$_POST['pass'])),$database->escapeString($_POST['email']),$gid,$uid));
 						}else{
-							$database->setQuery(sprintf("UPDATE #__users SET username = '%s', fullname = '%s', email= '%s', group_id = '%d' WHERE id = '%d' LIMIT 1",$database->escapeString($_POST['usr']),$database->escapeString($_POST['fname']),$database->escapeString($_POST['email']),$gid,$uid));
+							$database->setQuery(sprintf("UPDATE #__users SET username = '%s', fullname = '%s', display = '%s', email= '%s', group_id = '%d' WHERE id = '%d' LIMIT 1",$database->escapeString($_POST['usr']),$database->escapeString($_POST['fname']),$database->escapeString($_POST['dname']),$database->escapeString($_POST['email']),$gid,$uid));
 						}
 					}//end sql selection
 					
@@ -159,7 +159,7 @@ if(isset($_GET['edit'])){
 		echo '<br />';
 	}
 	
-	$database->setQuery('SELECT #__users.id AS uid, group_id AS gid, fullname, username, email FROM #__users WHERE username = "'.$database->escapeString($_GET['edit']).'" LIMIT 1');
+	$database->setQuery('SELECT #__users.id AS uid, group_id AS gid, fullname, display, username, email FROM #__users WHERE username = "'.$database->escapeString($_GET['edit']).'" LIMIT 1');
 	$database->query();
 	//user exist?
 	if($database->getNumberRows()==1){
@@ -170,6 +170,7 @@ if(isset($_GET['edit'])){
 		$data['gid'] = '';
 		$data['fullname'] = '';
 		$data['username'] = '';
+		$data['display'] = '';
 		$data['email']='';
 	}
 	
@@ -188,7 +189,7 @@ if(isset($_GET['edit'])){
 	}
 	
 	//populate form stuffs
-	echo '</legend><input type="hidden" value="',$data['uid'],'" name="uid" /><!--[if IE]><br /><![endif]--><div><label for="usr">Username: </label><input type="text" maxlength="10" name="usr" id="usr" value="',$data['username'],'" /></div><br /><div><label for="fname">Full Name: </label><input type="text" maxlength="30" name="fname" id="fname" value="',$data['fullname'],'" /></div><br /><div><label for="pass">Set Password:</label><input type="password" name="pass" id="pass" /></div><br /><div><label for="pass2">Confirm Password:</label><input type="password" name="pass2" id="pass2" /></div><br /><div><label for="email">Email:</label><input type="text" name="email" id="email" value="',$data['email'],'" /></div><br /><div><label for="gid">Group: </label><select name="gid" id="gid">';
+	echo '</legend><input type="hidden" value="',$data['uid'],'" name="uid" /><!--[if IE]><br /><![endif]--><div><label for="usr">Username: </label><input type="text" maxlength="10" name="usr" id="usr" value="',$data['username'],'" /></div><br /><div><label for="fname">Full Name: </label><input type="text" maxlength="30" name="fname" id="fname" value="',$data['fullname'],'" /></div><br /><div><label for="dname">Display Name: </label><input type="text" maxlength="30" name="dname" id="dname" value="',$data['display'],'" /></div><br /><div><label for="pass">Set Password:</label><input type="password" name="pass" id="pass" /></div><br /><div><label for="pass2">Confirm Password:</label><input type="password" name="pass2" id="pass2" /></div><br /><div><label for="email">Email:</label><input type="text" name="email" id="email" value="',$data['email'],'" /></div><br /><div><label for="gid">Group: </label><select name="gid" id="gid">';
 	//options for group...
 	$database->setQuery('SELECT id, name, description FROM #__groups ORDER BY name ASC');
 	$database->query();
@@ -365,11 +366,11 @@ if(isset($_GET['edit'])){
 		
 }else{
 	//display tables
-	echo'<form action="',$sscConfig_adminURI,'" method="post"><table class="tab-admin" summary="Users with admin access" width="100%"><tr><th>ID</th><th>Full Name</th><th>&nbsp;<img src="',$sscConfig_adminImages,'/delete.png" alt="Delete" /></th><th>Username</th><th>Group</th><th>Last Access</th></tr>';
-	$database->setQuery('SELECT #__users.id, name, description, fullname, username, last_access FROM #__users LEFT JOIN #__groups ON #__users.group_id = #__groups.id ORDER BY id ASC');
+	echo'<form action="',$sscConfig_adminURI,'" method="post"><table class="tab-admin" summary="Users with admin access" width="100%"><tr><th>ID</th><th>Full Name</th><th>&nbsp;<img src="',$sscConfig_adminImages,'/delete.png" alt="Delete" /></th><th>Username</th><th>Display Name</th><th>Group</th><th>Last Access</th></tr>';
+	$database->setQuery('SELECT #__users.id, name, description, fullname, username, display, last_access FROM #__users LEFT JOIN #__groups ON #__users.group_id = #__groups.id ORDER BY id ASC');
 	$database->query();
 	while($data = $database->getAssoc()){
-		echo '<tr><td>',$data['id'],'</td><td>',$data['fullname'],'</td><td><input type="checkbox" value="',$data['id'],'" name="del-id[]" /></td><td><a href="',$sscConfig_adminURI,'/edit/',$data['username'],'" title="Change user settings">',$data['username'],'</a></td><td><span class="popup" title="',$data['description'],'">',$data['name'],'</span></td><td>',date('j M y, g:i:sa', strtotime($data['last_access'])-1800),'</td></tr>';
+		echo '<tr><td>',$data['id'],'</td><td>',$data['fullname'],'</td><td><input type="checkbox" value="',$data['id'],'" name="del-id[]" /></td><td><a href="',$sscConfig_adminURI,'/edit/',$data['username'],'" title="Change user settings">',$data['username'],'</a></td><td>',$data['display'],'</td><td><span class="popup" title="',$data['description'],'">',$data['name'],'</span></td><td>',date('j M y, g:i:sa', strtotime($data['last_access'])-1800),'</td></tr>';
 	}
 	echo '</table><p><button type="submit" name="delete" value="delete">Delete selected&nbsp;<img src="',$sscConfig_adminImages, '/delete.png" alt="" class="small-ico" /></button></p></form><a title="Create new administrator" class="small-ico" href="',$sscConfig_adminURI,'/edit/new"><img src="',$sscConfig_adminImages,'/new.png" alt="Add" /><span>New Admin</span></a><br /></div>';
 		
