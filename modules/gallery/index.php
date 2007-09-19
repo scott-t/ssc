@@ -23,6 +23,20 @@ function createGalleryBox($url,$pid,$cap){
 	echo '<div class="gal-img"><a href="',$url,'"><span><img src="',$sscConfig_webPath, '/modules/gallery/photos/',$pid,'_thumb.jpg" alt="" /></span>',$cap,'</a><br class="clear" /></div>';
 }
  
+$tmp = explode('/',$_GET['q']);
+//set up the expected parameters as before
+if(isset($tmp[1])){
+	$_GET['sub'] = $tmp[1];
+	$num = count($tmp);
+	for($i = 2; $i < $num;){
+		if(isset($tmp[$i+1])){
+			//this plus next set... match them up
+			$_GET[$tmp[$i]] = $tmp[$i+1];
+		}
+		$i+= 2;
+	}
+} 
+ 
 if(isset($_GET['sub'])){
 	//get gallery details
 	$database->setQuery(sprintf("SELECT id, name FROM #__gallery WHERE name LIKE '%s' AND id > 1 LIMIT 1",$database->escapeString(str_replace('-',' ',$_GET['sub']))));
