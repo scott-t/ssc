@@ -1,2 +1,3 @@
 	#navigation a span{cursor:hand}
 	.panel{overflow-x:hidden}
+	.clear{float:left;clear:both;zoom: 1}

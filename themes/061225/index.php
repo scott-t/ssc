@@ -49,25 +49,23 @@ defined('_VALID_SSC') or die('Restricted access');
 </head>
 <body> 
 <div id="container"> 
-    <div id="header">
-        <a href="<?php echo $sscConfig_webPath; ?>">
+	<div id="navigation">
+		<a href="<?php echo $sscConfig_webPath; ?>">
             <img id="logo" src="<?php echo $sscConfig_themeRel;?>/logo.jpg" alt="" />
         </a>
-        <img src="<?php echo $sscConfig_themeRel;?>/header.jpg" alt="" />
-    </div> 
-    <div id="main_body"> 
-        <div id="content_wrap"> 
-            <div id="content"> 
-                <?php sscPlaceContent();?> 
-            </div> 
-        </div> 
-        <div id="navigation"> 
-            <?php sscPlaceNavigation(true); ?> 
-        </div> 
-    </div> 
-    <div id="footer"> 
-        <?php sscPlaceFooter();?> 
-    </div> 
-</div> 
+        <?php sscPlaceNavigation(true); ?>
+    </div>
+    <div id="body">
+    	<div id="header">
+	    	<img src="<?php echo $sscConfig_themeRel;?>/header.jpg" alt="" />
+	    </div>
+	    <div id="content">
+	    	<?php sscPlaceContent(); ?>
+	    </div>
+	    <div id="footer">
+	    	<?php sscPlaceFooter(); ?>
+	    </div>
+	</div>
+</div>
 </body>
 </html>

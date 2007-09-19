@@ -3,33 +3,26 @@ body, html {margin:0;padding:0;height:100%;background-color:#edf5fa;color:#00336
 body {min-width:750px;height:100%;font-size:1em}
 
 /* don't need to format body_block */
+#container{background-image:url('navmesh.jpg');background-repeat:repeat;position:relative;}
 
-#container{width:100%;background-image:url('navmesh.jpg');background-repeat:repeat;}
+	#navigation{float:left;width:8em;padding:0;position:relative;} /*end black magic*/
 
-	#header {clear:both;width:100%;background-image:url('navmesh.jpg');background-repeat:repeat;height:100px;}
+		#header {height:100px;}
 
-	#main_body:after{ /* this is for NN6 to clear floats */
-    content:".";display:block;height:0;clear:both;visibility:hidden;}
+		#content{background-color:#edf5fa;margin-left:8em;padding:1em 1em 1em 1em;}
 
-		#content_wrap{float:left;width:100%;margin: 0 -95% 0 0;background-color:transparent;} /*black magic occurs*/
-			#content{margin:0 0 0 8em;background-color:#edf5fa;padding:1em 1em 1em 2em;}
-			
-		#navigation{float:left;width:8em;margin: 0 0 0 -5%;} /*end black magic*/
-	
-	#footer{background-color:#edf5fa;clear:both;width:100%;text-align:center;}
+		#footer{background-color:#edf5fa;text-align:center}
 
-
-	#header img{border:0;position:absolute;right:0;z-index:3;}
-	#header #logo{border:0;position:absolute;right:auto;left:0;}
+			#header img{border:0;position:absolute;right:0;z-index:3;}
 
 /* NAVBAR */
 
 		#navigation ul{list-style-type:none;padding:2em 0 0 0;margin:0;}
-		#navigation a{display:block;width:8em;line-height:2em;height:2em;text-align:center;text-decoration:none;color:#000000;background-color:#8AC3FA;position:relative;}
-		#navigation a span{z-index:3;position:relative;display:block;width:8em;height:2em;line-height:2em;}
-		#navigation a:hover, #navigation a:active{background-color:#F9E38A}	
-		#navigation a img{z-index:2;position:absolute;top:0;left:0;width:8em;height:2em;border:#ffffff 0 none}
-
+		#navigation ul a{display:block;width:8em;line-height:2em;height:2em;text-align:center;text-decoration:none;color:#000000;background-color:#8AC3FA;position:relative;}
+		#navigation ul a span{z-index:3;position:relative;display:block;width:8em;height:2em;line-height:2em;}
+		#navigation ul a:hover, #navigation ul a:active{background-color:#F9E38A}	
+		#navigation ul a img{z-index:2;position:absolute;top:0;left:0;width:8em;height:2em;border:#ffffff 0 none}
+		#navigation a #logo{border:0;}
 /* CONT STUFF*/
 		
 			 span.title{color:#006600;font-size:1.6em;line-height:72px;font-weight:bold;}
@@ -38,9 +31,9 @@ body {min-width:750px;height:100%;font-size:1em}
 			h3{font-size:1.2em}
 			h4{font-size:1em}
 		
-			#cont a{color:#027ac6;}
-			#cont a:visited{}
-			#cont a:hover{color:#005290;text-decoration:none;}
+			#content a{color:#027ac6;}
+			#content a:visited{}
+			#content a:hover{color:#005290;text-decoration:none;}
 			
 			 a img{border:0px;}
 			
@@ -51,8 +44,8 @@ body {min-width:750px;height:100%;font-size:1em}
 			.clear{clear:both;}
 			.cfloat{float:left;clear:both;}
 			.cright{float:right;clear:both;}
-			img.cfloat, img.float{padding-right:1em;}
-			img.cright, img.right{padding-left:1em;}
+			img.cfloat, img.float{padding-right:1em;position:relative;}
+			img.cright, img.right{padding-left:1em;position:relative;}
 			.hide{display:none;}
 			.center{text-align:center;margin:0 auto;}
 			.bold{font-weight:bold;}
@@ -71,7 +64,7 @@ body {min-width:750px;height:100%;font-size:1em}
 			
 			.sub-li{ list-style-type:none;}
 			
-			.panel{background-color:#eeffee;border:#dddddd 1px solid;padding:1.5em;position:absolute;left:9.5em;right:-4em;}
+			.panel{background-color:#eeffee;border:#dddddd 1px solid;padding:1.5em;}
  			div > .panel{background-color:#eeffee;border:#dddddd 1px solid;padding:1.5em;position:relative;left:0;right:0;}
 			.gal-img{float:left; display:block;}
 				.gal-img span{height:150px;display:block;}

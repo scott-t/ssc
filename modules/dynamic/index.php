@@ -118,8 +118,7 @@ if($database->query() && $data = $database->getAssoc()){
 		}
 	}
 
-	echo '<!--[if !IE 6]><div class="clear" /></div><![endif]-->';
-	echo '<br class="clear" />';
+	echo '<div class="clear" /></div>';
 }else{ echo error("An unexpected error occurred. Please contact the webmaster with the link to this page<br />");}
 
 ?>
