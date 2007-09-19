@@ -134,7 +134,7 @@ class sscEdit{
 		
 		$tmp = explode("\n",$text);
 		$output = '';
-		$inpara = false;$blanks=0;
+		$inpara = false;
 		for($i = 0; $i < count($tmp);$i++){
 			//echo substr($tmp[$i], 0, 1),'-',$tmp[$i],'<br />';
 			switch(substr($tmp[$i], 0, 1)){
@@ -146,13 +146,14 @@ class sscEdit{
 					}
 					$output .= '</pre>';
 					$i--;
-					$blanks=0;
 					break;
 					
 				case '*': 
 					if($inpara){$output .= '</p>';$inpara=false;}
 					$output .= sscEdit::doList(0,$tmp, $i);
-					$blanks=0;
+					break;
+				case '-':
+					if($inpara)$output .= '<br />';
 					break;
 				case "":
 					if($inpara){
@@ -173,7 +174,7 @@ class sscEdit{
 						$output.=$tmp[$i];
 					}else{
 					 if(!$inpara){$output .='<p>' . $tmp[$i];$inpara=true;}else{$output .= $tmp[$i].' ';}
-				    } $blanks=0;
+				    } 
 					break;
 			}
 		}
