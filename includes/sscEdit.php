@@ -153,7 +153,7 @@ class sscEdit{
 					$output .= sscEdit::doList(0,$tmp, $i);
 					break;
 				case '-':
-					if($inpara)$output .= '<br />';
+					if($inpara)$output .= '<br />'.substr($tmp[$i],1);
 					break;
 				case "":
 					if($inpara){
