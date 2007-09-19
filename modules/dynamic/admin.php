@@ -91,6 +91,7 @@ if(isset($_GET['edit'])){
 				if($database->query() && $data = $database->getAssoc()){
 					$uID = $data['id'];
 					$res = 0;
+					
 					if($pID == 0){
 						$database->setQuery(sprintf("INSERT INTO #__dynamic_content (blog_id, date, user_id, title, uri, content) VALUES (%d,'%s',%d,'%s','%s','%s')",$edID, date("Y-m-d H:i:s",strtotime($_POST['date'])), $uID, $database->escapeString($_POST['title']), $database->escapeString($_POST['uri']), $database->escapeString($_POST['cont'])));
 						$res = $database->query();
@@ -100,6 +101,63 @@ if(isset($_GET['edit'])){
 						$res = $database->query();
 					}
 					
+					if( $pID > 0){
+						//$database->setQuery("UPDATE #__dynamic_relation SET tag_id = -1 WHERE content_id = ". $pID);
+						//$database->query();
+						$database->setQuery("SELECT tag_id FROM #__dynamic_relation WHERE content_id = $pID");
+						$database->query();
+						$total = -1;
+						$exist[0] = ''; 
+						while($data = $database->getAssoc())
+							$exist[++$total] = $data['tag_id'];
+							
+						$exist = ','.implode(',',$exist).',';
+						
+						if(isset($_POST['tid'])){
+							$tID = $_POST['tid'];
+						
+							$loop = count($tID);
+							for($i = 0; $i < $loop; $i++){
+								$tID[$i] = intval($tID[$i]);
+								
+								if($tID[$i] > 0 && strpos($exist,','.$tID[$i].',')===false){
+									$database->setQuery("INSERT INTO #__dynamic_relation (content_id, tag_id) VALUES ($pID,".$tID[$i].")");
+									$database->query();echo mysql_error();
+								}else
+									$exist = str_replace(','.$tID[$i],'',$exist);
+							}
+						}
+						$exist = explode(',',$exist);
+						$total = count($exist);
+						for($i = 0; $i < $total; $i++){
+							if($tID = intval($exist[$i])){
+								$database->setQuery("DELETE FROM #__dynamic_relation WHERE content_id = $pID AND tag_id = $tID LIMIT 1");
+								$database->query();
+							}
+						}
+						
+						if(isset($_POST['tag']) && strlen($_POST['tag']) > 0){
+							//add new tags
+							$tags = urlify(str_replace(',',' ',$_POST['tag']));
+							$tags = ereg_replace('  +',' ',$tags);
+							$tags = explode(' ', $tags);
+							$tags = array_unique($tags);
+							$loop = count($tags);
+							for($i = 0; $i < $loop; $i++){
+								$database->setQuery(sprintf("INSERT INTO #__dynamic_tags (tag) VALUES ('%s')",$database->escapeString($tags[$i])));
+								$database->query();
+								$tID = $database->getLastInsertID();
+								if($tID == 0)
+									echo warn("Tried to add existing tag - ignoring");
+								else{
+									$database->setQuery("INSERT INTO #__dynamic_relation (content_id, tag_id) VALUES ($pID,$tID)");
+									$database->query();
+								}
+							}
+							echo message('Tags were added to the database'),'<br />';
+						}
+						
+					}
 					if($res)
 						echo message("Post was saved");
 					else
@@ -147,7 +205,28 @@ if(isset($_GET['edit'])){
 		//populate form stuffs
 		echo '</legend><!--[if IE]><br /><![endif]--><div><label for="title">Post Title: </label><input type="text" maxlength="50" name="title" id="title" value="',$data['title'],'" /></div><br /><div><label for="date"><span class="popup" title="Accepts string \'inputs\', eg \'tomorrow\'">Date:</span> </label><input type="text" maxlength="30" name="date" id="date" value="',$data['date'],'" /></div><br /><div><label for="uri"><span class="popup" title="Friendly uri version of page title. eg my-post. Leave blank to guess from title">Access URI</span></label><input type="text" maxlength="100" name="uri" id="uri" value="'.$data['uri'].'" /></div><br /><div><label for="cont">Page Contents: </label>';
 		sscEdit::placeEditor('cont',$data['content']);
-		echo '</div><br /><div class="btn"><input type="submit" value="',($edID==0?'Create':'Save'),' Post" name="submit" id="submit" /><input type="submit" value="Preview Page" name="preview" id="preview" /></div>';
+		echo '</div><br />Tag post with:<br />';
+		$database->setQuery("SELECT id, tag FROM #__dynamic_tags ORDER BY tag ASC");
+		$res = $database->query();
+		$database->setQuery("SELECT tag FROM #__dynamic_relation, #__dynamic_tags WHERE content_id = $pID AND tag_id = #__dynamic_tags.id ORDER BY tag ASC");
+		$database->query();
+		$dat = $database->getAssoc();
+		while($data=$database->getAssoc($res)){
+			echo '<div><label for="tid',$data['id'],'">',$data['tag'],'</label><input type="checkbox" name="tid[]" id="tid',$data['id'],'" value="',$data['id'],'" ';
+			$i = strcmp($data['tag'],$dat['tag']);
+			if($i == 0){
+				echo 'checked="checked" ';
+				$dat = $database->getAssoc();
+			}
+			while($i>0 && $dat['tag'] != ''){
+		
+				$dat = $database->getAssoc();
+				$i = strcmp($data['tag'],$dat['tag']);
+			}
+				
+			echo '/></div>';
+		}
+		echo '<div><label for="tag">Create tags: </label><input type="text" name="tag" id="tag" /></div><br /><div class="btn"><input type="submit" value="',($edID==0?'Create':'Save'),' Post" name="submit" id="submit" /><input type="submit" value="Preview Page" name="preview" id="preview" /></div>';
 		echo '</fieldset></form><br class="clear" /><br />';
 		
 		echo '<a class="small-ico" href="',$sscConfig_adminURI,'/../../"><img src="',$sscConfig_adminImages,'/back.png" alt="" />Return</a> to the post list';
@@ -280,21 +359,72 @@ if(isset($_GET['edit'])){
 	}
 	
 }else{
-//guess not.  display pages belonging to this module
-$database->setQuery("SELECT #__dynamic.id, #__navigation.uri, #__dynamic.title FROM #__dynamic, #__navigation WHERE #__navigation.id = nav_id ORDER BY uri ASC");
-if($database->query()){
-	if($database->getNumberRows() > 0){
-		echo '<form action="',$sscConfig_adminURI,'" method="post"><table class="tab-admin" summary="Details of pages controlled by this module"><tr><th>ID</th><th>&nbsp;<img src="',$sscConfig_adminImages,'/delete.png" alt="Delete" /></th><th>Page Title</th><th><span class="popup" title="Path to access page">URI Text</span></th><th>Posts</th></tr>';
-		while($data = $database->getAssoc()){
-			$database->setQuery("SELECT COUNT(blog_id) AS posts FROM #__dynamic_content WHERE blog_id = " . $data['id']);
-			if($database->query() && $dat = $database->getAssoc())
-			{
-				$data['posts'] = $dat['posts'];
-				echo '<tr><td>',$data['id'],'</td><td><input type="checkbox" value="',$data['id'],'" name="del-id[]" /></td><td><a href="',$sscConfig_adminURI,'/edit/',$data['id'],'" title="Edit page contents">',$data['title'],'</a></td><td>',$data['uri'], '</td><td>',$data['posts'],'</td></tr>';
+	//guess not.  display pages belonging to this module
+	$database->setQuery("SELECT #__dynamic.id, #__navigation.uri, #__dynamic.title FROM #__dynamic, #__navigation WHERE #__navigation.id = nav_id ORDER BY uri ASC");
+	if($database->query()){
+		if($database->getNumberRows() > 0){
+			echo '<form action="',$sscConfig_adminURI,'" method="post"><table class="tab-admin" summary="Details of pages controlled by this module"><tr><th>ID</th><th>&nbsp;<img src="',$sscConfig_adminImages,'/delete.png" alt="Delete" /></th><th>Page Title</th><th><span class="popup" title="Path to access page">URI Text</span></th><th>Posts</th></tr>';
+			while($data = $database->getAssoc()){
+				$database->setQuery("SELECT COUNT(blog_id) AS posts FROM #__dynamic_content WHERE blog_id = " . $data['id']);
+				if($database->query() && $dat = $database->getAssoc())
+				{
+					$data['posts'] = $dat['posts'];
+					echo '<tr><td>',$data['id'],'</td><td><input type="checkbox" value="',$data['id'],'" name="del-id[]" /></td><td><a href="',$sscConfig_adminURI,'/edit/',$data['id'],'" title="Edit page contents">',$data['title'],'</a></td><td>',$data['uri'], '</td><td>',$data['posts'],'</td></tr>';
+				}
 			}
+			echo '</table><p><input type="checkbox" name="yes-i-am-sure" id="yes-i-am-sure" />Yes, I am absolutely sure I wish to permanently delete the selected pages above and acknowledge that any mistake is irreversible<br /><br /><button type="submit" name="del" value="delete">Delete selected&nbsp;<img src="',$sscConfig_adminImages, '/delete.png" alt="" class="small-ico" /></button></p></form>';
+		}else{
+			echo message("There are no dynamic pages set up yet.");
 		}
-		echo '</table><p><input type="checkbox" name="yes-i-am-sure" id="yes-i-am-sure" />Yes, I am absolutely sure I wish to permanently delete the selected pages above and acknowledge that any mistake is irreversible<br /><br /><button type="submit" name="del" value="delete">Delete selected&nbsp;<img src="',$sscConfig_adminImages, '/delete.png" alt="" class="small-ico" /></button></p></form>';
-	}else{echo message("There are no dynamic pages set up yet."),'<br />';}echo '<a title="Create a new dynamic page" class="small-ico" href="',$sscConfig_adminURI,'/edit/0"><img src="',$sscConfig_adminImages,'/new.png" alt="Add" /><span>New dynamic page</span></a><br />';}else{echo error("Unexpected database error: ". $database->getErrorMessage());}
+		echo '<a title="Create a new dynamic page" class="small-ico" href="',$sscConfig_adminURI,'/edit/0"><img src="',$sscConfig_adminImages,'/new.png" alt="Add" /><span>New dynamic page</span></a><br /><br />';
+	}else{
+		echo error("Unexpected database error: ". $database->getErrorMessage());
+		}
+	
+	echo '</div><img class="panel-icon-img" src="', $sscConfig_adminImages, '/text.png" alt="" /><span class="title">Tags</span><hr class="admin" /><div class="indent">';
+	
+	if(isset($_POST['deltag'],$_POST['del-tage'])){
+		$delID = $_POST['del-tag'];
+		$loop = count($delID);
+		$res = false;
+		for($i = 0; $i < $loop; $i++){
+			$database->setQuery(sprintf("DELETE FROM #__dynamic_relation WHERE tag_id = %d",$delID[$i]));
+			$database->query();
+			$database->setQuery(sprintf("DELETE FROM #__dynamic_tags WHERE id = %d",$delID[$i]));
+			$res = $database->query();
+		}
+		if($res)
+			echo message('Tags should have been deleted');
+		else
+			echo error('Tags were not deleted');
+	}
+	if(isset($_POST['tag'],$_POST['tagsubmit'])){
+		//add new tags
+		$tags = urlify(str_replace(',',' ',$_POST['tag']));
+		$count = 0;
+		$tags = ereg_replace('  +',' ',$tags);
+		$tags = explode(' ', $tags);
+		$tags = array_unique($tags);
+		$loop = count($tags);
+		for($i = 0; $i < $loop; $i++){
+			$database->setQuery(sprintf("INSERT INTO #__dynamic_tags (tag) VALUES ('%s')",$database->escapeString($tags[$i])));
+			$database->query();
+		}
+			echo message('Tag addition should have completed successfully'),'<br />';
+	}
+	
+	$database->setQuery("SELECT id,tag FROM #__dynamic_tags ORDER BY tag ASC;");
+	echo '<form action="',$sscConfig_adminURI,'" method="post">';
+	if($database->query() && $database->getNumberRows() > 0){
+		echo '<table class="tab-admin" summary="List of tags available to assign to content"><tr><th>ID</th><th>&nbsp;<img src="',$sscConfig_adminImages,'/delete.png" alt="Delete" /></th><th>Name</th></tr>';
+		while($data = $database->getAssoc())
+			echo '<tr><td>',$data['id'],'</td><td><input type="checkbox" value="',$data['id'],'" name="del-tag[]" /></td><td>',$data['tag'],'</td></tr>';
+			
+		echo '</table><p><button type="submit" name="deltag" value="deletetag">Delete selected&nbsp;<img src="',$sscConfig_adminImages, '/delete.png" alt="" class="small-ico" /></button></p>';
+	}else{
+		echo message('There are no tags currently set up');
+	}
+	echo '</form><form action="',$sscConfig_adminURI,'" method="post"><fieldset><legend>Add new tag(s)</legend><!--[if IE]><br /><![endif]--><div><label for="tag"><span class="popup" title="Mutliple tags may be added by separating by a space or comma">Tag name: </span></label><input type="text" id="tag" name="tag" maxlength="50" /></div><br /><div class="btn"><input type="submit" value="Add tag" name="submit" id="submit" /></div></fieldset></form><br class="clear" /><br />';
 }
 echo '</div>';
 ?>
