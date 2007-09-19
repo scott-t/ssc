@@ -67,7 +67,7 @@ class sscEdit{
 		$offset = 0;
 		while(($offset = strpos($text,"[",$offset))!== false){
 			$newOffset = strpos($text,"]",$offset) + 2;
-			$sub = substr($text,$offset, $newOffset - $offset);
+			$sub = substr($text,$offset, $newOffset - $offset - 2);
 			$tmp = explode("|",$sub);
 			//decide what to do
 			switch(strtolower($tmp[0])){
@@ -75,8 +75,8 @@ class sscEdit{
 					if(isset($tmp[1])){
 						
 						if(isset($tmp[2])){
-						    $sub = "<a href=\"$tmp[1]\">".substr($tmp[2],0,-2).'</a>';
-						}else{ $tmp[1] = substr($tmp[1],0,-2); 
+						    $sub = "<a href=\"$tmp[1]\">".$tmp[2].'</a>';
+						}else{  
 							$sub = "<a href=\"$tmp[1]\">".$tmp[1].'</a>';
 						}
 					}
@@ -111,6 +111,8 @@ class sscEdit{
 									$sub .= " title=\"".$tmp[4]."\"";
 								}
 							}
+						}else{
+							$sub .= " alt=\"\"";
 						}
 						$sub .= ' />';
 					}
