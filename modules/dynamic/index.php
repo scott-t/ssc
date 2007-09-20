@@ -118,7 +118,7 @@ if($database->query() && $data = $database->getAssoc()){
 		}
 	}
 
-	echo '<div class="clear" /></div>';
+	echo '<div class="clear"></div>';
 }else{ echo error("An unexpected error occurred. Please contact the webmaster with the link to this page<br />");}
 
 ?>

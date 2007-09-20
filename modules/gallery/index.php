@@ -79,7 +79,7 @@ if(isset($_GET['sub'])){
 	}else{
 		echo error('There was an error retrieving gallery contents');
 	}
-	echo '<div class="clear" /></div>';
+	echo '<div class="clear"></div>';
 	echo '<a href="',$sscConfig_webPath,'/gallery">Return</a> to the photo gallery<br />';
 
 }else{
@@ -93,7 +93,7 @@ if(isset($_GET['sub'])){
 			createGalleryBox($sscConfig_webPath . '/gallery/'.str_replace(' ','-',strtolower($data['name'])),$data['id'].'/'.$data['pid'],$data['name']);
 		}
 		}else{echo message('There are currently no galleries set up.  Please try again later');}
-		echo '<div class="clear" /></div></div>';
+		echo '<div class="clear"></div></div>';
 	}else{
 		echo error('There was an error retrieving gallery contents');
 	}

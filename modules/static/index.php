@@ -20,7 +20,7 @@ if($database->query() && $data = $database->getAssoc()){
 	include_once($sscConfig_absPath.'/includes/sscEdit.php');
 	echo sscEdit::parseToHTML($data['content']);
 
-	echo '<div class="clear" /></div>';
+	echo '<div class="clear"></div>';
 
 }else{ echo error("An unexpected error occurred. Please contact the webmaster with the link to this page</br >".$database->getErrorMessage());}
 
