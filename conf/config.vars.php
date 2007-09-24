@@ -26,6 +26,8 @@ $sscConfig_themeWeb = $sscConfig_webPath . '/themes/' . $sscConfig_theme;
 $sscConfig_metaDesc = 'SSC - The Smooth Sailing CMS!';
 $sscConfig_metaKeywords = 'SSC, Smooth Sailing CMS, CMS';
 
+$sscConfig_wordpressAPI = ''; //WordPressAPI key for Akismet
+
 $sscConfig_mail = 'mail'; //??
 $sscConfig_mailFrom = ''; //admin email
 $sscConfig_sendMail = '/usr/share/sendmail'; //sendmail path

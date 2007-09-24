@@ -12,10 +12,16 @@
  */
 defined('_VALID_SSC') or die('Restricted access');
 
-global $database, $sscConfig_absPath, $sscConfig_webPath;
+global $database, $sscConfig_absPath, $sscConfig_webPath, $sscConfig_wordpressAPI;
 
-$database->setQuery(sprintf("SELECT #__dynamic.id, title, uri FROM #__dynamic, #__navigation WHERE nav_id = %d AND nav_id = #__navigation.id LIMIT 1",$_GET['pid']));
+$database->setQuery(sprintf("SELECT #__dynamic.id, title, uri, comments FROM #__dynamic, #__navigation WHERE nav_id = %d AND nav_id = #__navigation.id LIMIT 1",$_GET['pid']));
 if($database->query() && $data = $database->getAssoc()){
+	
+	if($data['comments'])
+		$blogComments = true;
+	else
+		$blogComments = false;
+		
 	if($data['title'] != '')
 		echo '<h1>',$data['title'],'</h1>';
 
@@ -23,6 +29,7 @@ if($database->query() && $data = $database->getAssoc()){
 	
 	//split the query string
 	$uri = $data['uri'];
+	$permalink = '/'.$_GET['q'];
 	$str = explode("/",substr($_GET['q'],strlen($uri)));
 	
 	//rh-side bar
@@ -63,6 +70,69 @@ if($database->query() && $data = $database->getAssoc()){
 					echo '<br />';
 				}
 				echo sscEdit::parseToHTML($data['content']);
+				if($blogComments){
+					if(isset($_POST['g']) && $_SERVER['HTTP_REFERER'] == $sscConfig_webPath.$permalink)
+					{
+						if(isset($_POST['n'],$_POST['s'],$_POST['e'],$_POST['c']) && $_POST['n'] != '' && $_POST['e'] != '' && $_POST['c'] != ''){
+							//submit button pushed...
+							require_once($sscConfig_absPath.'/includes/sscAkismet.php');
+	
+							$akismet = new sscAkismet($sscConfig_webPath.$uri, $sscConfig_wordpressAPI);
+							if($akismet === false)
+								echo "Problem submitting comment<br />";
+							else{
+								
+								$akismet->setContent($_POST['c'],'comment');
+								$akismet->setAuthor($_POST['n'],$_POST['e'],$_POST['s']);
+								$akismet->setRemote($_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT']);
+								$akismet->setBlog($permalink);
+								
+								if(strstr($_POST['s'],'http://')!==0 && strstr($_POST['s'],'https://')!==0)
+									$_POST['s']="http://".$_POST['s'];
+								
+								$_POST['n'] = $database->escapeString($_POST['n']);
+								$_POST['e'] = $database->escapeString($_POST['e']);
+								$_POST['s'] = $database->escapeString($_POST['s']);
+								$_POST['c'] = $database->escapeString($_POST['c']);
+ 
+								if($akismet->isSpam()){
+									$spam = 1;
+								}else{
+									$spam = 0;
+								}
+								$database->setQuery(sprintf("INSERT INTO #__dynamic_comments (post_id, name, email, site, comment, date, spam, ip) VALUES (%d, '%s', '%s', '%s', '%s', '%s', $spam, '%s')",$data['id'], $_POST['n'], $_POST['e'], $_POST['s'], $_POST['c'],  date("Y-m-d H:i:s"), $_SERVER['REMOTE_ADDR']));
+								if($database->query())
+									echo message('Your comment has been submitted'.($spam?' however was marked as spam and been submitted for moderation':'')),'<br />';
+							}
+																
+						}else{
+							echo warn("Not all required fields were filled in!"),'<br />';
+						}
+					}
+				
+					echo '<br /><h2>Comments</h2>';
+					$database->setQuery("SELECT name, site, comment, date FROM #__dynamic_comments WHERE post_id = " . $data['id'] . " && spam = 0 ORDER BY date ASC");
+					if($database->query() && $database->getNumberRows() > 0){
+						while($data = $database->getAssoc()){
+							echo $data['comment'], '<br /><br />Posted ', date("D, M d, Y \a\\t h:i a",strtotime($data['date'])), " by ";
+							if($data['site'] !=  '')
+								echo '<a href="',$data['site'],'">', $data['name'],'</a>';
+							else
+								echo $data['name'];
+							echo '<br /><hr /><br />';
+						}
+					}else{
+						echo 'There are currently no comments<br /><br />';
+					}
+					echo '<form method="post" action="',$sscConfig_webPath,$permalink,'"><fieldset><legend>Make a comment</legend><!--[if IE]><br /><![endif]-->';
+					echo '<div><label for="n">Name: </label><input type="text" name="n" id="n" maxlength="30" /></div><br />';
+					echo '<div><label for="e"><span class="popup" title="Will not be shown">Email: </span></label><input type="text" maxlength="50" id="e" name="e" /></div><br />';
+					echo '<div><label for="s"><span class="popup" title="Optional">Site:</span></label><input type="text" maxlength="80" name="s" id="s" /></div><br />';
+					echo '<!--<div><label for="r"><span class="popup" title="Requires cookies">Remember Me?</span></label><input type="checkbox" id="r" name="r" value="1" /></div><br />-->';
+					echo '<div><label for="c">Comment:</label><textarea cols="40" rows="10" name="c" id="c"></textarea></div><br />';
+					echo '<div class="btn"><input type="submit" value="Add Comment" name="g" id="g" /></div></fieldset></form>';
+				}
+				
 			}else{
 				echo error("There was a problem accessing this post"),'<br />';
 				echo $database->getQuery();
