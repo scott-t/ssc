@@ -91,3 +91,31 @@ body {min-width:750px;height:100%;font-size:1em}
 			.twentyfive{width:25%;}	
 			
 			.w-70{width:70%;}
+			
+			hr.admin{border:#006600 1px solid;clear:both;}		
+			hr.admin ~ div.indent{margin-left:2em;}
+	
+
+			/* FORMS */
+			form,form br{clear:both;display:block;}
+			fieldset{border:#003366 1px solid;float:left;padding:1em 2em;position:relative;clear:both;margin-bottom:1em;}
+
+			fieldset div{float:left;padding-bottom:0.4em;clear:both;display:block;}
+			.noclear{clear:none;}
+			fieldset div.btn{padding-left:8em;}
+			label{margin:0;display:block;width:8em;text-align:right;float:left;}
+			input,select,textarea,button{border:#003366 1px solid;margin-left:10px;margin-top:1px;}
+			
+			button {cursor:pointer;padding:3px}		
+			button img {vertical-align:middle}
+			button.pad-top{margin-top:1em;}
+			
+			.box {margin-bottom:1.2em;}
+			.box input{margin-left:11em;}
+			.box label{display:inline;width:auto;text-align:left;float:none;}
+			
+			legend{border:#003366 1px solid;padding:2px 6px;background-color:#ffffff;}
+			label:hover + *,button:hover,input:hover,select:hover,textarea:hover{background-color:#ffeeee;}
+			label:focus + *,button:focus,input:focus,select:focus,textarea:focus{background-color:#ffffdd;}
+	
+			
