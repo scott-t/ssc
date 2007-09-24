@@ -87,7 +87,7 @@ if($database->query() && $data = $database->getAssoc()){
 								$akismet->setRemote($_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT']);
 								$akismet->setBlog($permalink);
 								
-								if(strstr($_POST['s'],'http://')!==0 && strstr($_POST['s'],'https://')!==0)
+								if($_POST['s'] != '' && strstr($_POST['s'],'http://')!==0 && strstr($_POST['s'],'https://')!==0)
 									$_POST['s']="http://".$_POST['s'];
 								
 								$_POST['n'] = $database->escapeString($_POST['n']);
