@@ -164,7 +164,7 @@ if($database->query() && $data = $database->getAssoc()){
 			$from = '';
 			$where = '';
 		}
-		$database->setQuery("SELECT #__dynamic_content.id, #__dynamic_content.date, title, content, uri, display, COUNT(post_id) AS comments FROM (#__dynamic_content, #__users$from) LEFT JOIN #__dynamic_comments ON (post_id = #__dynamic_content.id) WHERE #__users.id = user_id$where GROUP BY #__dynamic_content.id ORDER BY date DESC $limit");
+		$database->setQuery("SELECT #__dynamic_content.id, #__dynamic_content.date, title, content, uri, display, COUNT(post_id) AS comments FROM (#__dynamic_content, #__users$from) LEFT JOIN #__dynamic_comments ON (post_id = #__dynamic_content.id AND spam = 0) WHERE #__users.id = user_id$where GROUP BY #__dynamic_content.id ORDER BY date DESC $limit");
 		if(($res = $database->query()) && $database->getNumberRows() > 0){
 			while($data = $database->getAssoc($res)){
 				$data['date'] = strtotime($data['date']);
