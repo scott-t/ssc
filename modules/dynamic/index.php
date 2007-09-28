@@ -90,10 +90,10 @@ if($database->query() && $data = $database->getAssoc()){
 								if($_POST['s'] != '' && strstr($_POST['s'],'http://')!==0 && strstr($_POST['s'],'https://')!==0)
 									$_POST['s']="http://".$_POST['s'];
 								
-								$_POST['n'] = $database->escapeString($_POST['n']);
-								$_POST['e'] = $database->escapeString($_POST['e']);
-								$_POST['s'] = $database->escapeString($_POST['s']);
-								$_POST['c'] = $database->escapeString($_POST['c']);
+								$_POST['n'] = $database->escapeString(htmlspecialchars($_POST['n']));
+								$_POST['e'] = $database->escapeString(htmlspecialchars($_POST['e']));
+								$_POST['s'] = $database->escapeString(htmlspecialchars($_POST['s']));
+								$_POST['c'] = $database->escapeString(nl2br(htmlspecialchars($_POST['c'])));
  
 								if($akismet->isSpam()){
 									$spam = 1;
@@ -125,8 +125,8 @@ if($database->query() && $data = $database->getAssoc()){
 						echo 'There are currently no comments<br /><br />';
 					}
 					echo '<form method="post" action="',$sscConfig_webPath,$permalink,'"><fieldset><legend>Make a comment</legend><!--[if IE]><br /><![endif]-->';
-					echo '<div><label for="n">Name: </label><input type="text" name="n" id="n" maxlength="30" /></div><br />';
-					echo '<div><label for="e"><span class="popup" title="Will not be shown">Email: </span></label><input type="text" maxlength="50" id="e" name="e" /></div><br />';
+					echo '<div><label for="n">Name (required): </label><input type="text" name="n" id="n" maxlength="30" /></div><br />';
+					echo '<div><label for="e"><span class="popup" title="Will not be shown">Email (required): </span></label><input type="text" maxlength="50" id="e" name="e" /></div><br />';
 					echo '<div><label for="s"><span class="popup" title="Optional">Site:</span></label><input type="text" maxlength="80" name="s" id="s" /></div><br />';
 					echo '<!--<div><label for="r"><span class="popup" title="Requires cookies">Remember Me?</span></label><input type="checkbox" id="r" name="r" value="1" /></div><br />-->';
 					echo '<div><label for="c">Comment:</label><textarea cols="40" rows="10" name="c" id="c"></textarea></div><br />';
