@@ -53,4 +53,6 @@ if(!$sscConfig_siteStatus && $_GET['cont'] != 'admin'){
  * Connect to selected theme
  */
 require_once($sscConfig_themeAbs.'/index.php');
+
+$database->cleanUp();
 ?>
