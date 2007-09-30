@@ -255,8 +255,8 @@ if(isset($_GET['edit'])){
 													$database->setQuery(sprintf("SELECT id, number, results, points, division FROM #__results_results WHERE number = '%s' AND series_id = %d LIMIT 1",$database->escapeString($line[$sail]),$rid));
 													$database->query();
 													$finish = implode(array_slice($line,$results,count($line)-$missing_cnt),',');
-													echo $finish, '<br />';
-													print_r($line);echo  '<br />';print_r($results);echo '<br />';
+													//echo $finish, '<br />';
+													//print_r($line);echo  '<br />';print_r($results);echo '<br />';
 																											
 													if($data = $database->getAssoc()){
 														//update existing
