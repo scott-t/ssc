@@ -290,7 +290,6 @@ CREATE TABLE `ssc_navigation` (
 INSERT INTO `ssc_navigation` (`id`, `module_id`, `name`, `uri`, `position`, `hidden`) VALUES 
 (1, 1, 'Home', '/', 1, 0x30),
 (2, 14, 'Club Events', '/event', 60, 0x30),
-(3, 15, 'Results', '/results', 70, 0x30),
 (4, 13, 'Gallery', '/gallery', 50, 0x30);
 
 -- --------------------------------------------------------
