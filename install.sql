@@ -407,4 +407,4 @@ CREATE TABLE `ssc_users` (
 -- 
 
 INSERT INTO `ssc_users` (`id`, `group_id`, `fullname`, `username`, `display`, `password`, `email`, `last_access`) VALUES 
-(1, 1, 'Admin User', 'admin', 'admin', '0a50e073fc5f28bfc585110f8018555a', '', '2007-01-01 01:00:00');
+(1, 1, 'Admin User', 'admin', 'admin', 'f6fdffe48c908deb0f4c3bd36c032e72', '', '2007-01-01 01:00:00');
