@@ -140,6 +140,7 @@ if(isset($_GET['edit'])){
 										
 										//check which weren't detected
 										$missing = '';
+										$missing_cnt = 0;
 										$crit = false;
 										if($div < 0){
 											$missing .= 'Division, ';
@@ -159,17 +160,24 @@ if(isset($_GET['edit'])){
 										}
 										
 										//non critical
-										if($boat < 0)
+										if($boat < 0){
 											$missing .= 'Boat Name, ';
-											
-										if($crew < 0)
+											$missing_cnt ++;
+										}
+										if($crew < 0){
 											$missing .= 'Crew, ';
+											$missing_cnt ++;
+										}
 										
-										if($class < 0)
+										if($class < 0){
 											$missing .= 'Class, ';
+											$missing_cnt ++;
+										}
 											
-										if($club < 0)
+										if($club < 0){
 											$missing .='Club, ';
+											$missing_cnt ++;
+										}
 
 										if($missing != ''){
 											$msg = 'The following fields were not detected in the uploaded file: ' . substr($missing,0,-2);
@@ -178,6 +186,8 @@ if(isset($_GET['edit'])){
 											else
 												echo warn($msg), '<br />';
 										}
+										
+										$missing_cnt += $results;
 										
 										if(!$crit){
 											//so we know if some boats disappear from results
@@ -244,9 +254,9 @@ if(isset($_GET['edit'])){
 													//insert results for said boat
 													$database->setQuery(sprintf("SELECT id, number, results, points, division FROM #__results_results WHERE number = '%s' AND series_id = %d LIMIT 1",$database->escapeString($line[$sail]),$rid));
 													$database->query();
-													
-													$finish = implode(array_slice($line,$results),',');
-													//echo $finish;
+													$finish = implode(array_slice($line,$results,count($line)-$missing_cnt),',');
+													echo $finish, '<br />';
+													print_r($line);echo  '<br />';print_r($results);echo '<br />';
 																											
 													if($data = $database->getAssoc()){
 														//update existing
