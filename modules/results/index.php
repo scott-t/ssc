@@ -28,6 +28,7 @@ if ($database->query() && $data = $database->getAssoc()){
 		$curDiv = '\0';
 		$intable = false;
 		$rowNo = 0;$size = 0;
+		echo '<table class="tab-highlight" summary="Results">';
 		do{
 			//check for change in div
 			
@@ -36,11 +37,11 @@ if ($database->query() && $data = $database->getAssoc()){
 			{
 				$curDiv = $data['division'];
 				if($intable){
-					echo '</table>';
+					//echo '</table>';
 				}
-				echo '<h2>Division: ',$curDiv,'</h2><table class="tab-highlight" summary="Results for ',$curDiv,'"><tr><th>Sail No</th><th>Class</th><th>Boat Name</th><th>Skipper</th>';
-				//number of races we have?
 				$size = count($results);
+				echo '<tr class="tab-nohighlight"><th colspan="',$size+4,'" class="h2">Division ',$curDiv,'</th></tr><tr><th>Sail No</th><th>Class</th><th>Boat Name</th><th>Skipper</th>';
+				//number of races we have?
 				for($i = 1; $i <= $size; $i++){
 					echo "<th>R$i</th>";
 				}

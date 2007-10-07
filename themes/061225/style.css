@@ -27,7 +27,8 @@ body {min-width:750px;height:100%;font-size:1em}
 		
 			 span.title{color:#006600;font-size:1.6em;line-height:72px;font-weight:bold;}
 			 h1{font-size:1.6em}
-			h2{font-size:1.4em}
+			h2,.h2{font-size:1.4em}
+			.h2{padding-top:1em}
 			h3{font-size:1.2em}
 			h4{font-size:1em}
 		
@@ -73,6 +74,7 @@ body {min-width:750px;height:100%;font-size:1em}
 				.gal-img a:active{border:#6666dd 1px solid;border-top:#6666dd 2px solid;border-left:#6666dd 2px solid;background-color:#eeeeff;position:relative;top:2px;left:2px;}
 
 			.tab-highlight tr:hover{background-color:#ccccff;}
+			.tab-nohighlight:hover{background-color:transparent !important}
 			.tab-highlight {width:100%;text-align:left;border-collapse:collapse}
 			
 			/* Popup messages - not used at present */
