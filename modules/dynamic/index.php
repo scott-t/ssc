@@ -155,7 +155,7 @@ if($database->query() && $data = $database->getAssoc()){
 				case 'archive':
 					$limit = '';
 					$from = '';
-					$where = ' AND date LIKE \'' . intval($str[1]) . '%\'';
+					$where = ' AND #__dynamic_content.date LIKE \'' . intval($str[1]) . '%\'';
 					$content = false;echo '<h2>',$str[1],' Archive</h2>';
 					break;
 			}
@@ -164,7 +164,7 @@ if($database->query() && $data = $database->getAssoc()){
 			$from = '';
 			$where = '';
 		}
-		$database->setQuery("SELECT #__dynamic_content.id, #__dynamic_content.date, title, content, uri, display, COUNT(post_id) AS comments FROM (#__dynamic_content, #__users$from) LEFT JOIN #__dynamic_comments ON (post_id = #__dynamic_content.id AND spam = 0) WHERE #__users.id = user_id$where GROUP BY #__dynamic_content.id ORDER BY date DESC $limit");
+		$database->setQuery("SELECT #__dynamic_content.id, #__dynamic_content.date, title, content, uri, display, COUNT(post_id) AS comments FROM (#__dynamic_content, #__users$from) LEFT JOIN #__dynamic_comments ON (post_id = #__dynamic_content.id AND spam = 0) WHERE #__users.id = user_id$where GROUP BY #__dynamic_content.id ORDER BY #__dynamic_content.date DESC $limit");
 		if(($res = $database->query()) && $database->getNumberRows() > 0){
 			while($data = $database->getAssoc($res)){
 				$data['date'] = strtotime($data['date']);
@@ -184,7 +184,8 @@ if($database->query() && $data = $database->getAssoc()){
 					echo $data['comments'], " comments<br />";
 					
 				if($content)
-					echo sscEdit::parseToHTML($data['content']),'<br /><hr />';
+					echo sscEdit::parseToHTML($data['content']),'<br />';
+				echo '<hr />';
 			}
 		}else{
 			echo message("There is currently nothing posted under the specified criteria");echo mysql_error();echo '<br />',$database->getQuery();
