@@ -164,9 +164,9 @@ if($database->query() && $data = $database->getAssoc()){
 					$where = ' AND content_id = #__dynamic_content.id AND tag_id = ' . $data['id'];
 					break;
 				case 'archive':
-					$limit = 'LIMIT '.(($page-1)*8).',9';
+					$limit = 'LIMIT '.(($page-1)*10).',11';
 					$from = '';
-					$count = 8;
+					$count = 10;
 					$reluri = "/archive/$str[1]";
 					$where = ' AND #__dynamic_content.date LIKE \'' . intval($str[1]) . '%\'';
 					$content = false;echo '<h2>',$str[1],' Archive</h2>';
@@ -210,7 +210,7 @@ if($database->query() && $data = $database->getAssoc()){
 					echo sscEdit::parseToHTML($data['content']),'<br />';
 				echo '<hr />';
 				
-			}echo $total," ",$count;
+			}
 			echo '<div class="center">',(($page == 1)?'':("<a href=\"$sscConfig_webPath$uri$reluri/page/".($page-1)."\">&lt;- Previous Page</a>".($total==1?'&nbsp;-&nbsp;':''))),($total==1?"<a href=\"$sscConfig_webPath$uri$reluri/page/".($page+1)."\">Next Page -&gt;</a> ":''),'</div>';
 		}else{
 			echo message("There is currently nothing posted under the specified criteria");echo mysql_error();echo '<br />',$database->getQuery();
