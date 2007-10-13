@@ -34,13 +34,12 @@ if($database->query() && $data = $database->getAssoc()){
 	
 	//find page number
 	$i = count($str)-1;
-	$page = 0;	//default value
-	if($str[$i] == '')$i--;
-	if(strcasecmp('page',$str[$i-1])===0){
-		$page = intval($str[$i]);
+	$page = 1;	//default value
+	if($i > -1 && $str[$i] == '')$i--;
+	if($i > -1 && strcasecmp('page',$str[$i-1])===0){
+		if(($page = intval($str[$i]))==0)$page=1;
 		unset($str[$i],$str[$i-1]);
 	}
-	
 	//rh-side bar
 	echo '<div class="right">';
 	$database->setQuery("SELECT tag, COUNT(content_id) AS cnt FROM #__dynamic_tags LEFT JOIN #__dynamic_relation ON tag_id = #__dynamic_tags.id GROUP BY #__dynamic_tags.id ORDER BY tag ASC");
@@ -159,33 +158,38 @@ if($database->query() && $data = $database->getAssoc()){
 					$database->query();
 					$data = $database->getAssoc();
 					$from = ', #__dynamic_relation';
-					$limit = 'LIMIT '.($page*5).',6';
+					$limit = 'LIMIT '.(($page-1)*5).',6';
+					$reluri = "/tag/$str[1]";
 					$count = 5;
 					$where = ' AND content_id = #__dynamic_content.id AND tag_id = ' . $data['id'];
 					break;
 				case 'archive':
-					$limit = 'LIMIT '.($page*10).',11';
+					$limit = 'LIMIT '.(($page-1)*8).',9';
 					$from = '';
-					$count = 10;
+					$count = 8;
+					$reluri = "/archive/$str[1]";
 					$where = ' AND #__dynamic_content.date LIKE \'' . intval($str[1]) . '%\'';
 					$content = false;echo '<h2>',$str[1],' Archive</h2>';
 					break;
 				default:
-					$limit = 'LIMIT '.($page*5).',6';
+					$limit = 'LIMIT '.(($page-1)*5).',6';
 					$count = 5;
 					$from = '';
 					$where = '';
+					$reluri = '';
 					break;
 			}
 		}else{
-			$limit = 'LIMIT '.($page*5).',6';
+			$limit = 'LIMIT '.(($page-1)*5).',6';
 			$count = 5;
 			$from = '';
 			$where = '';
+			$reluri = '';
 		}
 		$database->setQuery("SELECT #__dynamic_content.id, #__dynamic_content.date, title, content, uri, display, COUNT(post_id) AS comments FROM (#__dynamic_content, #__users$from) LEFT JOIN #__dynamic_comments ON (post_id = #__dynamic_content.id AND spam = 0) WHERE #__users.id = user_id$where GROUP BY #__dynamic_content.id ORDER BY #__dynamic_content.date DESC $limit");
 		if(($res = $database->query()) && ($total = $database->getNumberRows()) > 0){
 			while(($data = $database->getAssoc($res)) && $count--){
+				$total--;
 				$data['date'] = strtotime($data['date']);
 			
 				echo "<h2><a href=\"",$sscConfig_webPath,$uri,'/',date("Y/m/d/",$data['date']),$data['uri'],"\">",$data['title'],'</a></h2>Posted ', date("D, M d, Y \a\\t h:i a",$data['date']), " by ", $data['display'], '<br />';
@@ -206,8 +210,8 @@ if($database->query() && $data = $database->getAssoc()){
 					echo sscEdit::parseToHTML($data['content']),'<br />';
 				echo '<hr />';
 				
-			}
-			echo '<div class="center">',($page == 0?'':("<a href=\"$sscConfig_webPath$uri/page/".($page-1)."\">&lt;- Previous Page</a>".($total == 6?'&nbsp;-&nbsp;':''))),($total == 6?"<a href=\"$sscConfig_webPath$uri/page/".($page+1)."\">Next Page -&gt;</a> ":''),'</div>';
+			}echo $total," ",$count;
+			echo '<div class="center">',(($page == 1)?'':("<a href=\"$sscConfig_webPath$uri$reluri/page/".($page-1)."\">&lt;- Previous Page</a>".($total==1?'&nbsp;-&nbsp;':''))),($total==1?"<a href=\"$sscConfig_webPath$uri$reluri/page/".($page+1)."\">Next Page -&gt;</a> ":''),'</div>';
 		}else{
 			echo message("There is currently nothing posted under the specified criteria");echo mysql_error();echo '<br />',$database->getQuery();
 		}
