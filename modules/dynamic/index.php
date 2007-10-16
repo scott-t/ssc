@@ -95,14 +95,15 @@ if($database->query() && $data = $database->getAssoc()){
 								$akismet->setRemote($_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT']);
 								$akismet->setBlog($permalink);
 								
-								if($_POST['s'] != '' && strstr($_POST['s'],'http://')!==0 && strstr($_POST['s'],'https://')!==0)
+								if($_POST['s'] != '' && (strpos($_POST['s'],'http://')!==0 && strpos($_POST['s'],'https://')!==0))
 									$_POST['s']="http://".$_POST['s'];
 								
 								$_POST['n'] = $database->escapeString(htmlspecialchars($_POST['n']));
 								$_POST['e'] = $database->escapeString(htmlspecialchars($_POST['e']));
 								$_POST['s'] = $database->escapeString(htmlspecialchars($_POST['s']));
 								$_POST['c'] = $database->escapeString(nl2br(htmlspecialchars($_POST['c'])));
- 
+													
+
 								if($akismet->isSpam()){
 									$spam = 1;
 								}else{
