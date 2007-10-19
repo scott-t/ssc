@@ -71,9 +71,8 @@ ITEM
 	}while($dat = $database->getAssoc());
 	fwrite($fp,"  </channel>
 </rss>");
-	echo $sscConfig_absPath . $data['uri'] . '/rss.xml','<br />',$database->getQuery(),'<br />';
 	
-	//fclose($fp);
+	fclose($fp);
 	
 }
 
