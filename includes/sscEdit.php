@@ -65,8 +65,8 @@ class sscEdit{
 		
 		//go [] searching
 		$offset = 0;
-		while(($offset = strpos($text,"[",$offset))!== false){
-			$newOffset = strpos($text,"]",$offset) + 2;
+		while(($offset = strpos($text,"[[",$offset))!== false){
+			$newOffset = strpos($text,"]]",$offset) + 2;
 			$sub = substr($text,$offset, $newOffset - $offset - 2);
 			$tmp = explode("|",$sub);
 			//decide what to do
