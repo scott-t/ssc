@@ -16,7 +16,7 @@ global $database, $sscConfig_absPath, $sscConfig_webPath, $sscConfig_wordpressAP
 
 $database->setQuery(sprintf("SELECT #__dynamic.id, title, uri, comments FROM #__dynamic, #__navigation WHERE nav_id = %d AND nav_id = #__navigation.id LIMIT 1",$_GET['pid']));
 if($database->query() && $data = $database->getAssoc()){
-	
+	$blogID = $data['id'];
 	if($data['comments'])
 		$blogComments = true;
 	else
@@ -42,15 +42,16 @@ if($database->query() && $data = $database->getAssoc()){
 	}
 	//rh-side bar
 	echo '<div class="right">';
-	$database->setQuery("SELECT tag, COUNT(content_id) AS cnt FROM #__dynamic_tags LEFT JOIN #__dynamic_relation ON tag_id = #__dynamic_tags.id GROUP BY #__dynamic_tags.id ORDER BY tag ASC");
+	$database->setQuery("SELECT tag, COUNT(content_id) AS cnt FROM #__dynamic_content, #__dynamic_tags LEFT JOIN #__dynamic_relation ON tag_id = #__dynamic_tags.id WHERE content_id = #__dynamic_content.id AND blog_id = $blogID GROUP BY #__dynamic_tags.id ORDER BY tag ASC");
 	if($database->query() && $database->getNumberRows() > 0){
 		echo 'Tags<br />';
-		while($data=$database->getAssoc())
+		while($data=$database->getAssoc()){
 			echo '&nbsp;&nbsp;&nbsp;<a href="',$sscConfig_webPath,$uri,'/tag/',$data['tag'],'">',$data['tag'],'</a>  (',$data['cnt'],')<br />';
-			
+		}
+		
 		echo '<br /><br />';
 	}
-	$database->setQuery("SELECT YEAR( date ) AS yr, COUNT( date ) AS cnt FROM #__dynamic_content GROUP BY YEAR( date ) ORDER BY yr DESC");
+	$database->setQuery("SELECT YEAR( date ) AS yr, COUNT( date ) AS cnt FROM #__dynamic_content WHERE blog_id = $blogID GROUP BY YEAR( date ) ORDER BY yr DESC");
 	if($database->query() && $database->getNumberRows() > 0){
 		echo 'Archive<br />';
 		while($data = $database->getAssoc())
@@ -186,7 +187,7 @@ if($database->query() && $data = $database->getAssoc()){
 			$where = '';
 			$reluri = '';
 		}
-		$database->setQuery("SELECT #__dynamic_content.id, #__dynamic_content.date, title, content, uri, display, COUNT(post_id) AS comments FROM (#__dynamic_content, #__users$from) LEFT JOIN #__dynamic_comments ON (post_id = #__dynamic_content.id AND spam = 0) WHERE #__users.id = user_id$where GROUP BY #__dynamic_content.id ORDER BY #__dynamic_content.date DESC $limit");
+		$database->setQuery("SELECT #__dynamic_content.id, #__dynamic_content.date, title, content, uri, display, COUNT(post_id) AS comments FROM (#__dynamic_content, #__users$from) LEFT JOIN #__dynamic_comments ON (post_id = #__dynamic_content.id AND spam = 0) WHERE #__users.id = user_id AND blog_id = $blogID$where GROUP BY #__dynamic_content.id ORDER BY #__dynamic_content.date DESC $limit");
 		if(($res = $database->query()) && ($total = $database->getNumberRows()) > 0){
 			while(($data = $database->getAssoc($res)) && $count--){
 				$total--;
