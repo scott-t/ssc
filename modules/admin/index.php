@@ -11,7 +11,7 @@
  */
 defined('_VALID_SSC') or die('Restricted access');
 
-global $sscConfig_webPath, $database;
+global $sscConfig_webPath, $database, $sscConfig_siteName;
 
 $sscConfig_adminImages = $sscConfig_webPath . '/themes/admin';
 $sscConfig_adminURI = $sscConfig_webPath . '/' . $_GET['q'];
@@ -51,7 +51,7 @@ if($database->getNumberRows() >= 3){
 	// three attempts and no email yet?!
 	if($database->getNumberRows() < 1){
 		//email our friendly admin
-		$database->setQuery("SELECT email,fullname FROM users WHERE group_id = 1 AND email != ''");
+		$database->setQuery("SELECT email,fullname FROM #__users WHERE group_id = 1 AND email != ''");
 		$database->query();
 		//generate admin "To:" list
 		$to = '';
@@ -72,8 +72,8 @@ if($database->getNumberRows() >= 3){
 		//no longer need to keep
 		$database->freeResult($attack_result);
 		
-		$database->setQuery("UPDATE log SET success ='-1' WHERE id = '$id' LIMIT 1");
-		$database->query() or die(mysql_query());
+		$database->setQuery("UPDATE #__log SET success ='-1' WHERE id = '$id' LIMIT 1");
+		$database->query();
 
 		//generate email
 		$random_hash = md5(date('r', time())); 
@@ -98,7 +98,7 @@ Content-Type: text/html; charset="iso-8859-1";Content-Transfer-Encoding: 7bit\r\
 EMAIL;
 		//ensure formatted nicely
 		$body = wordwrap($body,70);
-		mail($to,"LBYC Suspect Attempted Logins",$body,$headers);
+		mail($to,"$sscConfig_siteName Suspect Attempted Logins",$body,$headers);
 	}//end if no email sent
 
 	//suggest to user to bugger off
