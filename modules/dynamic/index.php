@@ -144,7 +144,6 @@ if($database->query() && $data = $database->getAssoc()){
 				
 			}else{
 				echo error("There was a problem accessing this post"),'<br />';
-				echo $database->getQuery();
 			}
 		}else{
 			echo warn("Oops!  You have entered an incomplete URI!<br /><br /><a href=\"".$sscConfig_webPath.$uri."\">Return</a> to the main section"),'<br />';
@@ -214,7 +213,7 @@ if($database->query() && $data = $database->getAssoc()){
 			}
 			echo '<div class="center">',(($page == 1)?'':("<a href=\"$sscConfig_webPath$uri$reluri/page/".($page-1)."\">&lt;- Previous Page</a>".($total==1?'&nbsp;-&nbsp;':''))),($total==1?"<a href=\"$sscConfig_webPath$uri$reluri/page/".($page+1)."\">Next Page -&gt;</a> ":''),'</div>';
 		}else{
-			echo message("There is currently nothing posted under the specified criteria");echo mysql_error();echo '<br />',$database->getQuery();
+			echo message("There is currently nothing posted under the specified criteria");
 		}
 	}
 
