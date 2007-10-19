@@ -1,8 +1,6 @@
-  RewriteEngine on
-
 RewriteEngine On
 
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f
 # if not, pass it to index.php
-RewriteRule ^(.*) index.php?q=$1 [QSA]  # QSA preserves the query 
+RewriteRule ^(.*) /ssc/index.php?q=$1 [QSA]  # QSA preserves the query 
