@@ -18,7 +18,7 @@ defined('_VALID_SSC') or die('Restricted access');
     <title><?php echo ucwords($_GET['cont']), " | " , $sscConfig_siteName;?></title>
     <meta http-equiv="keywords" content="<?php echo $sscConfig_metaKeywords;?>" />
     <meta http-equiv="description" content="<?php echo $sscConfig_metaDesc;?>" />
-
+<?php sscPlaceMeta(); ?>
     <style type="text/css" media="screen, projection">
 /*<![CDATA[*/
 @import "<?php echo $sscConfig_themeRel;?>/style.css";

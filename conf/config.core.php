@@ -160,6 +160,16 @@ function sscPlaceNavigation($image = false){
 	echo '</ul>';
 }
 
+/**
+ * Call the selected module's meta.php file if present
+ */
+ 
+function sscPlaceMeta(){
+	global $sscConfig_absPath;
+	$hook = $sscConfig_absPath . "/modules".$_GET['file'].'/meta.php';
+	if(file_exists($hook))
+		include($hook);
+}
 
 /**
  * Generate footer and does general cleanup, free variables, etc
