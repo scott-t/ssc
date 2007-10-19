@@ -18,8 +18,8 @@ $database->setQuery(sprintf("SELECT id FROM #__dynamic WHERE nav_id = %d LIMIT 1
 if($database->query() && $data = $database->getAssoc()){
 	$path = $sscConfig_absPath.'/modules/dynamic/';
 	if(file_exists($path.'rss-'.$data['id'].'.xml'))
-		echo '<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="rss-',$data['id'],'.xml" />';
+		echo '<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="',$sscConfig_webPath,'/modules/dynamic/rss-',$data['id'],'.xml" />';
 	if(file_exists($path.'atom-'.$data['id'].'.xml'))
-		echo '<link rel="alternate" type="application/rss+xml" title="Atom 0.3" href="rss-',$data['id'],'.xml" />';
+		echo '<link rel="alternate" type="application/rss+xml" title="Atom 0.3" href="',$sscConfig_webPath,'/modules/dynamic/atom-',$data['id'],'.xml" />';
 	
 }

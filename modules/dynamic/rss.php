@@ -62,7 +62,7 @@ ITEM
 ); //<?php
 
 	$dat['content'] = preg_replace('/<[^<|>]+>?/','',sscEdit::parseToHTML($dat['content']));
-	fwrite($fp,substr($dat['content'],0,250).(strlen($dat['content'])>250?"[...]":""));
+	fwrite($fp,substr($dat['content'],0,350).(strlen($dat['content'])>350?"[...]":""));
 	fwrite($fp,"</description>
       <pubDate>".date("r",$dat['date'])."</pubDate>
     </item>
