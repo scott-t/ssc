@@ -6,7 +6,7 @@
  * @package SSC
  * @copyright Copyright (c) Scott Thomas
  */
- 
+
 if($_SERVER['REMOTE_ADDR'] != $_SERVER['SERVER_ADDR'])
 	exit();
 
