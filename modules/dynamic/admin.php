@@ -361,10 +361,10 @@ if(isset($_GET['edit'])){
 }else{
 	//guess not.  display pages belonging to this module
 	$database->setQuery("SELECT #__dynamic.id, #__navigation.uri, #__dynamic.title FROM #__dynamic, #__navigation WHERE #__navigation.id = nav_id ORDER BY uri ASC");
-	if($database->query()){
+	if($result = $database->query()){
 		if($database->getNumberRows() > 0){
 			echo '<form action="',$sscConfig_adminURI,'" method="post"><table class="tab-admin" summary="Details of pages controlled by this module"><tr><th>ID</th><th>&nbsp;<img src="',$sscConfig_adminImages,'/delete.png" alt="Delete" /></th><th>Page Title</th><th><span class="popup" title="Path to access page">URI Text</span></th><th>Posts</th></tr>';
-			while($data = $database->getAssoc()){
+			while($data = $database->getAssoc($result)){
 				$database->setQuery("SELECT COUNT(blog_id) AS posts FROM #__dynamic_content WHERE blog_id = " . $data['id']);
 				if($database->query() && $dat = $database->getAssoc())
 				{
