@@ -56,7 +56,7 @@ FEED
 <feed xmlns=\"http://www.w3.org/2005/Atom\" xml:lang=\"en\" xml:base=\"$sscConfig_webPath/modules/dynamic/atom-$data[id].xml\">
   <title type=\"text\">$data[title]</title>
 ".
-  (strlen($data['description'])>=0?"  <subtitle type=\"text\">$data[description]</subtitle>":'')."
+  (strlen($data['description'])>0?"  <subtitle type=\"text\">$data[description]</subtitle>":'')."
   <link rel=\"self\" type=\"application/atom+xml\" href=\"$sscConfig_webPath/modules/dynamic/atom-$data[id].xml\" />
   <link rel=\"alternate\" type=\"text/html\" href=\"$sscConfig_webPath$data[uri]\" />
   <updated>".date("c",$dat['date'])."</updated>
