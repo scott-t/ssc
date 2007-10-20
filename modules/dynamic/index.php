@@ -12,7 +12,7 @@
  */
 defined('_VALID_SSC') or die('Restricted access');
 
-global $database, $sscConfig_absPath, $sscConfig_webPath, $sscConfig_wordpressAPI;
+global $database, $sscConfig_absPath, $sscConfig_webPath, $sscConfig_wordpressAPI, $sscConfig_themeRel;
 
 $database->setQuery(sprintf("SELECT #__dynamic.id, title, uri, comments FROM #__dynamic, #__navigation WHERE nav_id = %d AND nav_id = #__navigation.id LIMIT 1",$_GET['pid']));
 if($database->query() && $data = $database->getAssoc()){
@@ -218,7 +218,14 @@ if($database->query() && $data = $database->getAssoc()){
 		}
 	}
 
-	echo '<div class="clear"></div>';
+	echo '<div class="clear center">';$path = $sscConfig_absPath.'/modules/dynamic/';
+	if(file_exists($path.'rss-'.$blogID.'.xml'))
+		echo '<a rel="alternate" type="application/rss+xml" title="Subscribe using RSS 2.0" href="',$sscConfig_webPath,'/modules/dynamic/rss-',$blogID,'.xml">RSS 2.0</a> ';
+	echo '<img src="',$sscConfig_themeRel,'/rss.png" alt="" />';
+	if(file_exists($path.'atom-'.$blogID.'.xml'))
+		echo ' <a rel="alternate" type="application/atom+xml" title="Subscribe using Atom 1.0" href="',$sscConfig_webPath,'/modules/dynamic/atom-',$blogID,'.xml">Atom 1.0</a>';
+	echo '</div>';
+	
 }else{ echo error("An unexpected error occurred. Please contact the webmaster with the link to this page<br />");}
 
 ?>
