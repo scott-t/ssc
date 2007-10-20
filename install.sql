@@ -21,7 +21,7 @@ CREATE TABLE `ssc_dynamic` (
   `id` smallint(6) NOT NULL auto_increment,
   `nav_id` int(11) NOT NULL,
   `title` varchar(50) NOT NULL,
-  `description` tinyblob NOT NULL
+  `description` tinyblob NOT NULL, 
   `comments` binary(1) NOT NULL,
   PRIMARY KEY  (`id`),
   KEY `nav_id` (`nav_id`)
