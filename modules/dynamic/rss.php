@@ -53,11 +53,11 @@ FEED
     <lastBuildDate>'.date("r",$dat['date']).'</lastBuildDate>
 ');
     fwrite($ap, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
-<feed xmlns=\"http://www.wc3.org/2005/Atom\" xml:lang=\"en\" xml:base=\"$sscConfig_webPath/modules/dynamic/atom-$data[id].xml\">
+<feed xmlns=\"http://www.w3.org/2005/Atom\" xml:lang=\"en\" xml:base=\"$sscConfig_webPath/modules/dynamic/atom-$data[id].xml\">
   <title type=\"text\">$data[title]</title>
 ".
   (strlen($data['description'])>=0?"  <subtitle type=\"text\">$data[description]</subtitle>":'')."
-  <link rel=\"self\" type=\"applicatin/atom+xml\" href=\"$sscConfig_webPath/modules/dynamic/atom-$data[id].xml\" />
+  <link rel=\"self\" type=\"application/atom+xml\" href=\"$sscConfig_webPath/modules/dynamic/atom-$data[id].xml\" />
   <link rel=\"alternate\" type=\"text/html\" href=\"$sscConfig_webPath$data[uri]\" />
   <updated>".date("c",$dat['date'])."</updated>
   <author>
@@ -97,7 +97,7 @@ ITEM
     </author>
     <link rel=\"alternate\" type=\"text/html\" href=\"$sscConfig_webPath$data[uri]/$date/$dat[uri]\" />
     <summary type=\"text\">$stripped</summary>
-    <content type=\"html\"><div xmlns=\"http://www.w3.org/1999/xhtml\">$dat[content]</div></content>
+    <content type=\"xhtml\"><div xmlns=\"http://www.w3.org/1999/xhtml\">$dat[content]</div></content>
   </entry>
 ");
 	}while($dat = $database->getAssoc());
