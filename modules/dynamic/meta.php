@@ -20,6 +20,6 @@ if($database->query() && $data = $database->getAssoc()){
 	if(file_exists($path.'rss-'.$data['id'].'.xml'))
 		echo '<link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="',$sscConfig_webPath,'/modules/dynamic/rss-',$data['id'],'.xml" />';
 	if(file_exists($path.'atom-'.$data['id'].'.xml'))
-		echo '<link rel="alternate" type="application/rss+xml" title="Atom 0.3" href="',$sscConfig_webPath,'/modules/dynamic/atom-',$data['id'],'.xml" />';
+		echo '<link rel="alternate" type="application/atom+xml" title="Atom 0.3" href="',$sscConfig_webPath,'/modules/dynamic/atom-',$data['id'],'.xml" />';
 	
 }
