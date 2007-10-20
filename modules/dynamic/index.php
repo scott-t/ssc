@@ -69,7 +69,7 @@ if($database->query() && $data = $database->getAssoc()){
 				//success
 				$database->setQuery("SELECT tag FROM #__dynamic_relation, #__dynamic_tags WHERE tag_id = #__dynamic_tags.id AND content_id = " . $data['id']);
 				$database->query();
-				echo '<h2>', $data['title'], '</h2>Posted ', date("D, M d, Y \a\\t h:i a",strtotime($data['date'])), " by ", $data['display'],'<br />';
+				echo '<h2>', $data['title'], '</h2>Posted ', date("D, M d, Y \a\\t g:i a",strtotime($data['date'])), " by ", $data['display'],'<br />';
 				if($database->getNumberRows()>0){
 					echo 'Tagged: ';
 				
@@ -124,7 +124,7 @@ if($database->query() && $data = $database->getAssoc()){
 					$database->setQuery("SELECT name, site, comment, date FROM #__dynamic_comments WHERE post_id = " . $data['id'] . " && spam = 0 ORDER BY date ASC");
 					if($database->query() && $database->getNumberRows() > 0){
 						while($data = $database->getAssoc()){
-							echo $data['comment'], '<br /><br />Posted ', date("D, M d, Y \a\\t h:i a",strtotime($data['date'])), " by ";
+							echo $data['comment'], '<br /><br />Posted ', date("D, M d, Y \a\\t g:i a",strtotime($data['date'])), " by ";
 							if($data['site'] !=  '')
 								echo '<a href="',$data['site'],'">', $data['name'],'</a>';
 							else
@@ -193,7 +193,7 @@ if($database->query() && $data = $database->getAssoc()){
 				$total--;
 				$data['date'] = strtotime($data['date']);
 			
-				echo "<h2><a href=\"",$sscConfig_webPath,$uri,'/',date("Y/m/d/",$data['date']),$data['uri'],"\">",$data['title'],'</a></h2>Posted ', date("D, M d, Y \a\\t h:i a",$data['date']), " by ", $data['display'], '<br />';
+				echo "<h2><a href=\"",$sscConfig_webPath,$uri,'/',date("Y/m/d/",$data['date']),$data['uri'],"\">",$data['title'],'</a></h2>Posted ', date("D, M d, Y \a\\t g:i a",$data['date']), " by ", $data['display'], '<br />';
 				$database->setQuery("SELECT tag FROM #__dynamic_relation, #__dynamic_tags WHERE tag_id = #__dynamic_tags.id AND content_id = " . $data['id']);
 				$database->query();
 				if($database->getNumberRows()>0){
