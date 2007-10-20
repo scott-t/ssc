@@ -135,9 +135,9 @@ if($database->query() && $data = $database->getAssoc()){
 						echo 'There are currently no comments<br /><br />';
 					}
 					echo '<form method="post" action="',$sscConfig_webPath,$permalink,'"><fieldset><legend>Make a comment</legend><!--[if IE]><br /><![endif]-->';
-					echo '<div><label for="n">Name (required): </label><input type="text" name="n" id="n" maxlength="30" /></div><br />';
-					echo '<div><label for="e"><span class="popup" title="Will not be shown">Email (required): </span></label><input type="text" maxlength="50" id="e" name="e" /></div><br />';
-					echo '<div><label for="s"><span class="popup" title="Optional">Site:</span></label><input type="text" maxlength="80" name="s" id="s" /></div><br />';
+					echo '<div><label for="n">Name (required): </label><input type="text" name="n" id="n" maxlength="30" /></div><br />';					
+					echo '<div><label for="e">Email (required): </label><input type="text" maxlength="50" id="e" name="e" /> (will be kept private) </div><br />';
+					echo '<div><label for="s">Site: </label><input type="text" maxlength="80" name="s" id="s" /> (optional) </div><br />';
 					echo '<!--<div><label for="r"><span class="popup" title="Requires cookies">Remember Me?</span></label><input type="checkbox" id="r" name="r" value="1" /></div><br />-->';
 					echo '<div><label for="c">Comment:</label><textarea cols="40" rows="10" name="c" id="c"></textarea></div><br />';
 					echo '<div class="btn"><input type="submit" value="Add Comment" name="g" id="g" /></div></fieldset></form>';
