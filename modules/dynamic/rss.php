@@ -10,7 +10,7 @@
 if($_SERVER['REMOTE_ADDR'] != $_SERVER['SERVER_ADDR'])
 	exit();
 
-define('REL_PATH','../..');
+define('REL_PATH','../..');	//better to store abs path in here
 define('_VALID_SSC', 1);
 	
 /**
@@ -31,6 +31,8 @@ while($data = $database->getAssoc($result)){
 	$database->setQuery("SELECT #__dynamic_content.date, title, content, uri, display FROM (#__dynamic_content, #__users) WHERE #__users.id = user_id AND #__dynamic_content.blog_id = $data[id] ORDER BY #__dynamic_content.date DESC LIMIT 0,5");
 	if(!$database->query() || $database->getNumberRows() == 0)
 		continue;
+	if($data['uri']=='/')
+		$data['uri'] = '';
 		
 	$fp = fopen($sscConfig_absPath . '/modules/dynamic/rss-' . $data['id'] . '.xml','w');
 	$ap = fopen($sscConfig_absPath . '/modules/dynamic/atom-'. $data['id'] . '.xml','w');
@@ -48,9 +50,10 @@ while($data = $database->getAssoc($result)){
 FEED
 ); // <?php
 	$dat = $database->getAssoc();
-	$dat['date'] = strtotime($dat['date']);
+	$date = strtotime($dat['date']);
+
 	fwrite($fp,date("r").'</pubDate>
-    <lastBuildDate>'.date("r",$dat['date']).'</lastBuildDate>
+    <lastBuildDate>'.date("r",$date).'</lastBuildDate>
 ');
     fwrite($ap, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <feed xmlns=\"http://www.w3.org/2005/Atom\" xml:lang=\"en\" xml:base=\"$sscConfig_webPath/modules/dynamic/atom-$data[id].xml\">
@@ -59,7 +62,7 @@ FEED
   (strlen($data['description'])>0?"  <subtitle type=\"text\">$data[description]</subtitle>":'')."
   <link rel=\"self\" type=\"application/atom+xml\" href=\"$sscConfig_webPath/modules/dynamic/atom-$data[id].xml\" />
   <link rel=\"alternate\" type=\"text/html\" href=\"$sscConfig_webPath$data[uri]\" />
-  <updated>".date("c",$dat['date'])."</updated>
+  <updated>".date("c",$date)."</updated>
   <author>
     <name>$sscConfig_siteName</name>
   </author>
