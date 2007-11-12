@@ -9,7 +9,7 @@ echo "*{background-color:transparent;}#navigation ul a:hover span{text-decoratio
 * html #navigation ul a{filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(src='".$sscConfig_themeWeb."/nav.png', sizingMethod='scale');background-color:#8AC3FA;}
 
 	/*.panel{overflow-x:hidden;border:none;background-color:transparent;}*/
-.panel *{position:relative;}
+.panel *, .right{position:relative;}
 
 /* Admin fixes */
 				.login-text{width:44%;margin-left:5px;float:left;}
