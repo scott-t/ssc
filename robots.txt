@@ -5,3 +5,4 @@ Disallow: /admin/
 Disallow: /themes/
 Disallow: /tmp/
 Disallow: /install/
+Allow: /modules/*.xml
