@@ -17,7 +17,7 @@ defined('_VALID_SSC') or die('Restricted access');
  */
 require_once('config.vars.php');
 
-$sscConfig_version = '2.0a';
+$sscConfig_version = '2.0.1';
 $sscConfig_app = 'Smooth Sailing CMS';
 
 /**
