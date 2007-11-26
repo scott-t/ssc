@@ -1,8 +1,0 @@
-order deny,allow
-deny from all
-<FilesMatch "\.(gif|jpe?g|png|xml)$">
-allow from all
-</FilesMatch>
-<FilesMatch "rss.php$">
-allow from localhost
-</FilesMatch>
