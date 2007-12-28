@@ -23,8 +23,13 @@ define('SSC_INIT_FULL', 3);
 
 function core_conf_file(){
 	static $path = ''; echo $path;
-	if ($path)
+	if ($path){
+		core_debug(array(
+			'title' => 'core_conf_file',
+			'body'  => "Path exists from static variable - shortcutting..."
+			));
 		return $path;						// So we don't go through this every timne
+	}
 
 	$path = explode('.', $_SERVER['SERVER_NAME']);
 	do{
@@ -46,22 +51,31 @@ function core_conf_file(){
 
 function core_conf_init(){
 	// Global environment information
-	global $site_url, $site_path;
+	global $ssc_site_url, $ssc_site_path;
 	
 	// Global site configuration
-	global $config;
-	$config = array();
+	/*global $config;
+	$config = array();*/
 	
 	// Global database settings
-	global $db_config, $db_prefix;
+	/*global $db_config, $db_prefix;*/
 
 	// Fill in environment information
 	$site_url = "http://" . $_SERVER['SERVER_NAME'] . substr($_SERVER['SCRIPT_NAME'], 0, -10);
 	$site_path = substr($_SERVER['SCRIPT_FILENAME'], 0, -10);
 
+	core_debug(array(
+			'title' => 'core_conf_init',
+			'body'  => "Running from $site_url in path $site_path"
+			));
+	
 	// Get our configuration path
 	$path = core_conf_file();
 	if (file_exists($path)){
+		core_debug(array(
+					'title' => 'core_conf_init',
+					'body'  => "Loading configuration $path"
+					));
 		include $path;
 	}
 	else {
@@ -78,7 +92,15 @@ function core_conf_init(){
  */
 
 function core_database_init(){
-	global $database; 
+	global $ssc_site_path, $ssc_database, $SSC_SETTINGS;
+
+	// Check if the database engine is available
+	if (!file_exists("$site_path/includes/database.".$SSC_SETTINGS['database']['engine'].".inc.php")){
+		core_die(array(
+			'title' => 'Installation Rrror',
+			'body'  => 'The specified database engine is not available.'
+			));
+	}
 }
 
 /**
@@ -87,6 +109,34 @@ function core_database_init(){
 
 function core_die($information){
 
+}
+
+/**
+ * Keep track of debug messages
+ */
+
+function core_debug($information){
+	global $ssc_debug, $ssc_execute_time;
+	
+	if (defined("_SSC_DEBUG")){
+		if(!isset($ssc_debug['count']))
+			$ssc_debug['count'] = 0;
+			
+		$ssc_debug['message'][$ssc_debug['count']] = $information;
+		$ssc_debug['message'][$ssc_debug['count']]['time'] = round(microtime(true) - $ssc_execute_time, 4); 
+		$ssc_debug['count']++;
+	}
+}
+
+function core_debug_show(){
+	global $ssc_debug;
+	if (defined("_SSC_DEBUG")){
+		echo '<table>';
+		for ($i = 0; $i < $ssc_debug['count']; $i++){
+			echo "<tr><td>",$ssc_debug['message'][$i]['time'],"</td><td>",$ssc_debug['message'][$i]['title'],"</td><td>",$ssc_debug['message'][$i]['body'],"</td></tr>";
+		}
+		echo '</table>';
+	}
 }
 
 /**
@@ -101,6 +151,10 @@ function core_init($level = SSC_INIT_FULL){
 	
 	for ($i = 1; $i <= $level; $i++){
 		// Load up all previous levels
+		core_debug(array(
+					'title' => 'core_init',
+					'body'  => "Initializing core level $i"
+					));
 		_core_load($i);				 
 	}
 }
