@@ -22,8 +22,10 @@ define('SSC_INIT_FULL', 3);
  */
 
 function core_conf_file(){
-	static $path = ''; echo $path;
-	if ($path){
+	global $ssc_site_path;
+	static $path;
+	
+	if (isset($path)){
 		core_debug(array(
 			'title' => 'core_conf_file',
 			'body'  => "Path exists from static variable - shortcutting..."
@@ -40,9 +42,9 @@ function core_conf_file(){
 			$filepath = 'default';
 			break;
 		}
-	} while (!file_exists("./config/$filepath.settings.inc.php"));
+	} while (!file_exists("$ssc_site_path/config/$filepath.settings.inc.php"));
 	
-	return "./config/$filepath.settings.inc.php";
+	return "$ssc_site_path/config/$filepath.settings.inc.php";
 }
 
 /**
@@ -54,19 +56,19 @@ function core_conf_init(){
 	global $ssc_site_url, $ssc_site_path;
 	
 	// Global site configuration
-	/*global $config;
-	$config = array();*/
+	global $SSC_SETTINGS;
+	$SSC_SETTINGS = array();
 	
 	// Global database settings
 	/*global $db_config, $db_prefix;*/
 
 	// Fill in environment information
-	$site_url = "http://" . $_SERVER['SERVER_NAME'] . substr($_SERVER['SCRIPT_NAME'], 0, -10);
-	$site_path = substr($_SERVER['SCRIPT_FILENAME'], 0, -10);
+	$ssc_site_url = "http://" . $_SERVER['SERVER_NAME'] . substr($_SERVER['SCRIPT_NAME'], 0, -10);
+	$ssc_site_path = substr($_SERVER['SCRIPT_FILENAME'], 0, -10);
 
 	core_debug(array(
 			'title' => 'core_conf_init',
-			'body'  => "Running from $site_url in path $site_path"
+			'body'  => "Running from $ssc_site_url in path $ssc_site_path"
 			));
 	
 	// Get our configuration path
@@ -76,7 +78,7 @@ function core_conf_init(){
 					'title' => 'core_conf_init',
 					'body'  => "Loading configuration $path"
 					));
-		include $path;
+		include_once $path;
 	}
 	else {
 		core_die(array(
@@ -95,12 +97,31 @@ function core_database_init(){
 	global $ssc_site_path, $ssc_database, $SSC_SETTINGS;
 
 	// Check if the database engine is available
-	if (!file_exists("$site_path/includes/database.".$SSC_SETTINGS['database']['engine'].".inc.php")){
+	if (!file_exists("$ssc_site_path/includes/database.".$SSC_SETTINGS['database']['engine'].".inc.php")){
 		core_die(array(
-			'title' => 'Installation Rrror',
-			'body'  => 'The specified database engine is not available.'
+			'title' => 'Installation Error',
+			'body'  => 'The specified database engine '.$SSC_SETTINGS['database']['engine'].' is not available.'
 			));
+		return;
 	}
+	
+	// Load database engine
+	core_debug(array(
+				'title' => 'core_database_init',
+				'body'  => "Loading database engine ".$SSC_SETTINGS['database']['engine']
+				));
+				
+	include_once "$ssc_site_path/includes/core.database.inc.php";
+	include_once "$ssc_site_path/includes/database.".$SSC_SETTINGS['database']['engine'].".inc.php";
+	
+	
+	$ssc_database = new sscDatabase();
+	
+	
+	$ssc_database->set_query("UPDATE blah SET %s = %s", "p1\'s%_Afl", "p2");
+	$ssc_database->query(); 
+	
+	
 }
 
 /**
@@ -108,7 +129,11 @@ function core_database_init(){
  */
 
 function core_die($information){
-
+	echo $information['body'],'<br />';
+	core_debug($information);
+	core_debug_show();
+	
+	exit (1);
 }
 
 /**
