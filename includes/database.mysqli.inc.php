@@ -12,6 +12,8 @@ defined('_VALID_SSC') or die('Restricted access');
 
 /**
  * MySQLI based database object
+ * @package SSC
+ * @subpackage MySQLi
  */
 
 class sscDatabase extends sscAbstractDatabase{

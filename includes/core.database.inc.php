@@ -1,10 +1,10 @@
 <?php
 /**
- * Database engine using the mysqli interface.
+ * File containing the core database interface
  * @package SSC
  * @subpackage Core
- */
- 
+ */ 
+
 /**
  * Check for legit call
  */
@@ -12,15 +12,17 @@ defined('_VALID_SSC') or die('Restricted access');
 
 /**
  * Interface for database objects 
+ * @package SSC
+ * @subpackage Core
  */
 abstract class sscAbstractDatabase{
 	/**
-	 *	Create the database object
+	 *	Connect to the database object using the $SSC_SETTINGS['database'] settings
 	 */
 	abstract public function __construct();
 	
 	/**
-	 * Clean up
+	 * Free up the database objects
 	 */
 	abstract public function __destruct();
 	
