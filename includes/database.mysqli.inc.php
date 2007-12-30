@@ -10,13 +10,14 @@
  */
 defined('_VALID_SSC') or die('Restricted access');
 
+$SSC_SETTINGS['database']['engineclass'] = 'sscDatabaseMySQLi';
+
 /**
  * MySQLI based database object
  * @package SSC
  * @subpackage MySQLi
  */
-
-class sscDatabase extends sscAbstractDatabase{
+class sscDatabaseMySQLi extends sscAbstractDatabase{
 
 	// Query related storage
 	private $link;
@@ -75,6 +76,8 @@ class sscDatabase extends sscAbstractDatabase{
 	
 	/**
 	 * Escape the current string
+	 * @param string $str String to be escaped
+	 * @return string Escaped string ready for insertion into the database
 	 */
 	function escape_string($str){
 		$this->link->real_escape_string($str);

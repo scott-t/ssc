@@ -60,9 +60,6 @@ function core_conf_init(){
 	global $SSC_SETTINGS;
 	$SSC_SETTINGS = array();
 	
-	// Global database settings
-	/*global $db_config, $db_prefix;*/
-
 	// Fill in environment information
 	$ssc_site_url = "http://" . $_SERVER['SERVER_NAME'] . substr($_SERVER['SCRIPT_NAME'], 0, -10);
 	$ssc_site_path = substr($_SERVER['SCRIPT_FILENAME'], 0, -10);
@@ -115,9 +112,8 @@ function core_database_init(){
 	include_once "$ssc_site_path/includes/core.database.inc.php";
 	include_once "$ssc_site_path/includes/database.".$SSC_SETTINGS['database']['engine'].".inc.php";
 	
-	
-	$ssc_database = new sscDatabase();
-	
+	// Create database object
+	$ssc_database = new $SSC_SETTINGS['database']['engineclass']();
 	
 	$ssc_database->set_query("UPDATE blah SET %s = %s", "p1\'s%_Afl", "p2");
 	$ssc_database->query(); 
@@ -127,6 +123,8 @@ function core_database_init(){
 
 /**
  * Displays fatal error messages
+ * @param array $information Formatted array containing title and body keys with
+ * 			reason for dieing
  */
 
 function core_die($information){
@@ -139,6 +137,8 @@ function core_die($information){
 
 /**
  * Keep track of debug messages
+ * @param array $information Formatted array containing title and body keys with
+ * 			reason for dieing
  */
 
 function core_debug($information){
@@ -169,7 +169,7 @@ function core_debug_show(){
  * Initializes the environment.  An optional parameter is available to specify
  * how much to initialize.  All levels below the specified will be loaded automatically
  * 
- * @param $level Level to initialize core to
+ * @param int $level Level to initialize core to
  */
 
 function core_init($level = SSC_INIT_FULL){
@@ -188,7 +188,7 @@ function core_init($level = SSC_INIT_FULL){
 /**
  * Initialize a particular level of the core.
  * @private
- * @param $level Level of the core to initialize
+ * @param int $level Level of the core to initialize
  */
 
 function _core_load($level){
