@@ -2,7 +2,7 @@
 /**
  * Database engine using the mysqli interface.
  * @package SSC
- * @subpackage MySQLi
+ * @subpackage Database
  */
  
 /**
@@ -15,7 +15,7 @@ $SSC_SETTINGS['database']['engineclass'] = 'sscDatabaseMySQLi';
 /**
  * MySQLI based database object
  * @package SSC
- * @subpackage MySQLi
+ * @subpackage Database
  */
 class sscDatabaseMySQLi extends sscAbstractDatabase{
 
