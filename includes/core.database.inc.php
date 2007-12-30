@@ -1,7 +1,8 @@
 <?php
 /**
- * @file
  * Database engine using the mysqli interface.
+ * @package SSC
+ * @subpackage Core
  */
  
 /**
@@ -12,16 +13,29 @@ defined('_VALID_SSC') or die('Restricted access');
 /**
  * Interface for database objects 
  */
-interface ssciDatabase{
+abstract class sscAbstractDatabase{
 	/**
 	 *	Create the database object
 	 */
-	public function __construct();
+	abstract public function __construct();
 	
 	/**
 	 * Clean up
 	 */
-	public function __destruct();
+	abstract public function __destruct();
+	
+	/**
+	 * Create a table in the database
+	 * @param $structure
+	 * 		Array structure containing specified table layout
+	 */
+	abstract public function create_table($structure)
+	
+	/**
+	 * Replace appropriate table prefixes based on environment settings
+	 * @param $table
+	 * 		Unprefixed table containing 
+	private function _set_table_prefix
 	
 	/**
 	 * Sets the current database object query
@@ -30,11 +44,11 @@ interface ssciDatabase{
 	 * @param ...
 	 * 		Arguments to be passed to the query for escaping  
 	 */
-	public function set_query($sql);
+	abstract public function set_query($sql);
 	
 	/**
 	 * Execute the stored query
 	 */
-	public function query();
-
+	abstract public function query();
+	
 }

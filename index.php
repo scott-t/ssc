@@ -1,7 +1,7 @@
 <?php
 /**
- * @file
  * The primary php file.  All page requests come via this file
+ * @package SSC
  */
 
 /**

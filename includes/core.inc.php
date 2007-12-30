@@ -1,7 +1,8 @@
 <?php
 /**
- * @file
  * This file provides the bulk of the SSC core.
+ * @package SSC
+ * @subpackage Core
  */
  
 /**

@@ -1,7 +1,8 @@
 <?php
 /**
- * @file
  * Database engine using the mysqli interface.
+ * @package SSC
+ * @subpackage MySQLi
  */
  
 /**
@@ -13,7 +14,7 @@ defined('_VALID_SSC') or die('Restricted access');
  * MySQLI based database object
  */
 
-class sscDatabase implements ssciDatabase{
+class sscDatabase extends sscAbstractDatabase{
 
 	// Query related storage
 	private $link;
