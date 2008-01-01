@@ -53,11 +53,22 @@ function core_conf_file(){
  */
 
 function core_conf_init(){
-	// Global environment information
-	global $ssc_site_url, $ssc_site_path;
+	/**
+	 * @global string $ssc_site_url URL information
+	 */
+	global $ssc_site_url;
 	
-	// Global site configuration
+	/**
+	 * @global string $ssc_site_path Absolute path information
+	 */
+	global $ssc_site_path;
+	
+	/**
+	 * Application settings array
+	 * @global mixed $SSC_SETTINGS Mixed array containing environment settings
+	 */
 	global $SSC_SETTINGS;
+
 	$SSC_SETTINGS = array();
 	
 	// Fill in environment information

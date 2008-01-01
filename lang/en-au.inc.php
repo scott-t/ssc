@@ -1,6 +1,6 @@
 <?php
 /**
- * This file provides the bulk of the SSC core.
+ * Australian English language file
  * @package SSC
  * @subpackage Language
  */

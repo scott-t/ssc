@@ -28,23 +28,29 @@ abstract class sscAbstractDatabase{
 	
 	/**
 	 * Create a table in the database
-	 * @param $structure
-	 * 		Array structure containing specified table layout
+	 * @param array $structure Structure containing specified table layout
 	 */
-	abstract public function create_table($structure)
+	//abstract public function create_table($structure);
 	
 	/**
 	 * Replace appropriate table prefixes based on environment settings
-	 * @param $table
-	 * 		Unprefixed table containing 
-	private function _set_table_prefix
+	 * @private
+	 * @param string $table Unprefixed table name
+	 * @return string Prefixed table name
+	 */ 
+	private function _set_table_prefix($table){
+		if (array_key_exists($table, $SSC_SETTINGS['database']['prefix'])){
+			return $SSC_SETTINGS['database']['prefix'][$table] . $table;
+		}
+		else {
+			return $SSC_SETTINGS['database']['prefix']['default'] . $table;
+		}
+	}
 	
 	/**
 	 * Sets the current database object query
-	 * @param $sql 
-	 * 		SQL query to exectute
-	 * @param ...
-	 * 		Arguments to be passed to the query for escaping  
+	 * @param string $sql SQL query to exectute
+	 * @param mixed $...,... Arguments to be passed to the query for escaping  
 	 */
 	abstract public function set_query($sql);
 	

@@ -1,6 +1,7 @@
 <?php
 /**
- * This file provides the bulk of the SSC core.
+ * Default program settings.
+ * This file should be copied for use as a template for other domains as required.
  * @package SSC
  */
  

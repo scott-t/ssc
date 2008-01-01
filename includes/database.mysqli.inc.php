@@ -19,11 +19,24 @@ $SSC_SETTINGS['database']['engineclass'] = 'sscDatabaseMySQLi';
  */
 class sscDatabaseMySQLi extends sscAbstractDatabase{
 
-	// Query related storage
+	/**
+	 * @var mixed Contains the mysqli object
+	 */
 	private $link;
+	
+	/**
+	 * @var string Storage for current query 
+	 */
 	private $query;
+	
+	/**
+	 * @var mixed Contains the result from a query 
+	 */
 	private $result;
-	// Environment settings storage
+	
+	/**
+	 * @var int Flag indicating magic quote status 
+	 */
 	private $quote_status;
 	
 	/**
