@@ -41,7 +41,7 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 	
 	/**
 	 * Create the database connection
-	 * @see ssciDatabase::__construct
+	 * @see ssciDatabase::__construct()
 	 */
 	function __construct(){
 		global $SSC_SETTINGS;
@@ -61,21 +61,79 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 	
 	/**
 	 * Clean up
-	 * @see ssciDatabase::__destruct
+	 * @see ssciDatabase::__destruct()
 	 */
 	function __destruct(){
 		$this->link->close();
 	}
 	
 	/**
-	 * @see ssciDatabase::query
+	 * @see ssciDatabase::create_table()
+	 */
+	function create_table($structure){
+		$sql = "CREATE TABLE " . $this->_set_table_prefix($structure['name']);
+		echo '<pre>';print_r($structure);echo '</pre>';
+		
+		// Number of fields table contains
+		$fields = count($structure['fields']);
+		
+		// Opening bracket for field declaration if needed
+		if ($fields > 0)
+			$sql .= ' (';
+			
+		// Add each field
+		$i = 0;
+		foreach ($structure['fields'] as $key => $value){
+			if ($i > 0)
+				$sqlf .= ', ';
+			$i++;
+			
+			$sqlf = " " . $key . ' ' . $this->_map_field_type($value) . ' '; 
+			//$sqlf
+		}
+		
+		if ($fields > 0)
+			$sql .= ') ';
+			
+		return $sql;
+	}
+	
+	/**
+	 * Maps the field structures type and size into the databases equivalent
+	 * @param array $structure Field structure
+	 * @return string SQL portion relating to field structure
+	 */
+	private function _map_field_type($structure){
+		switch ($structure['type']){
+		case 'varchar':
+			break;
+		
+		case 'text':
+			break;
+		
+		case 'blob':
+			break;
+		
+		case 'int':
+			break;
+		
+		case 'float':
+			break;
+		
+		case 'datetime':
+			break;
+		}
+	}
+	
+	/**
+	 * @see ssciDatabase::query()
 	 */
 	function query(){
 		echo $this->query;
 	}
 	
 	/**
-	 * @see ssciDatabase::set_query
+	 * @see ssciDatabase::set_query()
 	 */
 	function set_query($sql){
 		$param = func_get_args();
