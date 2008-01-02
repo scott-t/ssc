@@ -17,9 +17,38 @@ define('SSC_INIT_CONFIG', 1);
 define('SSC_INIT_DATABASE', 2);
 define('SSC_INIT_FULL', 3);
 
+/**
+ * URL domain information.
+ * @global string $ssc_site_url
+ */
+$ssc_site_url;
+
+/**
+ * File system path information.
+ * @global string $ssc_site_path
+ */
+$ssc_site_path;
+
+/**
+ * Application settings array.
+ * 
+ * This array contains several sections relating to various parts of the application which are
+ * generally set inside the appropriate settings file.  This includes database engine and login,
+ * among with several other hard-coded program settings.  Other database stored settings may be
+ * loaded into a sub-array with the key 'runtime'.
+ * 
+ * @see default.settings.inc.php
+ * @global mixed $SSC_SETTINGS
+ * 
+ * 
+ */
+$SSC_SETTINGS;
+
 
 /**
  * Retrieve the correct site configuration.  Sites can only be set on a (sub-)domain basis. 
+ * 
+ * @see default.settings.inc.php
  */
 
 function core_conf_file(){
@@ -53,20 +82,9 @@ function core_conf_file(){
  */
 
 function core_conf_init(){
-	/**
-	 * @global string $ssc_site_url URL information
-	 */
-	global $ssc_site_url;
-	
-	/**
-	 * @global string $ssc_site_path Absolute path information
-	 */
-	global $ssc_site_path;
-	
-	/**
-	 * Application settings array
-	 * @global mixed $SSC_SETTINGS Mixed array containing environment settings
-	 */
+	// Path settings
+	global $ssc_site_url, $ssc_site_path;
+	// App settings
 	global $SSC_SETTINGS;
 
 	$SSC_SETTINGS = array();
@@ -126,8 +144,28 @@ function core_database_init(){
 	// Create database object
 	$ssc_database = new $SSC_SETTINGS['database']['engineclass']();
 	
-	$ssc_database->set_query("UPDATE blah SET %s = %s", "p1\'s%_Afl", "p2");
-	$ssc_database->query(); 
+	echo $ssc_database->create_table(array(
+								'name' => 'bob',
+								'description' => 'Hi',
+								'fields' => array(
+												'id' => array(
+															'type' => 'int',
+															'size' => 'normal',
+															'auto_inc' => true,
+															'null' => false,
+															'unsigned' => true
+														),
+												'thing' => array(
+															'type' => 'varchar',
+															'size' => 10,
+															'null' => true
+														)
+											),
+								'primary' => array('id', 'thing'),
+								'unique' => array('thing'),
+								'index' => array('thing')
+											
+								));
 	
 	
 }
