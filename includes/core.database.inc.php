@@ -29,16 +29,19 @@ abstract class sscAbstractDatabase{
 	/**
 	 * Create a table in the database
 	 * @param array $structure Structure containing specified table layout
+	 * @return string SQL statement that was generated and executed
 	 */
-	//abstract public function create_table($structure);
+	abstract public function create_table($structure);
 	
 	/**
 	 * Replace appropriate table prefixes based on environment settings
-	 * @private
 	 * @param string $table Unprefixed table name
 	 * @return string Prefixed table name
 	 */ 
-	private function _set_table_prefix($table){
+	protected function _set_table_prefix($table){
+		global $SSC_SETTINGS;
+		$table = '_' . $table;
+		
 		if (array_key_exists($table, $SSC_SETTINGS['database']['prefix'])){
 			return $SSC_SETTINGS['database']['prefix'][$table] . $table;
 		}
