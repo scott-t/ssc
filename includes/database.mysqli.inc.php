@@ -84,16 +84,93 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 		// Add each field
 		$i = 0;
 		foreach ($structure['fields'] as $key => $value){
-			if ($i > 0)
-				$sqlf .= ', ';
-			$i++;
+			// Main column data
+			if ($i == 0){
+				$sqlf = " " . $key . ' ' . $this->_map_field_type($value) . ' ';
+				$i++;
+			}
+			else {
+				$sqlf = ", " . $key . ' ' . $this->_map_field_type($value) . ' ';
+			} 
 			
-			$sqlf = " " . $key . ' ' . $this->_map_field_type($value) . ' '; 
-			//$sqlf
+			// Allowed to be null?
+			if (isset($value['null']) && $value['null'] == 1){
+				$sqlf .= ' NULL ';
+			} else {
+				$sqlf .= ' NOT NULL ';
+			}
+			
+			// Auto inc?
+			if (isset($value['auto_inc']) && $value['auto_inc'] == 1){
+				$sqlf .= ' AUTO_INCREMENT';
+			}
+			
+			// Description?
+			if (isset($value['description'])){
+				$sqlf .= " COMMENT '$value[description]'";
+			}
+			
+			$sql .= $sqlf;
 		}
+		
+		// Primary keys
+		$i = count($structure['primary']);
+		if ($i > 0)
+			$sqlf = ', PRIMARY KEY (';
+		foreach ($structure['primary'] as $key => $value){
+			if (intval($key) != 0){
+				 $sqlf .= ", ";
+			}
+			
+			$sqlf .= $value;
+		}
+		if ($i > 0)
+			$sqlf .= ')';
+			
+		$sql .= $sqlf;
+		
+		// Unique keys
+		$i = count($structure['unique']);
+		if ($i > 0)
+			$sqlf = ', UNIQUE (';
+		foreach ($structure['unique'] as $key => $value){
+			if (intval($key) != 0){
+				 $sqlf .= ", ";
+			}
+			
+			$sqlf .= $value;
+		}
+		if ($i > 0)
+			$sqlf .= ')';
+			
+		$sql .= $sqlf;
+		
+		// Index fields
+		$i = count($structure['index']);
+		if ($i > 0)
+			$sqlf = ', INDEX (';
+		foreach ($structure['index'] as $key => $value){
+			if (intval($key) != 0){
+				 $sqlf .= ", ";
+			}
+			
+			$sqlf .= $value;
+		}
+		if ($i > 0)
+			$sqlf .= ')';
+			
+		$sql .= $sqlf;
 		
 		if ($fields > 0)
 			$sql .= ') ';
+			
+		// Force MyISAM
+		$sql .= " ENGINE = MyISAM";
+		
+		// Table comment
+		if (isset($structure['description'])){
+			$sql .= " COMMENT '$structure[description]'";
+		}
 			
 		return $sql;
 	}
@@ -104,25 +181,54 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 	 * @return string SQL portion relating to field structure
 	 */
 	private function _map_field_type($structure){
-		switch ($structure['type']){
+		$ret = '';
+		switch (strtolower($structure['type'])){
 		case 'varchar':
+			return "VARCHAR (" . intval($structure['size']) . ")";
 			break;
 		
 		case 'text':
+			return "TEXT";
 			break;
 		
 		case 'blob':
+			return "BLOB";
 			break;
 		
 		case 'int':
+			switch (strtolower($structure['size'])){
+			case 'tiny':
+				$ret = 'TINYINT';
+				break;
+			case 'small':
+				$ret = 'SMALLINT';
+				break;
+			case 'medium':
+				$ret = 'MEDIUMINT';
+				break;
+			case 'normal':
+				$ret = 'INT';
+				break;
+			default:	// Large
+				$ret = 'BIGINT';
+				break;
+			
+			}
 			break;
 		
 		case 'float':
 			break;
 		
 		case 'datetime':
+			return "TIMESTAMP";
 			break;
 		}
+		
+		if (isset($structure['unsigned']) && $structure['unsigned'] == 1){
+			$ret .= ' UNSIGNED ';
+		}
+
+		return $ret;
 	}
 	
 	/**
