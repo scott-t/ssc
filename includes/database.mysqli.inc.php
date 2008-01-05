@@ -68,6 +68,35 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 	}
 	
 	/**
+	 * @see ssciDatabase::select_from()
+	 */
+	function select_from($structure){
+	
+	}
+	
+	/**
+	 * @see ssciDatabase::insert_row()
+	 */
+	function insert_row($table, $values){
+	
+	}
+	
+	/**
+	 * @see ssciDatabase::delete_row()
+	 */
+	function delete_row($table, $id){
+	
+	}
+	
+	/**
+	 * @see ssciDatabase::update_row()
+	 */
+	function update_row($table, $values){
+	
+	}
+
+	
+	/**
 	 * @see ssciDatabase::create_table()
 	 */
 	function create_table($structure){
@@ -171,8 +200,27 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 		if (isset($structure['description'])){
 			$sql .= " COMMENT '$structure[description]'";
 		}
-			
+		
+		$this->set_query($sql);
+		
+		
 		return $sql;
+	}
+	
+	/**
+	 * @see ssciDatabase::delete_table()
+	 */
+	function delete_table($table){
+		$this->set_query("DROP TABLE " . $this->_set_table_prefix($table));
+		return ($this->link->query() ? true : false);
+	}
+	
+	/**
+	 * @see ssciDatabase::empty_table()
+	 */
+	function empty_table($table){
+		$this->set_query("TRUNCATE TABLE " . $this->_set_table_prefix($table));
+		return ($this->link->query() ? true : false);
 	}
 	
 	/**
@@ -235,6 +283,7 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 	 * @see ssciDatabase::query()
 	 */
 	function query(){
+		//$this->link->query($this->query);
 		echo $this->query;
 	}
 	
