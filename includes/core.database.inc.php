@@ -88,7 +88,7 @@ abstract class sscAbstractDatabase{
 	 * Permanently empty a table
 	 * @param string $table Table name representing the table to empty
 	 */
-	abstract public function emtpy_table($table);
+	abstract public function empty_table($table);
 	
 	/**
 	 * Replace appropriate table prefixes based on environment settings
