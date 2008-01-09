@@ -79,13 +79,70 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 	 */
 	function insert_row($table, $values){
 	
+		$sql = "INSERT INTO " . $this->_set_table_prefix($table) . " (";
+		$keys = array_keys($values);
+		foreach ($keys as $key){
+			if (isset($sqlf)){
+				$sqlf .= ", $key";
+			}
+			else{
+				$sqlf = $key;
+				$first = $key;
+			}
+		}
+		$sql .= $sqlf . ") VALUES ";
+		
+		// Get number of "rows" to insert
+		$count = count($values[$first]);
+		
+		// Loop through each row
+		for ($i = 0; $i < $count; $i++){
+			// Comma separator
+			if ($i > 0)
+				$sql .= ", ";
+				
+			$sqlf = "(";
+		
+			// For each key
+			foreach ($values as $key => $value){
+				if ($sqlf != '(')
+					$sqlf .= ', ';
+						
+				if (is_array($value))
+					$value = $value[$i];
+				
+				if (is_string($value))
+					$sqlf .= "'$value'";
+				else
+					$sqlf .= $value;
+			}
+			$sql .= "$sqlf)";
+		}
+		return $sql;
 	}
-	
+
 	/**
 	 * @see ssciDatabase::delete_row()
 	 */
 	function delete_row($table, $id){
-	
+		
+		// Loop through each of the field parameters
+		foreach ($id as $field => $value){
+			// Quotes for string
+			if (is_string($value))
+				$value = "'$value'";
+		
+			// Ensure 'AND' is placed when needed
+			if (!isset($sql)){
+				$sql = "$field = $value";
+			}
+			else{
+				$sql .= " AND $field = $value";
+			}
+			
+		}
+		$this->set_query("DELETE FROM " . $this->_set_table_prefix($table) . " WHERE $sql ");
+		return "DELETE FROM " . $this->_set_table_prefix($table) . " WHERE $sql ";
 	}
 	
 	/**
@@ -101,7 +158,7 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 	 */
 	function create_table($structure){
 		$sql = "CREATE TABLE " . $this->_set_table_prefix($structure['name']);
-		echo '<pre>';print_r($structure);echo '</pre>';
+		echo '<pre>';var_dump($structure);echo '</pre>';
 		
 		// Number of fields table contains
 		$fields = count($structure['fields']);
