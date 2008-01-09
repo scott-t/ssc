@@ -36,10 +36,10 @@ abstract class sscAbstractDatabase{
 	/**
 	 * Insert a row or rows into a table.
 	 * 
-	 * If array index [0] exists, then may assume multiple rows are to be inserted
-	 * at the same time with the array elements containing arrays of field=>value pairs
-	 * for each row.  If [0] does not exist, assume a single row where $values is a simple
-	 * field=>value array.
+	 * If array the first element's value is an array, then it is assumed that multiple
+	 * rows are to be inserted at the same time.  The key will then hold the field name
+	 * and the value will hold an array of successive values representing to each row.
+	 * Each field should be an array with equivalent length. 
 	 *  
 	 * @param string $table Table to insert into
 	 * @param array $values Array of field=>value pairs to insert into the database
