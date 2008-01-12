@@ -376,9 +376,15 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 		$sql = call_user_func_array('sprintf', $param);
 		
 		// Execute
-		echo $sql;
-		$this->query = $sql;
-		//$this->link->query($this->query);
+		core_debug(array("title" => "database debug", "body" => $sql));
+		return $this->link->query($sql);
+	}
+	
+	/**
+	 * @see ssciDatabase::error()
+	 */
+	public function error(){
+		return $this->link->error;
 	}
 	
 	/**
@@ -386,6 +392,13 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 	 */
 	public function number_rows(){
 		return $this->link->affected_rows;
+	}
+	
+	/**
+	 * @see ssciDatabase::fetch_assoc()
+	 */
+	public function fetch_assoc($result){
+		return $result->fetch_assoc();
 	}
 	
 	/**

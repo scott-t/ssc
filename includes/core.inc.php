@@ -144,30 +144,6 @@ function core_database_init(){
 	// Create database object
 	$ssc_database = new $SSC_SETTINGS['database']['engineclass']();
 	
-	echo $ssc_database->create_table(array(
-								'name' => 'bob',
-								'description' => 'Hi',
-								'fields' => array(
-												'id' => array(
-															'type' => 'int',
-															'size' => 'normal',
-															'auto_inc' => true,
-															'null' => false,
-															'unsigned' => true
-														),
-												'thing' => array(
-															'type' => 'varchar',
-															'size' => 10,
-															'null' => true
-														)
-											),
-								'primary' => array('id', 'thing'),
-								'unique' => array('thing'),
-								'index' => array('thing')
-											
-								));
-	
-	
 }
 
 /**
@@ -252,8 +228,30 @@ function _core_load($level){
 			break;
 			
 		case SSC_INIT_FULL:
+			core_frontend_init();
 			break;
 	
-	
 	}
+}
+
+/**
+ * Start the display of the page by booting up the theme
+ */
+function core_frontend_init(){
+	global $SSC_SETTINGS, $ssc_site_path, $ssc_database;
+
+	// Include the language file
+	$file = "$ssc_site_path/lang/" . $SSC_SETTINGS['lang']['tag'] . ".inc.php";
+
+	if (file_exists($file))
+		require_once $file;
+	else
+		core_die(array(
+					'title' => 'Bad language',
+					'body'  => "Language '" . $SSC_SETTINGS['lang']['tag'] . "' is currently not installed"
+					));
+	
+	// Load up all enabled modules
+	require_once "$ssc_site_path/includes/core.module.inc.php";
+	module_load();
 }

@@ -114,9 +114,23 @@ abstract class sscAbstractDatabase{
 	abstract public function number_rows();
 	
 	/**
+	 * Fetch an associative array for the given resource
+	 * @param resource $result Result from a previous query
+	 * @return array Associative array containing row result
+	 */
+	abstract public function fetch_assoc($result);
+	
+	/**
+	 * Returns a string containing the error message associated with the last query
+	 * @return string Error message
+	 */
+	abstract public function error();
+	
+	/**
 	 * Sets and execute a query on the current database object
 	 * @param string $sql SQL query to exectute
 	 * @param mixed $sql,... Arguments to be passed to the query for escaping  
+	 * @return resource Query result
 	 */
 	abstract public function query($sql);
 	
