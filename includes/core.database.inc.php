@@ -108,15 +108,48 @@ abstract class sscAbstractDatabase{
 	}
 	
 	/**
-	 * Sets the current database object query
-	 * @param string $sql SQL query to exectute
-	 * @param mixed $...,... Arguments to be passed to the query for escaping  
+	 * Get the number of rows affected or returned in the last operation
+	 * @return int Number of rows affected or returned
 	 */
-	abstract public function set_query($sql);
+	abstract public function number_rows();
 	
 	/**
-	 * Execute the stored query
+	 * Sets and execute a query on the current database object
+	 * @param string $sql SQL query to exectute
+	 * @param mixed $sql,... Arguments to be passed to the query for escaping  
 	 */
-	abstract public function query();
+	abstract public function query($sql);
 	
+	/**
+	 * Easy access for "paging" of a query.
+	 * 
+	 * Note: This function will generate a result containing 1 + $per_page rows
+	 * or less if not enough rows are present.  This is used to determine if a
+	 * 'next' page exists.
+	 * 
+	 * @param int $page Page to view, starting from 1
+	 * @param int $per_page Number of items per page 
+	 * @param string $sql SQL query (excluding LIMIT argument)
+	 * @param mixed $sql,... Arguments to be passed to the query for escaping
+	 * @return array Array containing information about the paging including
+	 * 				whether or not a previous/next page exists and the query
+	 * 				result object
+	 */
+	public function query_paged(){
+		$args = func_get_args();
+		$page = intval($args[0]);
+		$per_page = intval($args[1]);
+		unset($args[0], $args[1]);
+		
+		$args[2] .= " LIMIT " . ($page - 1) * $per_page . ", " . $page * $per_page;
+		
+		$result = call_user_func_array('$this->query', $args);
+		$rows = $this->number_rows();
+		
+		return array(
+				"result" => $result,
+				"next" => ($rows == $per_page ? true : false),
+				"previous" => ($page == 1 ? false : true)
+				);
+	}
 }

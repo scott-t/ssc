@@ -25,11 +25,6 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 	private $link;
 	
 	/**
-	 * @var string Storage for current query 
-	 */
-	private $query;
-	
-	/**
 	 * @var mixed Contains the result from a query 
 	 */
 	private $result;
@@ -71,7 +66,32 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 	 * @see ssciDatabase::select_from()
 	 */
 	function select_from($structure){
-	
+		$sql = "SELECT ";
+		
+		// Get fields
+		foreach ($structure['fields'] as $field){
+			if (isset($sqlf)){
+				$sqlf .= ", $field";
+			}
+			else{
+				$sqlf = $field; 
+			}
+		}
+		unset($sqlf);
+		$sql .= " FROM ";
+		
+		// Get which tables
+		foreach ($structure['table'] as $field){
+			if (isset($sqlf)){
+				$sqlf .= ", $field";
+			}
+			else{
+				$sqlf = $field; 
+			}
+		}
+		unset($sqlf);
+		$sql .= " WHERE ";
+		
 	}
 	
 	/**
@@ -141,7 +161,7 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 			}
 			
 		}
-		$this->set_query("DELETE FROM " . $this->_set_table_prefix($table) . " WHERE $sql ");
+		$this->query("DELETE FROM " . $this->_set_table_prefix($table) . " WHERE $sql ");
 		return "DELETE FROM " . $this->_set_table_prefix($table) . " WHERE $sql ";
 	}
 	
@@ -258,7 +278,7 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 			$sql .= " COMMENT '$structure[description]'";
 		}
 		
-		$this->set_query($sql);
+		$this->query($sql);
 		
 		
 		return $sql;
@@ -268,7 +288,7 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 	 * @see ssciDatabase::delete_table()
 	 */
 	function delete_table($table){
-		$this->set_query("DROP TABLE " . $this->_set_table_prefix($table));
+		$this->query("DROP TABLE " . $this->_set_table_prefix($table));
 		return ($this->link->query() ? true : false);
 	}
 	
@@ -276,7 +296,7 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 	 * @see ssciDatabase::empty_table()
 	 */
 	function empty_table($table){
-		$this->set_query("TRUNCATE TABLE " . $this->_set_table_prefix($table));
+		$this->query("TRUNCATE TABLE " . $this->_set_table_prefix($table));
 		return ($this->link->query() ? true : false);
 	}
 	
@@ -339,22 +359,33 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 	/**
 	 * @see ssciDatabase::query()
 	 */
-	function query(){
+	function query($sql){
+		$param = func_get_args();
+		$param_count = count($param);
+		for ($i = 1; $i < $param_count; $i++){
+			// Escape string's as needed
+			if (is_string($param[$i]))
+				$param[$i] = $this->escape_string($param[$i]);
+			
+		}
+		
+		// Replace table name
+		$param[0] = preg_replace('/#__(\w+)/e', "sscAbstractDatabase::_set_table_prefix('$1')", $sql);
+
+		// Substitute in variables
+		$sql = call_user_func_array('sprintf', $param);
+		
+		// Execute
+		echo $sql;
+		$this->query = $sql;
 		//$this->link->query($this->query);
-		echo $this->query;
 	}
 	
 	/**
-	 * @see ssciDatabase::set_query()
+	 * @see ssciDatabase::number_rows()
 	 */
-	function set_query($sql){
-		$param = func_get_args();
-		$param_count = count($param);
-		for ($i = 1; $i < $param_count; $i++)
-			$param[$i] = $this->escape_string($param[$i]);
-		
-		$sql = call_user_func_array('sprintf', $param);
-		$this->query = $sql;
+	public function number_rows(){
+		return $this->link->affected_rows;
 	}
 	
 	/**
