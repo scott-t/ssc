@@ -27,6 +27,41 @@ define("SSC_MODULE_ENABLED", 1);
 $SSC_MODULES;
 
 /**
+ * Call a hook on any loaded modules.  Specific modules may be hooked 
+ * by passing the module name or names as an array to $modules
+ * 
+ * @param string $hook Hook to call
+ * @param string|array $modules Module(s) to execute the hook on
+ */
+function module_hook($hook, $modules = NULL){
+	global $SSC_MODULES;
+	
+	if (!isset($modules)){
+		foreach ($SSC_MODULES as $value){
+			$hook = "$value[filename]_init";
+			if (function_exists($hook))
+				call_user_func($hook);
+		}
+	}
+	else {
+		// Use suggested modules
+		if(isarray($modules))
+			foreach ($modules as $value){
+				$hook = "$value[filename]_init";
+				if (function_exists($hook))
+					call_user_func($hook);
+			}
+		}
+		else {
+			$hook = "${modules}_init";
+			if (function_exists($hook))
+				call_user_func($hook);
+		}
+	}
+
+}
+
+/**
  * Loop through and load up each module as needed
  */
 function module_load(){
@@ -50,11 +85,7 @@ function module_load(){
 	}
 
 	// Initialise module
-	foreach ($SSC_MODULES as $value){
-		$hook = "$value[filename]_init";
-		if (function_exists($hook))
-			call_user_func($hook);
-	}
+	module_hook("init");
 	
 	// Mark function as run
 	$has_run = 1;
