@@ -21,6 +21,11 @@ define("SSC_MODULE_DISABLED", 0);
 define("SSC_MODULE_ENABLED", 1);
 
 /**
+ * Module enable status: Module is required for core operation
+ */
+define("SSC_MODULE_REQUIRED", 2);
+
+/**
  * Module information.
  * @global array $SSC_MODULES
  */
@@ -36,26 +41,28 @@ $SSC_MODULES;
 function module_hook($hook, $modules = NULL){
 	global $SSC_MODULES;
 	
+	core_debug(array('title'=>'module_hook', 'body'=>"Calling '$hook' hook on modules"));
+	
 	if (!isset($modules)){
 		foreach ($SSC_MODULES as $value){
-			$hook = "$value[filename]_init";
-			if (function_exists($hook))
-				call_user_func($hook);
+			$h = "$value[filename]_$hook";
+			if (function_exists($h))
+				call_user_func($h);
 		}
 	}
 	else {
 		// Use suggested modules
-		if(isarray($modules))
+		if (isarray($modules)){
 			foreach ($modules as $value){
-				$hook = "$value[filename]_init";
-				if (function_exists($hook))
-					call_user_func($hook);
+				$h = "$value[filename]_$hook";
+				if (function_exists($h))
+					call_user_func($h);
 			}
 		}
 		else {
-			$hook = "${modules}_init";
-			if (function_exists($hook))
-				call_user_func($hook);
+			$h = "${modules}_$hook";
+			if (function_exists($h))
+				call_user_func($h);
 		}
 	}
 
@@ -76,12 +83,13 @@ function module_load(){
 	
 		
 	// Retrieve all enabled modules
-	$result = $ssc_database->query("SELECT name, filename, weight FROM #__module WHERE status = %d ORDER BY weight ASC", SSC_MODULE_ENABLED);
+	$result = $ssc_database->query("SELECT name, filename, weight FROM #__module WHERE status >= %d ORDER BY weight ASC", SSC_MODULE_ENABLED);
 
 	// Load each module
 	while ($data = $ssc_database->fetch_assoc($result)){
 		$SSC_MODULES[] = $data;
-		include "$ssc_site_path/modules/$data[filename].module.php";
+		core_debug(array('title'=>'module_load','body'=>"Loading '$data[name]' ($data[filename].module.php)"));
+		include "$ssc_site_path/modules/$data[filename]/$data[filename].module.php";
 	}
 
 	// Initialise module
