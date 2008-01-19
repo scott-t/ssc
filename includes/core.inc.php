@@ -46,6 +46,15 @@ $SSC_SETTINGS;
 
 
 /**
+ * Clean up
+ */
+function core_close(){
+	global $ssc_database;
+	module_hook('close');
+	unset($ssc_database);
+}
+
+/**
  * Retrieve the correct site configuration.  Sites can only be set on a (sub-)domain basis. 
  * 
  * @see default.settings.inc.php
@@ -113,7 +122,23 @@ function core_conf_init(){
 			'body'  => 'It seems SSC was not successfully uploaded as some files are missing!'
 			));
 	}
+	
+	// Set theme path
+	$SSC_SETTINGS['theme']['path'] = "$ssc_site_path/themes/{$SSC_SETTINGS['theme']['name']}";
+	$SSC_SETTINGS['theme']['url'] = "$ssc_site_url/themes/{$SSC_SETTINGS['theme']['name']}";
 		
+}
+
+/**
+ * Set a cookie
+ * @param string $name Cookie name
+ * @param mixed $value Cookie value
+ * @param int $timeout Offset from the current time to expire the cookie
+ */
+function core_cookie($name, $value, $timeout = 0){
+	//static $cookie_val[] = '';
+	core_debug(array('title'=>'setcookie','body'=>'For ' . ".".$_SERVER['HTTP_HOST'].", cookie $name = $value"));
+	setcookie($name, $value, $timeout, "/", ($_SERVER['HTTP_HOST'] != "localhost" ? ".".$_SERVER['HTTP_HOST'] : false), false);
 }
 
 /**
@@ -254,4 +279,14 @@ function core_frontend_init(){
 	// Load up all enabled modules
 	require_once "$ssc_site_path/includes/core.module.inc.php";
 	module_load();
+	
+	// Set up the theme
+	require_once "$ssc_site_path/includes/core.theme.inc.php";
+	$file = "{$SSC_SETTINGS['theme']['path']}/{$SSC_SETTINGS['theme']['name']}.theme.php";
+	if (!file_exists($file))
+		core_die(array(
+					'title' => 'Bad theme',
+					'body' => 'Specified theme ' . $SSC_SETTINGS['theme']['name'] . ' is not installed'
+				));
+				
 }

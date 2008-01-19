@@ -19,5 +19,6 @@ $ssc_execute_time = microtime(true);
 include('./includes/core.inc.php');
 core_init();
 
-// Show debug info
-core_debug_show();
+theme_load();
+
+core_close();
