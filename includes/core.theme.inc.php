@@ -56,7 +56,17 @@ function theme_title($count){
  * 					'mini' output versions should be shown
  */
 function theme_side($count){
-	echo "Navigation side $count";
+	global $ssc_database;
+	
+	$result = $ssc_database->query("SELECT filename, args FROM #__module, #__sidebar WHERE #__module.id = #__sidebar.module AND location = %d ORDER BY #__sidebar.weight ASC", $count);
+	if ($ssc_database->number_rows() < 1){
+		echo '&nbsp;';
+		return false;
+	}
+	while ($data = $ssc_database->fetch_assoc($result)){
+		module_hook('content_mini', $data['filename'], explode(',', $data['args']));
+	}
+	return true;
 }
 
 /**
@@ -73,9 +83,28 @@ function theme_header($count){
  * Called when the primary body needs to be output.
  */
 function theme_body(){
-	$handle = fopen(__FILE__, "r");
-	echo htmlentities(fread($handle, filesize(__FILE__)));
-	fclose($handle);
+	global $SSC_SETTINGS;
+	
+	// Display any built up errors
+	_theme_show_messages();
+	
+	module_hook('content', $SSC_SETTINGS['runtime']['handler_name']);
+}
+
+/**
+ * Used to generate message boxes at the header of each page
+ * @private
+ */
+function _theme_show_messages(){
+	global $SSC_SETTINGS;
+	
+	// Have there been any errors set?
+	if (!isset($SSC_SETTINGS['runtime']['errorlist']))
+		return;
+		
+	foreach ($SSC_SETTINGS['runtime']['errorlist'] as $error){
+		echo '<div class="error box">', $error['msg'], '</div>';
+	}
 }
 
 /**
@@ -85,8 +114,9 @@ function theme_body(){
  * 					or heading text
  */
 function theme_footer($count){	
-	if($count==1)
-		echo "second nav again?";
+	if($count==1){
+		echo 'GET: ';print_r($_GET);echo '<br />POST: ';
+		print_r($_POST);}
 	else
 	// Show debug info
 	core_debug_show();

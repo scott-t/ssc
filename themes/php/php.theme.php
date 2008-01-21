@@ -10,8 +10,13 @@
  */
 defined('_VALID_SSC') or die('Restricted access');
 
-?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+if(true){header("Content-type:application/xhtml+xml");?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="<?php echo $SSC_SETTINGS['lang']['tag'] ?>" xml:lang="<?php echo $SSC_SETTINGS['lang']['tag'] ?>">
+<?php }else{ 
+?><!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="<?php echo $SSC_SETTINGS['lang']['tag'] ?>">
+<?php } ?>
 <head><?php theme_meta(); ?>
 <style type="text/css" media="all">
 	@import url("<?php echo $SSC_SETTINGS['theme']['url']; ?>/site.css");
@@ -27,7 +32,9 @@ defined('_VALID_SSC') or die('Restricted access');
   <div id="container-help">
     
   	<div id="left"><?php theme_side(1); ?></div>
-    <div id="right"><?php theme_side(2); ?></div><div id="body"><?php theme_body(); ?></div>
+    <div id="right"><?php theme_side(2); ?></div>
+    <div id="body"><?php theme_body(); ?></div>
+    <div class="clear"></div>
   </div>
 </div>
 <div id="foot-bar"><?php theme_footer(1); ?></div>

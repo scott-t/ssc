@@ -23,16 +23,19 @@ define('SSC_USER_ROOT', 1);
 /**
  * Implements module_init hook
  */
-
 function login_init(){
-	core_debug(array('title'=>'login module', 'body'=>'init hook'));
+	global $ssc_site_path;
+	
+	// Include password encryption library
+	require_once "$ssc_site_path/lib/phpass.lib.php";
 	
 	session_set_save_handler('_login_sess_open', '_login_sess_close', '_login_sess_read', '_login_sess_write', '_login_sess_destroy', '_login_sess_clean');
 	
 	session_start();
 	
-	if (!isset($_SESSION['username'], $_SESSION['userlevel'], $_SESSION['useragent'])){ 
-		session_regenerate_id();
+	if (!isset($_SESSION['username'], $_SESSION['userlevel'], $_SESSION['useragent'], $_SESSION['id'])){ 
+		//session_regenerate_id();
+		$_SESSION['id'] = 0; 
 		$_SESSION['username'] = 'Guest';
 		$_SESSION['userlevel'] = SSC_USER_GUEST;
 		$_SESSION['useragent'] = md5($_SERVER['HTTP_USER_AGENT']);
@@ -49,14 +52,135 @@ function login_close(){
 }
 
 /**
+ * Implements module_content
+ */
+function login_content(){
+	global $ssc_site_url, $ssc_database;
+	
+	if ($_GET['path'] != 'user'){
+		module_error(SSC_ERROR_NOT_FOUND, SSC_LANG_NOT_FOUND);
+		return;
+	}
+	
+	switch ($_GET['param']){
+	case 'login':
+		// Show login details
+		$result = $ssc_database->query("SELECT accessed, ip FROM #__user WHERE id = %d LIMIT 1", $_SESSION['id']);
+		if (!($data = $ssc_database->fetch_assoc($result))){
+			core_add_message(SSC_MSG_CRIT, SSC_LANG_USER_BAD_USER);
+			break;
+		}
+
+		// Output welcome
+		$now = time();
+		printf(SSC_LANG_WELCOME_PAGE, $_SESSION['username'],  date(SSC_LANG_DATE_FORMAT, $data['accessed']), $data['ip'], date(SSC_LANG_DATE_FORMAT, $now), $ssc_site_url . '/admin', $_SERVER['HTTP_REFERER']);
+		if (isset($_POST['form-id']))
+			$ssc_database->query("UPDATE #__user SET accessed = %d, ip = '%s' WHERE id = %d", $now, $_SERVER['REMOTE_ADDR'], $_SESSION['id']); 
+		break;
+	
+	default:
+		module_error(SSC_ERROR_NOT_FOUND, SSC_LANG_NOT_FOUND);
+		break;
+	}
+}
+
+/**
+ * Implements module_content_mini
+ */
+function login_content_mini(){
+	if ($_SESSION['userlevel'] == SSC_USER_GUEST){
+		$form = array();
+		$form['id'] = 'login-side';
+		$form['action'] = '/user/login';
+		$form['method'] = 'post';
+		$form['fields'] = array();
+		
+		$form['fields'][0]['legend'] = SSC_LANG_USER_LOGIN;
+		$form['fields'][0]['user'] = array(
+										'label' => SSC_LANG_USER_USERNAME . ': ',
+										'type' => 'text',
+										'size' => 15,
+										'maxlen' => 20
+										);
+		$form['fields'][0]['pass'] = array(
+										'label' => SSC_LANG_USER_PASSWORD . ': ',
+										'type' => 'password',
+										'size' => 15
+										);
+		$form['fields'][0]['submit'] = array(
+										'type' => 'submit',
+										'value' => SSC_LANG_USER_DOLOGIN
+										);
+		core_generate_form($form);
+	}
+	else{
+		echo SSC_LANG_WELCOME, $_SESSION['username'];
+	}
+}
+
+/**
+ * Implements module_form_handler
+ */
+function login_form_handler(){
+	global $ssc_database;
+	
+	// Branch depending on form
+	switch ($_POST['form-id']){
+	case 'login-main':
+	case 'login-side':
+		$pass = new PasswordHash(8, true);
+		
+		// Attempt to find relevant username
+		$result = $ssc_database->query("SELECT id, accessed, password, fname, gid FROM #__user WHERE name = '%s' LIMIT 1", $_POST['user']);
+		if ($ssc_database->number_rows() < 1){
+			// Bad user details.  Tell user
+			core_add_message(SSC_MSG_CRIT, SSC_LANG_USER_BAD_USER);
+			return;
+		}
+		
+		// Check password
+		$data = $ssc_database->fetch_assoc($result);
+		if (!$pass->CheckPassword($_POST['pass'], $data['password'])){
+			// Was wrong!
+			core_add_message(SSC_MSG_CRIT, SSC_LANG_USER_BAD_USER);
+			return;
+		}
+			
+		// Correct details
+		_login_kill_session();
+		session_regenerate_id();
+		$_SESSION['username'] = $data['fname'];
+		$_SESSION['userlevel'] = $data['gid'];
+		$_SESSION['id'] = $data['id'];
+	}
+}
+
+/**
  * Logs the current user out
  */
 function login_logout(){
-	session_destroy();
+	_login_kill_session();
 	session_regenerate_id();
-	$_SESSION['username'] = 'Guest';
+	$_SESSION['id'] = 0;
+	$_SESSION['username'] = SSC_LANG_USER_GUEST;
 	$_SESSION['userlevel'] = SSC_USER_GUEST;
 	$_SESSION['useragent'] = md5($_SERVER['HTTP_USER_AGENT']);
+}
+
+/**
+ * Destroys an active session
+ */
+function _login_kill_session(){
+	// Empty variables
+	$_SESSION = array();
+	
+	// Remove remote SID
+	if (isset($_COOKIE[session_name()])){
+		core_cookie(session_name(), '', -3600);
+	}
+	
+	// Destroy the session
+	session_destroy();
 }
 
 /**

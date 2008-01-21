@@ -98,7 +98,6 @@ abstract class sscAbstractDatabase{
 	protected function _set_table_prefix($table){
 		global $SSC_SETTINGS;
 		$table = '_' . $table;
-		
 		if (array_key_exists($table, $SSC_SETTINGS['database']['prefix'])){
 			return $SSC_SETTINGS['database']['prefix'][$table] . $table;
 		}

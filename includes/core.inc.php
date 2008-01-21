@@ -18,6 +18,29 @@ define('SSC_INIT_DATABASE', 2);
 define('SSC_INIT_FULL', 3);
 
 /**
+ * Module error status: Forbidden
+ */
+define("SSC_ERROR_FORBIDDEN", 403);
+
+/**
+ * Module error status: Page not found
+ */
+define("SSC_ERROR_NOT_FOUND", 404);
+
+/**
+ * Module message type: Info
+ */
+define("SSC_MSG_INFO", 1);
+/**
+ * Module message type: Warning
+ */
+define("SSC_MSG_WARN", 2);
+/**
+ * Module message type: Error
+ */
+define("SSC_MSG_CRIT", 3);
+
+/**
  * URL domain information.
  * @global string $ssc_site_url
  */
@@ -126,6 +149,10 @@ function core_conf_init(){
 	// Set theme path
 	$SSC_SETTINGS['theme']['path'] = "$ssc_site_path/themes/{$SSC_SETTINGS['theme']['name']}";
 	$SSC_SETTINGS['theme']['url'] = "$ssc_site_url/themes/{$SSC_SETTINGS['theme']['name']}";
+	
+	// Set referer if none present
+	if (!isset($_SERVER['HTTP_REFERER']))
+		$_SERVER['HTTP_REFERER'] = '';
 		
 }
 
@@ -138,7 +165,7 @@ function core_conf_init(){
 function core_cookie($name, $value, $timeout = 0){
 	//static $cookie_val[] = '';
 	core_debug(array('title'=>'setcookie','body'=>'For ' . ".".$_SERVER['HTTP_HOST'].", cookie $name = $value"));
-	setcookie($name, $value, $timeout, "/", ($_SERVER['HTTP_HOST'] != "localhost" ? ".".$_SERVER['HTTP_HOST'] : false), false);
+	setcookie($name, $value, $timeout, "/", ($_SERVER['HTTP_HOST'] != "localhost" ? ".".$_SERVER['HTTP_HOST'] : false), false, true);
 }
 
 /**
@@ -280,6 +307,10 @@ function core_frontend_init(){
 	require_once "$ssc_site_path/includes/core.module.inc.php";
 	module_load();
 	
+	// Check inputs
+	core_magic_check();
+	core_form_check();
+	
 	// Set up the theme
 	require_once "$ssc_site_path/includes/core.theme.inc.php";
 	$file = "{$SSC_SETTINGS['theme']['path']}/{$SSC_SETTINGS['theme']['name']}.theme.php";
@@ -289,4 +320,140 @@ function core_frontend_init(){
 					'body' => 'Specified theme ' . $SSC_SETTINGS['theme']['name'] . ' is not installed'
 				));
 				
+}
+
+/**
+ * Generates a form based on the structure of the passed array
+ * @param array $struc Array depicting form structure
+ */
+function core_generate_form(&$struct){
+	global $ssc_site_url;
+	// Check for core components
+	if (!isset($struct['action'], $struct['method'], $struct['fields'], $struct['id']))
+		return;
+		
+	// Begin output
+	echo "<form action=\"", ($struct['action'] == '' ? '' : $ssc_site_url . $struct['action']), "\" method=\"$struct[method]\" id=\"$struct[id]\"";
+	// Optional form enc-types
+	if (isset($struct['enc'])){
+		echo ' enctype="';
+		switch ($struct['enc']){
+		case 'multi':
+			echo 'multipart/form-data';
+			break;
+		default:
+			echo 'application/x-www-form-urlencoded';
+			break;
+		}
+		echo '">';
+	}else{
+		echo '>';
+	}
+	
+	// Parse the fieldsets
+	foreach ($struct['fields'] as $fieldset){
+		echo '<fieldset>';
+		// Legend field
+		if (isset($fieldset['legend'])){
+			echo "<legend>$fieldset[legend]</legend>";
+			unset($fieldset['legend']);
+		}
+		
+		if (isset($struct['id'])){
+			echo '<input type="hidden" name="form-id" value="', $struct['id'],'" />';
+			unset($struct['id']);
+		}
+		
+		foreach ($fieldset as $id => $s){
+			if (!isset($s['type']))
+				continue;
+				
+			// Display field types
+			switch($s['type']){
+			// Text inputs
+			case 'text':
+			case 'password':
+				if (isset($s['label']))
+					echo '<label for="', $id, '">', $s['label'], '</label>';
+					
+				echo '<input type="', $s['type'], '" id="', $id, '" name="' , 
+					(isset($s['name']) ? $s['name'] : $id), '"',
+					(isset($s['size']) ? ' size="' . $s['size'] . '"' : ''),
+					(isset($s['maxlen']) ? ' maxlength="' . $s['maxlen'] . '"' : ''), 
+					(isset($s['value']) ? ' value="' . $s['value'] . '"' : ''), ' />'; 
+				break;
+				
+			// Buttons
+			case 'submit':
+			case 'button':
+			case 'reset':
+				echo '<input type="', $s['type'], '" id="', $id, '" name="' , 
+					(isset($s['name']) ? $s['name'] : $id), '"', 
+					(isset($s['value']) ? ' value="' . $s['value'] . '"' : ''), ' />';
+					
+			}
+		}
+			
+		echo '</fieldset>';
+	}
+	
+	echo '</form>';
+}
+
+/**
+ * Checks if a form has been submitted and passes it off to the relevant module if present
+ */
+function core_form_check(){
+	global $ssc_site_url;
+	// Ensure form was submitted from ourself
+	if (isset($_POST['form-id']) && strpos($_SERVER['HTTP_REFERER'], $ssc_site_url) === 0){
+		// We have a submitted form sitting here
+		$module = explode('-', $_POST['form-id']);
+		module_hook('form_handler', $module[0]);
+	}
+}
+
+/**
+ * Stores a list of messages to show to the user
+ * @param int $type Message importance level
+ * @param string $msg Message to be stored
+ */
+function core_add_message($type, $msg){
+	global $SSC_SETTINGS;
+	$SSC_SETTINGS['runtime']['errorlist'][] = array('type' => $type, 'msg' => $msg);
+}
+
+/**
+ * Undoes gpc_magic_quotes if present
+ */
+function core_magic_check(){
+	static $done = false;
+	if (!$done && get_magic_quotes_gpc()){
+		array_walk($_POST, '_core_magic_check');
+		array_walk($_GET, '_core_magic_check');
+		array_walk($_COOKIE, '_core_magic_check');
+		$done = true;
+	}
+}
+
+/**
+ * Strip the quotes from the specified string.  If an array is passed, will recursively strip.
+ * @param string|array $item Item to strip from.
+ * @private
+ */
+function _core_magic_check(&$item){
+	static $sysbase = -1;
+	if ($sysbase == -1)
+		$sysbase = (ini_get('magic_quotes_sysbase') ? 2 : 1);
+		
+	if (is_array($item)){
+		array_walk($item, '_core_magic_check');
+	}
+	else{
+		if ($sysbase == 2)
+			$item = stripslashes($item);
+		else
+			$item = str_replace("''","'",$item);
+	}
+	
 }
