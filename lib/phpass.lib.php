@@ -8,12 +8,25 @@
 /**
  * Check for legit call
  */
-//defined('_VALID_SSC') or die('Restricted access');
+defined('_VALID_SSC') or die('Restricted access');
 
 /**
  * PHPass password hashing framework
- * @package SSC
- * @subpackage Libraries
+ * 
+ * Usage:
+ * <code>
+ * <?php
+ * 
+ *     $pass = new PasswordHash(8, true);	// Use portable version
+ * 
+ *     // Calculate a hash
+ *     $hash = $pass->HassPassword('password');
+ * 
+ *     // Check if match
+ *     $match = $pass->CheckPassword('password', $hash);  // $match now == true
+ * 
+ * ?>
+ * </code>
  * 
  * Version 0.1 / SSC 3.0
  * 
@@ -37,6 +50,8 @@
  * Obviously, since this code is in the public domain, the above are not
  * requirements (there can be none), but merely suggestions.
  * 
+ * @package SSC
+ * @subpackage Libraries
  */
 
 class PasswordHash {
