@@ -98,11 +98,11 @@ abstract class sscAbstractDatabase{
 	protected function _set_table_prefix($table){
 		global $SSC_SETTINGS;
 		$table = '_' . $table;
-		if (array_key_exists($table, $SSC_SETTINGS['database']['prefix'])){
-			return $SSC_SETTINGS['database']['prefix'][$table] . $table;
+		if (array_key_exists($table, $SSC_SETTINGS['db-prefix'])){
+			return $SSC_SETTINGS['db-prefix'][$table] . $table;
 		}
 		else {
-			return $SSC_SETTINGS['database']['prefix']['default'] . $table;
+			return $SSC_SETTINGS['db-prefix']['default'] . $table;
 		}
 	}
 	
@@ -118,6 +118,13 @@ abstract class sscAbstractDatabase{
 	 * @return array Associative array containing row result
 	 */
 	abstract public function fetch_assoc($result);
+	
+	/**
+	 * Fetch an object for the given resource
+	 * @param resource $result Result from a previous query
+	 * @return object Object containing row result
+	 */
+	abstract public function fetch_object($result);
 	
 	/**
 	 * Returns a string containing the error message associated with the last query

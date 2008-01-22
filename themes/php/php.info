@@ -1,0 +1,10 @@
+; PHP theme settings file
+name = PHP Theme
+description = A PHP website based theme for SSC
+version = 3.x
+
+; theme related settings
+head_count = 1
+side_count = 2
+foot_count = 2
+title_count = 2

@@ -11,6 +11,11 @@
 defined('_VALID_SSC') or die('Restricted access');
 
 /**
+ * Default theme
+ */
+define('SSC_DEFAULT_THEME', 'php');
+
+/**
  * Theme controller - Vertical navigation bar
  */
 define('SSC_THEME_NAV_VERTICAL', 1);
@@ -29,17 +34,106 @@ define('SSC_THEME_NAV_HORIZONTAL', 1);
  * 
  */
 function theme_load(){
-	global $SSC_SETTINGS;
+	/**
+	 * Wrapper for themes
+	 */
+	function theme_do_render($type, $count = 1){
+		theme_render($type, $count);
+	}
+
+	/**
+	 * Rendering function
+	 * @param string $type Data or type. Passed byref so we don't need to copy an entire string  
+	 */
+	function theme_render($type = '', $count = null){
+		static $data;
+		global $ssc_site_path, $ssc_site_url, $ssc_title;
+
+		if ($type == ''){
+			return;
+		}
 		
-	include "{$SSC_SETTINGS['theme']['path']}/{$SSC_SETTINGS['theme']['name']}.theme.php";
+		if (!isset($count)){ 
+			$data = $type;
+					
+			if (!isset($ssc_title))
+				$ssc_title = 'Smooth Sailing CMS';
+				
+			$data['meta'] .= "<title>$ssc_title</title>"; 
+
+			$theme = ssc_var_get('theme_default', SSC_DEFAULT_THEME);
+			$theme_url = "$ssc_site_url/themes/$theme";
+			$theme_path = "$ssc_site_path/themes/$theme";
+			 
+			include "$theme_path/$theme.theme.php";
+			
+			return;
+		}
+		
+		$count--;
+
+		if (is_string($data[$type])){
+			echo $data[$type];
+			return;
+		}
+		
+		if (isset($data[$type][$count])){		
+			echo $data[$type][$count];
+			return;
+		}
+		
+		
+		
+		return '';
+		
+	}
+	
+	
+	global $ssc_site_path;
+	
+	$info = ssc_parse_ini_file('theme', "$ssc_site_path/themes/" . ssc_var_get('theme_default', SSC_DEFAULT_THEME). '/' . ssc_var_get('theme_default', SSC_DEFAULT_THEME) . '.info');
+	
+	// Now we build the theme up
+	$data = array();
+	// Meta
+	$data['meta'] = theme_meta();
+	
+	// Headers
+	$count = intval($info['head_count']);
+	for ($i = 0; $i < $count; $i++)
+		$data['header'][] = theme_header($i);
+	
+	// 'Title' blocks
+	$count = intval($info['title_count']);
+	for ($i = 0; $i < $count; $i++)
+		$data['title'][] = theme_title($i);
+		
+	// Sidebar blocks
+	$count = intval($info['side_count']);
+	for ($i = 0; $i < $count; $i++)
+		$data['side'][] = theme_side($i);
+		
+	// Body
+	$data['body']= theme_body();
+		
+	// Footer blocks
+	$count = intval($info['foot_count']);
+	for ($i = 0; $i < $count; $i++)
+		$data['footer'][] = theme_footer($i);
+		
+	
+	return $data;
 }
 
 /**
  * Called when HTML meta, CSS and JS tags may be output
  */
 function theme_meta(){
+	ob_start();
 	module_hook('meta');
-	echo '<title>content filler</title>';
+	$data = ob_get_contents();
+	ob_end_clean();
+	return $data;
 }
 
 /**
@@ -47,7 +141,7 @@ function theme_meta(){
  * @param int $count Header level.  Use 1 for primary title and 2 for a quip or subtitle.
  */
 function theme_title($count){
-	echo "SSC";
+	return "SSC";
 }
 
 /**
@@ -58,15 +152,18 @@ function theme_title($count){
 function theme_side($count){
 	global $ssc_database;
 	
+	ob_start();
+	
 	$result = $ssc_database->query("SELECT filename, args FROM #__module, #__sidebar WHERE #__module.id = #__sidebar.module AND location = %d ORDER BY #__sidebar.weight ASC", $count);
 	if ($ssc_database->number_rows() < 1){
-		echo '&nbsp;';
-		return false;
+		return '&nbsp;';
 	}
 	while ($data = $ssc_database->fetch_assoc($result)){
-		module_hook('content_mini', $data['filename'], explode(',', $data['args']));
+		module_hook('content_mini', $data['filename'], $data['args']);
 	}
-	return true;
+	$contents = ob_get_contents();
+	ob_end_clean();
+	return $contents;
 }
 
 /**
@@ -76,7 +173,7 @@ function theme_side($count){
  * 					or heading text
  */
 function theme_header($count){
-	echo "breadcrumb";
+	return "breadcrumb";
 }
 
 /**
@@ -85,10 +182,16 @@ function theme_header($count){
 function theme_body(){
 	global $SSC_SETTINGS;
 	
+	ob_start();
+	
 	// Display any built up errors
 	_theme_show_messages();
 	
 	module_hook('content', $SSC_SETTINGS['runtime']['handler_name']);
+	
+	$contents = ob_get_contents();
+	ob_end_clean();
+	return $contents;
 }
 
 /**
@@ -113,11 +216,17 @@ function _theme_show_messages(){
  * 					header sections exist but are not used purely for decoration,
  * 					or heading text
  */
-function theme_footer($count){	
+function theme_footer($count){
+	ob_start();
+		
 	if($count==1){
 		echo 'GET: ';print_r($_GET);echo '<br />POST: ';
 		print_r($_POST);}
 	else
 	// Show debug info
-	core_debug_show();
+	ssc_debug_show();
+	
+	$contents = ob_get_contents();
+	ob_end_clean();
+	return $contents;
 }

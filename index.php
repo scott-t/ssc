@@ -17,10 +17,12 @@ $ssc_execute_time = microtime(true);
 
 // Begin application startup
 include('./includes/core.inc.php');
-core_init();
+ssc_init();
 
 // Start output
-theme_load();
+$data = theme_load();
+
+theme_render($data);
 
 // Clean up
-core_close();
+ssc_close();

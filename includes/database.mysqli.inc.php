@@ -10,7 +10,7 @@
  */
 defined('_VALID_SSC') or die('Restricted access');
 
-$SSC_SETTINGS['database']['engineclass'] = 'sscDatabaseMySQLi';
+$SSC_SETTINGS['db-engineclass'] = 'sscDatabaseMySQLi';
 
 /**
  * MySQLI based database object
@@ -43,7 +43,7 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 		
 		// Check if mysqli is available
 		if (!function_exists('mysqli_connect')){
-			core_die(array(
+			ssc_die(array(
 						'title' => 'Installation Error',
 						'body'  => 'The MySQLI interface for PHP is not available'
 					));
@@ -51,7 +51,7 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 		}
 		
 		// Perform connection
-		$this->link = new mysqli($SSC_SETTINGS['database']['host'], $SSC_SETTINGS['database']['user'], $SSC_SETTINGS['database']['password'], $SSC_SETTINGS['database']['database'], $SSC_SETTINGS['database']['port']);
+		$this->link = new mysqli($SSC_SETTINGS['db-host'], $SSC_SETTINGS['db-user'], $SSC_SETTINGS['db-password'], $SSC_SETTINGS['db-database'], $SSC_SETTINGS['db-port']);
 	}
 	
 	/**
@@ -376,7 +376,7 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 		$sql = call_user_func_array('sprintf', $param);
 		
 		// Execute
-		core_debug(array("title" => "database debug", "body" => $sql));
+		ssc_debug(array("title" => "database debug", "body" => $sql));
 		return $this->link->query($sql);
 	}
 	
@@ -402,12 +402,20 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 	}
 	
 	/**
+	 * @see ssciDatabase::fetch_object()
+	 */
+	public function fetch_object($result){
+		return $result->fetch_object();
+	}
+	
+	/**
 	 * Escape the current string
 	 * @param string $str String to be escaped
 	 * @return string Escaped string ready for insertion into the database
 	 */
 	function escape_string($str){
 		$this->link->real_escape_string($str);
-		return str_replace(array('_', '%'), array('\\_', '\\%'),$str);
+		return $str;
+		//return str_replace(array('_', '%'), array('\\_', '\\%'),$str);
 	}
 }

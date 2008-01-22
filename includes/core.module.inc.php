@@ -75,13 +75,13 @@ function module_find_handler(){
 function module_hook($hook, $modules = NULL, $args = NULL){
 	global $SSC_MODULES;
 	
-	core_debug(array('title'=>'module_hook', 'body'=>"Calling '$hook' hook on modules"));
+	ssc_debug(array('title'=>'module_hook', 'body'=>"Calling '$hook' hook on modules"));
 	
 	if (!isset($modules)){
 		foreach ($SSC_MODULES as $value){
 			$h = "$value[filename]_$hook";
 			if (function_exists($h))
-				call_user_func($h, $args);
+				call_user_func_array($h, $args);
 		}
 	}
 	else {
@@ -90,13 +90,13 @@ function module_hook($hook, $modules = NULL, $args = NULL){
 			foreach ($modules as $value){
 				$h = "$value[filename]_$hook";
 				if (function_exists($h))
-					call_user_func($h, $args);
+					call_user_func_array($h, $args);
 			}
 		}
 		else {
 			$h = "${modules}_$hook";
 			if (function_exists($h))
-				call_user_func($h, $args);
+				call_user_func_array($h, $args);
 		}
 	}
 
@@ -122,7 +122,7 @@ function module_load(){
 	// Load each module
 	while ($data = $ssc_database->fetch_assoc($result)){
 		$SSC_MODULES[] = $data;
-		core_debug(array('title'=>'module_load','body'=>"Loading '$data[name]' ($data[filename].module.php)"));
+		ssc_debug(array('title'=>'module_load','body'=>"Loading '$data[name]' ($data[filename].module.php)"));
 		include "$ssc_site_path/modules/$data[filename]/$data[filename].module.php";
 	}
 
@@ -142,7 +142,7 @@ function module_load(){
  * but handle the error and quit normally.
  * 
  * @param int $error Status error relating to reason for dieing
- */
+ * /
 function module_error_content($error){
 	global $SSC_SETTINGS;
 	if (isset($SSC_SETTINGS['runtime']['error'])){
@@ -157,7 +157,7 @@ function module_error_content($error){
  * @param int $error Status error
  * @param string $message Description for dieing
  * @param bool $change Whether or not the core should take over the problem
- */
+ * /
 function module_error($error, $message, $change = true){
 	global $SSC_SETTINGS;
 	
@@ -169,4 +169,4 @@ function module_error($error, $message, $change = true){
 	else{
 		$SSC_SETTINGS['runtime']['error'] = $error;
 	}
-}
+}*/
