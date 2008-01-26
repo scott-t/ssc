@@ -31,99 +31,95 @@ define('SSC_THEME_NAV_TRAIL', 1);
 define('SSC_THEME_NAV_HORIZONTAL', 1);
 
 /**
- * 
+ * Returns the HTML tags representing CSS and JS for the current page
+ * @param string $ver Revision of the css/js to force page a refresh.
+ * 				eg, "/themes/site.css?ver"
+ * @return string HTML tags representing the CSS/JS
  */
-function theme_load(){
-	/**
-	 * Wrapper for themes
-	 */
-	function theme_do_render($type, $count = 1){
-		theme_render($type, $count);
-	}
-
-	/**
-	 * Rendering function
-	 * @param string $type Data or type. Passed byref so we don't need to copy an entire string  
-	 */
-	function theme_render($type = '', $count = null){
-		static $data;
-		global $ssc_site_path, $ssc_site_url, $ssc_title;
-
-		if ($type == ''){
-			return;
-		}
-		
-		if (!isset($count)){ 
-			$data = $type;
-					
-			if (!isset($ssc_title))
-				$ssc_title = 'Smooth Sailing CMS';
-				
-			$data['meta'] .= "<title>$ssc_title</title>"; 
-
-			$theme = ssc_var_get('theme_default', SSC_DEFAULT_THEME);
-			$theme_url = "$ssc_site_url/themes/$theme";
-			$theme_path = "$ssc_site_path/themes/$theme";
-			 
-			include "$theme_path/$theme.theme.php";
-			
-			return;
-		}
-		
-		$count--;
-
-		if (is_string($data[$type])){
-			echo $data[$type];
-			return;
-		}
-		
-		if (isset($data[$type][$count])){		
-			echo $data[$type][$count];
-			return;
-		}
-		
-		
-		
-		return '';
-		
+function _theme_get_meta($ver = '1'){
+	$out = '';
+	$css = ssc_add_css();
+	foreach ($css as $path){
+		$out .= '<link type="text/css" rel="stylesheet" media="' . $path[1] . '" href="' . $path[0] . '?' . $ver . "\" />\n";
 	}
 	
+	$js = ssc_add_js();
+	foreach ($js as $path){
+		$out .= '<script type="javascript" src="' . $path . '?' . $ver . "\"> </script>\n";
+	}
 	
-	global $ssc_site_path;
-	
-	$info = ssc_parse_ini_file('theme', "$ssc_site_path/themes/" . ssc_var_get('theme_default', SSC_DEFAULT_THEME). '/' . ssc_var_get('theme_default', SSC_DEFAULT_THEME) . '.info');
-	
-	// Now we build the theme up
-	$data = array();
-	// Meta
-	$data['meta'] = theme_meta();
-	
-	// Headers
-	$count = intval($info['head_count']);
-	for ($i = 0; $i < $count; $i++)
-		$data['header'][] = theme_header($i);
-	
-	// 'Title' blocks
-	$count = intval($info['title_count']);
-	for ($i = 0; $i < $count; $i++)
-		$data['title'][] = theme_title($i);
-		
-	// Sidebar blocks
-	$count = intval($info['side_count']);
-	for ($i = 0; $i < $count; $i++)
-		$data['side'][] = theme_side($i);
-		
-	// Body
-	$data['body']= theme_body();
-		
-	// Footer blocks
-	$count = intval($info['foot_count']);
-	for ($i = 0; $i < $count; $i++)
-		$data['footer'][] = theme_footer($i);
-		
-	
-	return $data;
+	return $out;
 }
+
+/**
+ * Loads up the specified theme for usage
+ * @param string $theme Theme 'folder' name to be loaded
+ * @return array Array containing the theme's .info data
+ */ 
+function theme_get_info($theme = null){
+	global $ssc_site_path, $ssc_site_url;
+	static $info = null;
+	
+	if ($theme){
+		// Get the theme data
+		$info = ssc_parse_ini_file('theme', "$ssc_site_path/themes/$theme/$theme.info");
+		
+		if (!$info){
+			ssc_die(array('title' => 'Invalid Theme', 'body' => 'The selected theme is borked'));
+		}
+		
+		if (isset($info['js']) && is_array($info['js'])){
+			foreach ($info['js'] as $path){
+				ssc_add_js("$ssc_site_url/themes/$theme/$path");
+			}
+		}
+		if (isset($info['css']) && is_array($info['css'])){
+			foreach ($info['css'] as $path){
+				$tmp = explode("#", $path);
+				ssc_add_css("$ssc_site_url/themes/$theme/$tmp[0]", $tmp[1]);
+			}
+		}
+	}
+	
+	return $info;
+}
+
+/**
+ * Rendering function
+ * @param string $body Generated HTML for the primary page.
+ * 				Passed byref so we don't need to copy an entire string  
+ */
+function theme_render(&$body){
+	global $ssc_site_path, $ssc_site_url;
+	
+	$theme = ssc_var_get('theme_default', SSC_DEFAULT_THEME);
+	$info = theme_get_info();
+	
+	for ($i = 0; $i < $info['mini_count']; $i++){
+		$side[$i] = theme_side($i);
+	}
+	
+	ob_start();
+	echo 'GET: ';
+	print_r($_GET);
+	echo '<br />POST: ';
+	print_r($_POST);
+	$side[2] = ob_get_contents();
+	ob_end_clean();
+	
+	$title = ssc_var_get('site_name', false);
+	$meta = _theme_get_meta() . '<title>' . ssc_set_title() . ($title ? " | " . $title : '') ."</title>\n";
+	$lang = ssc_var_get('language', 'en');
+	$logo = ssc_var_get('theme_show_logo', false) ? ssc_var_get('theme_logo', '') : false;
+	$title = ssc_var_get('theme_show_title', false) ? $title : false;
+	$quip = ssc_var_get('theme_show_quip', false) ? ssc_var_get('theme_quip', '') : false;
+	$breadcrumb = ssc_var_get('theme_breadcrumb', false);
+	//$side = array();
+	
+	// Show the page
+	include "$ssc_site_path/themes/$theme/$theme.theme.php";
+
+}	
 
 /**
  * Called when HTML meta, CSS and JS tags may be output
@@ -152,18 +148,16 @@ function theme_title($count){
 function theme_side($count){
 	global $ssc_database;
 	
-	ob_start();
-	
 	$result = $ssc_database->query("SELECT filename, args FROM #__module, #__sidebar WHERE #__module.id = #__sidebar.module AND location = %d ORDER BY #__sidebar.weight ASC", $count);
 	if ($ssc_database->number_rows() < 1){
 		return '&nbsp;';
 	}
+	$ret = array();
 	while ($data = $ssc_database->fetch_assoc($result)){
-		module_hook('content_mini', $data['filename'], $data['args']);
+		$ret[] = module_hook('content_mini', $data['filename'], $data['args']);
 	}
-	$contents = ob_get_contents();
-	ob_end_clean();
-	return $contents;
+	
+	return implode("\n", $ret);
 }
 
 /**
@@ -220,8 +214,7 @@ function theme_footer($count){
 	ob_start();
 		
 	if($count==1){
-		echo 'GET: ';print_r($_GET);echo '<br />POST: ';
-		print_r($_POST);}
+		}
 	else
 	// Show debug info
 	ssc_debug_show();
@@ -229,4 +222,46 @@ function theme_footer($count){
 	$contents = ob_get_contents();
 	ob_end_clean();
 	return $contents;
+}
+
+/**
+ * Form themeing function
+ * @param array $structure Form structure
+ * @return string HTML construction
+ */
+function theme_render_form($structure){
+	$structure += array('#action' => '',
+						'#method' => 'post');
+	
+	$out = '<form action="' . $structure['#action'] . '" method="' . $structure['#method'] . 
+		   '" ' . (isset($structure['#attributes']) ? ssc_attributes($structure['#attributes']) : '') . 
+		   '><div>';
+	
+	$out .= $structure['#value'] . '</div></form>';
+	
+	return $out;
+}
+
+/**
+ * Form element wrappers
+ * @param array $structure Element structure
+ * @return string HTML construction
+ */
+function theme_render_form_component($structure){
+	$structure += array('#required' => false);
+	$out = '<div class="form-item">';
+	
+	$required = ($structure['#required'] == true ? '<span class="form-required" title="' . t("This item is required") . '">*</span>' : '');
+	
+	if (isset($structure['#title'])){
+		$out .= '<label ' . (isset($structure['#id']) ? 'for="' . $structure['#id'] . '"' : '') . '>' . 
+			t('!title: !required', array('!title' => $structure['#title'],
+										 '!required' => $required)) . '</label>';
+		
+	}
+	
+	$out .= $structure['#value'];
+	$out .= '<div class="form-desc">' . $structure['#description'] . '</div>';
+	$out .= '</div>';
+	return $out;
 }

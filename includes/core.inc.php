@@ -53,12 +53,6 @@ $ssc_site_url;
 $ssc_site_path;
 
 /**
- * Site title
- * @global string $ssc_title
- */
-$ssc_title;
-
-/**
  * Application settings array.
  * 
  * This array contains several sections relating to various parts of the application which are
@@ -313,7 +307,7 @@ function ssc_frontend_init(){
 					'title' => 'Bad language',
 					'body'  => "Language '" . $SSC_SETTINGS['lang']['tag'] . "' is currently not installed"
 					));
-	
+					
 	// Load up all enabled modules
 	require_once "$ssc_site_path/includes/core.module.inc.php";
 	module_load();
@@ -325,27 +319,47 @@ function ssc_frontend_init(){
 	// Set up the theme
 	require_once "$ssc_site_path/includes/core.theme.inc.php";
 	$theme = ssc_var_get('theme_default', SSC_DEFAULT_THEME);
-	$file = "$ssc_site_path/themes/$theme/$theme.theme.php";
-	if (!file_exists($file))
+	$file = "$ssc_site_path/themes/$theme/$theme.";
+	if (!file_exists($file . 'theme.php') && !file_exists($file . 'info'))
 		ssc_die(array(
 					'title' => 'Bad theme',
 					'body' => 'Specified theme ' . $theme . ' is not installed'
 				));
 				
+	theme_get_info($theme);
 }
 
 /**
  * Generates a form based on the structure of the passed array
- * @param array $struc Array depicting form structure
+ * @param string $name Form name including 'module_' prefix
+ * @param mixed $args,... Arguments to be passed to form generator
  */
-function ssc_generate_form(&$struct){
+function ssc_generate_form($name, $args = null){
 	global $ssc_site_url;
+	
 	// Check for core components
-	if (!isset($struct['action'], $struct['method'], $struct['fields'], $struct['id']))
+	if (!function_exists($name))
 		return;
 		
-	// Begin output
-	echo "<form action=\"", ($struct['action'] == '' ? '' : $ssc_site_url . $struct['action']), "\" method=\"$struct[method]\" id=\"$struct[id]\"";
+	// Are there any args?
+	if (isset($args)){
+		$args = function_args();
+		// Pop off the function name
+		array_shift($args);
+		$form = call_user_func_array($name, $args);	
+	}
+	else{
+		$form = $name();
+	}
+
+	$form['#type'] = 'form';
+	
+	// Grab output
+	$out = ssc_generate_html($form);
+	return $out;
+
+	/*
+	$out = "<form action=\"", ($struct['action'] == '' ? '' : $ssc_site_url . $struct['action']), "\" method=\"$struct[method]\" id=\"$struct[id]\"";
 	// Optional form enc-types
 	if (isset($struct['enc'])){
 		echo ' enctype="';
@@ -410,7 +424,9 @@ function ssc_generate_form(&$struct){
 	}
 	
 	echo '</form>';
+*/
 }
+
 
 /**
  * Checks if a form has been submitted and passes it off to the relevant module if present
@@ -431,8 +447,18 @@ function ssc_form_check(){
  * @param string $msg Message to be stored
  */
 function ssc_add_message($type, $msg){
-	global $SSC_SETTINGS;
-	$SSC_SETTINGS['runtime']['errorlist'][] = array('type' => $type, 'msg' => $msg);
+	if (!isset($_SESSION['message']))
+		$_SESSION['message'] = array();
+		
+	$_SESSION['message'][] =  array('type' => $type, 'msg' => $msg);
+}
+
+/**
+ * Retrieves the messages to show to the user
+ * @return array Array of messages accumulated on page load
+ */
+function ssc_get_message(){
+	return isset($_SESSION['message']) ? $_SESSION['message'] : null;
 }
 
 /**
@@ -568,10 +594,23 @@ function do_plain($text){
 /**
  * Does translation on a string
  * @param string $text Text to get translation of
+ * @param string $vars Variables to be replaced
  * @return string Translated equivalent
  */
-function t($text){
-	return $text;
+function t($text, $vars = array()){
+	if (empty($vars))
+		return $text;
+		
+	foreach ($vars as $key => $val){
+		switch ($key[0]){
+		case '#':
+			// Plaintext
+			$vars[$key] = do_plain($text);
+		case '!':
+			break;
+		}
+	}
+	return strtr($text, $vars);
 }
 
 /**
@@ -588,6 +627,13 @@ function ssc_not_found(){
 function ssc_not_allowed(){
 	header("HTTP/1.1 403 Forbidden");
 	
+}
+
+/**
+ * Called to redirect the current page
+ */
+function ssc_redirect($path = '', $response_code = 302){
+	header("Location: $path", true, $response_code);
 }
 
 /**
@@ -611,7 +657,8 @@ function ssc_parse_ini_file($type, $path){
 		return;
 	switch ($type){
 	case 'theme':
-		if (isset($info['head_count'], $info['title_count'], $info['side_count'], $info['foot_count']))
+
+		if (isset($info['mini_count']))
 			return $info;
 	}
 	return;
@@ -626,10 +673,99 @@ function ssc_lang(){
 }
 
 /**
- * Sets the site title
- * @param string $title New title
+ * Form processing
+ * @param string $form_name Name of the form in the form of 'module_formname' representing the
+ * 					function to call to generate said form
  */
-function ssc_set_title($title){
-	global $ssc_title;
-	$ssc_title = $title;
+function ssc_form($form_name){
+
+	//return ssc_generate_html($form_name());
+}
+
+/**
+ * Display a structured array of html elements
+ * @param array $structure Array of html elements and element properties
+ */
+function ssc_generate_html(&$structure){
+	$out = '';
+	ssc_debug(array('title'=>'gen_html', 'body'=>$structure['#type']));
+	// Get keys
+	$keys = array_keys($structure);
+	rsort($keys);
+
+	// Generate the field content
+	foreach ($structure as $tag => $value){
+		if ($tag[0] == '#')
+			continue;
+			
+		$out .= ssc_generate_html($value);
+		unset($structure[$tag]);
+	}
+	
+	$structure['#value'] = $out;
+	$out = '';
+	
+	ssc_debug(array('title'=>'gen_html', 'body'=>'  ' . 'theme render ' . $structure['#type']));
+	
+	$hook = 'theme_render_' . $structure['#type'];
+	if (function_exists($hook)){
+		$out = $hook($structure);
+	}
+	else {
+		return null;
+	}
+	
+	return $out;
+}
+
+
+/**
+ * Runs page related queries to handle form submissions, etc
+ */
+function ssc_execute(){
+	// Check for form contents
+	//if (isset($_POST['form-id']))
+}
+
+/**
+ * Get/set a javascript file to be loaded
+ * @param string $path Path to the JS file relative to the base
+ * @return array Array containing JS paths
+ */
+function ssc_add_js($path = null){
+	static $js = array();
+	
+	if (isset($path)){
+		$js[md5($path)] = $path;
+	}
+	return $js;
+}
+
+/**
+ * Get/set a CSS file to be loaded
+ * @param string $path Path to the JS file relative to the base
+ * @param string $media Target media for the css file
+ * @return array Array containing JS paths
+ */
+function ssc_add_css($path = null, $media = 'all'){
+	static $css = array();
+	
+	if (isset($path)){
+		$css[md5($path)] = array($path, $media);
+	}
+	return $css;
+}
+
+/**
+ * Get/set the page title
+ * @param string $title Title to set the page to
+ */
+function ssc_set_title($title = null){
+	static $t = 'SSC';
+	
+	if ($title)
+		$t = $title;
+	
+	return $t;
+
 }

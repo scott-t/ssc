@@ -57,8 +57,6 @@ function login_close(){
 function login_content(){
 	global $ssc_site_url, $ssc_database;
 	
-	$out = '';
-	
 	if ($_GET['path'] != 'user'){
 		ssc_not_found();
 		return;
@@ -69,13 +67,20 @@ function login_content(){
 		// Show login details
 		$result = $ssc_database->query("SELECT accessed, ip FROM #__user WHERE id = %d LIMIT 1", $_SESSION['id']);
 		if (!($data = $ssc_database->fetch_assoc($result))){
-			ssc_add_message(SSC_MSG_CRIT, SSC_LANG_USER_BAD_USER);
+			ssc_add_message(SSC_MSG_CRIT, t('Invalid user name or password'));
+			login_display_form('main');
 			break;
 		}
 
 		// Output welcome
 		$now = time();
-		$out = sprintf(SSC_LANG_WELCOME_PAGE, $_SESSION['username'],  date(SSC_LANG_DATE_FORMAT, $data['accessed']), $data['ip'], date(SSC_LANG_DATE_FORMAT, $now), $ssc_site_url . '/admin', $_SERVER['HTTP_REFERER']);
+	 	echo t('<h1>Welcome, !name</h1><p>You last logged in to your account on !date from !ip.<br /><br />The time now is currently !datenow.</p><p>Continue to the <a href="!admin">admin</a> page or your return to your <a href="!refer">original</a> location.</p>', 
+	 		array('!name' => $_SESSION['username'],
+	 			  '!date' =>  date(SSC_LANG_DATE_FORMAT, $data['accessed']),
+	 			  '!ip' => $data['ip'],
+	 			  '!datenow' => date(SSC_LANG_DATE_FORMAT, $now),
+	 			  '!admin' => $ssc_site_url . '/admin',
+	 			  '!refer' => $_SERVER['HTTP_REFERER']));
 		if (isset($_POST['form-id']))
 			$ssc_database->query("UPDATE #__user SET accessed = %d, ip = '%s' WHERE id = %d", $now, $_SERVER['REMOTE_ADDR'], $_SESSION['id']); 
 		break;
@@ -90,8 +95,8 @@ function login_content(){
 		ssc_not_found();
 		break;
 	}
-	
-	return $out;
+
+	return;
 }
 
 /**
@@ -99,35 +104,72 @@ function login_content(){
  */
 function login_content_mini($type = 0){
 	if ($_SESSION['userlevel'] == SSC_USER_GUEST){
-		$form = array();
-		$form['id'] = 'login-side';
-		$form['action'] = '/user/login';
-		$form['method'] = 'post';
-		$form['fields'] = array();
-		
-		$form['fields'][0]['legend'] = t('User Login');
-		$form['fields'][0]['user'] = array(
-										'label' => t('Username') . ': ',
-										'type' => 'text',
-										'size' => 15,
-										'maxlen' => 20
-										);
-		$form['fields'][0]['pass'] = array(
-										'label' => t('Password') . ': ',
-										'type' => 'password',
-										'size' => 15
-										);
-		$form['fields'][0]['submit'] = array(
-										'type' => 'submit',
-										'value' => t('Log In')
-										);
-		ssc_generate_form($form);
+		return ssc_generate_form('login_form');
 	}
 	else{
-		echo t('Welcome'), $_SESSION['username'];
+		return t('Welcome, !name', array('!name' => $_SESSION['username']));
 	}
 	
 }
+
+/**
+ * Generate login form's
+ */
+function login_form($type = 'mini'){
+	$form = array();
+	
+	// Build base form
+	$form['#action'] = '/user/login';
+	$form['#method'] = 'post';
+	$form['user_login'] = array('#title' => t('User Login'),
+						  		'#type' => 'fieldset');
+	
+	$form['user_login']['user'] = array(
+									'#title' => t('Username') . ': ',
+									'#type' => 'text',
+									'#size' => $size,
+									'#maxlen' => 20
+									);
+	$form['user_login']['pass'] = array(
+									'#title' => t('Password') . ': ',
+									'#type' => 'password',
+									'#size' => $size
+									);
+	$form['user_login']['submit'] = array(
+									'#type' => 'submit',
+									'#value' => t('Log In')
+									);
+	
+	switch($type){
+	case 'mini':
+		$size = 15;
+		$form['#id'] = 'login-side';
+		break;
+	case 'main':
+		$size = 30;
+		$form['#id'] = 'login-main';
+		$form['user_login']['user']['#description'] = t('Your username');
+		$form['user_login']['pass']['#description'] = t('Your password associated with your username');
+		break;
+	}
+	return $form;
+	
+}
+
+/**
+ * Validate the form for invalid values
+ */
+function login_form_validate($values){
+	
+}
+
+/**
+ * Form valided.  Log the user in
+ */
+function login_form_submit($values){
+	
+}
+
 
 /**
  * Implements module_form_handler

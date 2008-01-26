@@ -75,13 +75,15 @@ function module_find_handler(){
 function module_hook($hook, $modules = NULL, $args = NULL){
 	global $SSC_MODULES;
 	
+	$ret = array();
+	
 	ssc_debug(array('title'=>'module_hook', 'body'=>"Calling '$hook' hook on modules"));
 	
 	if (!isset($modules)){
 		foreach ($SSC_MODULES as $value){
 			$h = "$value[filename]_$hook";
 			if (function_exists($h))
-				call_user_func_array($h, $args);
+				$ret[] = call_user_func_array($h, $args);
 		}
 	}
 	else {
@@ -90,14 +92,22 @@ function module_hook($hook, $modules = NULL, $args = NULL){
 			foreach ($modules as $value){
 				$h = "$value[filename]_$hook";
 				if (function_exists($h))
-					call_user_func_array($h, $args);
+					$ret[]= call_user_func_array($h, $args);
 			}
 		}
 		else {
 			$h = "${modules}_$hook";
 			if (function_exists($h))
-				call_user_func_array($h, $args);
+				$ret = call_user_func_array($h, $args);
 		}
+	}
+	
+	// Flatten the results
+	if (is_array($ret)){
+		return array_merge_recursive($ret, array());
+	}
+	else{
+		return $ret;
 	}
 
 }
