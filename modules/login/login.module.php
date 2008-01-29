@@ -142,15 +142,21 @@ function login_form($type = 'mini'){
 
 /**
  * Validate the form for invalid values
+ * @return bool Whether or not the form values are valid
  */
-function login_form_validate($values){
+function login_form_validate(){
+	if (empty($_POST['user']) || empty($_POST['pass'])){
+		ssc_add_message(SSC_MSG_CRIT, t("Please fill in both username and password"));
+		return false;
+	}
 	
-}
+	return true;
+}	
 
 /**
  * Form valided.  Log the user in
  */
-function login_form_submit($values){
+function login_form_submit(){
 	/*
 	 	out .= t('<h1>Welcome, !name</h1><p>You last logged in to your account on !date from !ip.<br /><br />The time now is currently !datenow.</p><p>Continue to the <a href="!admin">admin</a> page or your return to your <a href="!refer">original</a> location.</p>', 
 	 		array('!name' => $_SESSION['username'],
@@ -163,13 +169,13 @@ function login_form_submit($values){
 
 
 /**
- * Implements module_form_handler
+ * 
  */
 function login_form_handler(){
 	global $ssc_database;
 	
 	$pass = new PasswordHash(8, true);
-	
+	$i = 1 / 0;
 	// Attempt to find relevant username
 	$result = $ssc_database->query("SELECT id, accessed, password, fname, gid FROM #__user WHERE name = '%s' LIMIT 1", $_POST['user']);
 	if ($ssc_database->number_rows() < 1){
@@ -226,7 +232,7 @@ function _login_kill_session(){
  * Session open handler
  */
 function _login_sess_open(){
-	global $ssc_database;
+	//global $ssc_database;
 
 	return false;
 }
@@ -235,7 +241,7 @@ function _login_sess_open(){
  * Session close handler
  */
 function _login_sess_close(){
-	global $ssc_database;
+	//global $ssc_database;
 
 	return true;
 }

@@ -374,8 +374,8 @@ function ssc_form_check(){
 	if (isset($_POST['form-id']) && strpos($_SERVER['HTTP_REFERER'], $ssc_site_url) === 0){
 		// We have a submitted form sitting here
 		$module = explode('-', $_POST['form-id']);
-		if (module_hook('_validate', $module[0])){
-			module_hook('_submit', $module[0]);
+		if (module_hook('validate', $module[0])){
+			module_hook('submit', $module[0]);
 		}
 	}
 }
@@ -389,7 +389,8 @@ function ssc_add_message($type, $msg){
 	if (!isset($_SESSION['message']))
 		$_SESSION['message'] = array();
 		
-	$_SESSION['message'][] =  array('type' => $type, 'msg' => $msg);
+	ssc_debug(array('type'=>'add_message', 'body' => $msg));
+	$_SESSION['message'][] =  array($type, $msg);
 }
 
 /**
@@ -398,6 +399,13 @@ function ssc_add_message($type, $msg){
  */
 function ssc_get_message(){
 	return isset($_SESSION['message']) ? $_SESSION['message'] : null;
+}
+
+/**
+ * Cleares the message log
+ */
+function ssc_clear_message(){
+	$_SESSION['message'] = array();
 }
 
 /**
@@ -626,7 +634,7 @@ function ssc_form_handler($form_name){
  */
 function ssc_generate_html(&$structure){
 	$out = '';
-	ssc_debug(array('title'=>'gen_html', 'body'=>$structure['#type']));
+	
 	// Get keys
 	$keys = array_keys($structure);
 	rsort($keys);
@@ -704,10 +712,27 @@ function ssc_add_js($path = null){
  * @return array Array containing JS paths
  */
 function ssc_add_css($path = null, $media = 'all'){
+	global $ssc_site_url, $ssc_site_path;
 	static $css = array();
 	
-	if (isset($path)){
-		$css[md5($path)] = array($path, $media);
+	if (isset($path) && !array_key_exists(md5($path), $css)){
+		if (strpos($path, '.theme.css') === false){
+			$css[md5($path)] = array($ssc_site_url . $path, $media);
+		}
+		else {
+			$p = str_replace('.theme.css', '.css', $path);
+			//if (!file_exists($p)){
+				$file = file_get_contents($ssc_site_path . $path);
+				if (strpos($file, '$') !== false){
+					$file = str_replace('$base_url$', $ssc_site_url, $file);
+				}
+				
+				file_put_contents($ssc_site_path . $p, $file);
+			//}
+			
+			$css[md5($path)] = array($ssc_site_url . $p, $media);
+					
+		}
 	}
 	return $css;
 }

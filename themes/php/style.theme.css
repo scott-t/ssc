@@ -77,12 +77,29 @@ h6 {
 }
 
 .message{
-	padding: 1em 1em 1em 30px;
-	background-position: 1em 1em;
+	padding: 10px 1em 1em 0.5em;
+	background-position: 0.5em 0.5em;
 	background-repeat: no-repeat;
 }
 
+.message span{
+	padding-left: 30px;
+}
+
 .message-crit{
-	background-image: url("%base_url%/images/messagebox_critical.png");
+	background-image: url("$base_url$/images/messagebox_critical.png");
 	background-color: #FF9999;
 	border: #CC0000 2px dashed;
+}
+
+.message-warn{
+	background-image: url("$base_url$/images/messagebox_warning.png");
+	background-color: #FFCC66;
+	border: #FF9900 2px dashed;
+}
+
+.message-info{
+	background-image: url("$base_url$/images/messagebox_info.png");
+	background-color: #99CCFF;
+	border: #0066CC 2px dashed;
+}

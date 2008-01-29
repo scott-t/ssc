@@ -24,7 +24,7 @@ if(false)header("Content-type:application/xhtml+xml");?>
     
   	<div id="left"><?php echo $side[0] ?></div>
     <div id="right"><?php echo $side[1] ?></div>
-    <div id="body"><?php echo $body ?></div>
+    <div id="body"><?php echo $messages, $body ?></div>
     <div class="clear"></div>
   </div>
 </div>

@@ -20,8 +20,9 @@ include('./includes/core.inc.php');
 ssc_init();
 
 $page = ssc_execute();
-
 theme_render($page);
-ssc_debug_show();
+
 // Clean up
 ssc_close();
+
+ssc_debug_show();

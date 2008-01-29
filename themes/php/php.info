@@ -6,6 +6,6 @@ version = 3.x
 ; theme related settings
 mini_count = 5
 
-css[] = style.css#all
-css[] = site.css#all
-css[] = print.css#print
+css[] = style.theme.css#all
+css[] = site.theme.css#all
+css[] = print.theme.css#print

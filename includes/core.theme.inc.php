@@ -70,13 +70,13 @@ function theme_get_info($theme = null){
 		
 		if (isset($info['js']) && is_array($info['js'])){
 			foreach ($info['js'] as $path){
-				ssc_add_js("$ssc_site_url/themes/$theme/$path");
+				ssc_add_js("/themes/$theme/$path");
 			}
 		}
 		if (isset($info['css']) && is_array($info['css'])){
 			foreach ($info['css'] as $path){
 				$tmp = explode("#", $path);
-				ssc_add_css("$ssc_site_url/themes/$theme/$tmp[0]", $tmp[1]);
+				ssc_add_css("/themes/$theme/$tmp[0]", $tmp[1]);
 			}
 		}
 	}
@@ -114,6 +114,7 @@ function theme_render(&$body){
 	$title = ssc_var_get('theme_show_title', false) ? "<h1>$title</h1>" : false;
 	$quip = ssc_var_get('theme_show_quip', false) ? ssc_var_get('theme_quip', '') : false;
 	$breadcrumb = ssc_var_get('theme_breadcrumb', false);
+	$messages = theme_messages();
 	//$side = array();
 	
 	$body = '<h2>' . ssc_set_title() . '</h2>' . $body;
@@ -124,8 +125,12 @@ function theme_render(&$body){
 }	
 
 /**
- * Called when HTML meta, CSS and JS tags may be output
+ * 
  */
+
+/**
+ * Called when HTML meta, CSS and JS tags may be output
+ *
 function theme_meta(){
 	ob_start();
 	module_hook('meta');
@@ -137,7 +142,7 @@ function theme_meta(){
 /**
  * Called when a page title should be generated, for example the site name in a header
  * @param int $count Header level.  Use 1 for primary title and 2 for a quip or subtitle.
- */
+ *
 function theme_title($count){
 	return "SSC";
 }
@@ -169,14 +174,14 @@ function theme_side($count){
  * @param int $count Number of the header.  This may be possible where multiple
  * 					header sections exist but are not used purely for decoration,
  * 					or heading text
- */
+ *
 function theme_header($count){
 	return "breadcrumb";
 }
 
 /**
  * Called when the primary body needs to be output.
- */
+ *
 function theme_body(){
 	global $SSC_SETTINGS;
 	
@@ -194,18 +199,26 @@ function theme_body(){
 
 /**
  * Used to generate message boxes at the header of each page
- * @private
  */
-function _theme_show_messages(){
-	global $SSC_SETTINGS;
+function theme_messages(){
+	static $classes = array(
+						SSC_MSG_CRIT => 'message-crit',
+						SSC_MSG_WARN => 'message-warn',
+						SSC_MSG_INFO => 'message-info');
+						
+	$messages = ssc_get_message();
+	ssc_clear_message();
 	
-	// Have there been any errors set?
-	if (!isset($SSC_SETTINGS['runtime']['errorlist']))
-		return;
+	if (empty($messages))
+		return '';
+
+	$out = '';
 		
-	foreach ($SSC_SETTINGS['runtime']['errorlist'] as $error){
-		echo '<div class="error box">', $error['msg'], '</div>';
+	foreach ($messages as $message){
+		$out .= '<div class="message ' . $classes[$message[0]] . '"><span>';
+		$out .= do_plain($message[1]) . '</span></div>';
 	}
+	return $out;
 }
 
 /**
@@ -213,7 +226,7 @@ function _theme_show_messages(){
  * @param int $count Number of the header.  This may be possible where multiple
  * 					header sections exist but are not used purely for decoration,
  * 					or heading text
- */
+ 
 function theme_footer($count){
 	ob_start();
 		
@@ -300,7 +313,7 @@ function theme_render_input($structure){
  * Render the body of the page
  * @param string $body Primary bodily content
  * @return string Markup wrapped version of the body
- */
+ *
 function theme_render_content($body){
 	$out = '';
 	
