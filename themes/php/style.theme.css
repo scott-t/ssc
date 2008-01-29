@@ -1,0 +1,88 @@
+@CHARSET "ISO-8859-1";
+
+/* ID == # */
+legend,.form-required {
+	color: #333399;
+	font-weight: bold;
+}
+
+label {
+	font-weight: bold;
+}
+
+legend {
+	background-color: #ffffff;
+	padding: 5px;
+	border: #000000 1px solid;
+}
+
+input {
+	display: block;
+}
+
+.form-item {
+	margin-bottom: 1em;
+}
+
+#body * legend {
+	font-size: 1.2em;
+}
+
+.side-title {
+	font-size: 1.1em;
+	font-weight: bold;
+	text-align: center;
+	padding: 2px;
+	border-right: #000000 1px solid;
+	border-bottom: #000000 1px solid;
+	background-color: #cccccc;
+}
+
+.side {
+	border: #999999 1px dotted;
+	padding: 2px;
+}
+
+.side-body {
+	padding: 5px;
+	background-color: #ffffff;
+}
+
+#body * fieldset,#body * legend {
+	border: none;
+}
+
+h1 {
+	font-size: 160%;
+}
+
+h2 {
+	font-size: 140%;
+}
+
+h3 {
+	font-size: 120%;
+}
+
+h4 {
+	font-size: 100%;
+}
+
+h5 {
+	font-size: 95%;
+}
+
+h6 {
+	font-size: 90%;
+}
+
+.message{
+	padding: 1em 1em 1em 30px;
+	background-position: 1em 1em;
+	background-repeat: no-repeat;
+}
+
+.message-crit{
+	background-image: url("%base_url%/images/messagebox_critical.png");
+	background-color: #FF9999;
+	border: #CC0000 2px dashed;
