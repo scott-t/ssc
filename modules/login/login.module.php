@@ -57,38 +57,24 @@ function login_close(){
 function login_content(){
 	global $ssc_site_url, $ssc_database;
 	
+	$out = '';
+	
 	if ($_GET['path'] != 'user'){
 		ssc_not_found();
 		return;
 	}
-	
+		
 	switch ($_GET['param']){
 	case 'login':
 		// Show login details
-		$result = $ssc_database->query("SELECT accessed, ip FROM #__user WHERE id = %d LIMIT 1", $_SESSION['id']);
-		if (!($data = $ssc_database->fetch_assoc($result))){
-			ssc_add_message(SSC_MSG_CRIT, t('Invalid user name or password'));
-			login_display_form('main');
-			break;
-		}
-
-		// Output welcome
-		$now = time();
-	 	echo t('<h1>Welcome, !name</h1><p>You last logged in to your account on !date from !ip.<br /><br />The time now is currently !datenow.</p><p>Continue to the <a href="!admin">admin</a> page or your return to your <a href="!refer">original</a> location.</p>', 
-	 		array('!name' => $_SESSION['username'],
-	 			  '!date' =>  date(SSC_LANG_DATE_FORMAT, $data['accessed']),
-	 			  '!ip' => $data['ip'],
-	 			  '!datenow' => date(SSC_LANG_DATE_FORMAT, $now),
-	 			  '!admin' => $ssc_site_url . '/admin',
-	 			  '!refer' => $_SERVER['HTTP_REFERER']));
-		if (isset($_POST['form-id']))
-			$ssc_database->query("UPDATE #__user SET accessed = %d, ip = '%s' WHERE id = %d", $now, $_SERVER['REMOTE_ADDR'], $_SESSION['id']); 
+		ssc_set_title('User login');
+		$out = ssc_generate_form('login_form', 'main');
 		break;
 	
 	case 'logout':
 		// Log the user out
 		ssc_add_message(SSC_MSG_INFO, t('Do Logout'));
-		
+		break;
 	case '':
 		
 	default:
@@ -96,15 +82,18 @@ function login_content(){
 		break;
 	}
 
-	return;
+	return $out;
 }
 
 /**
  * Implements module_content_mini
  */
-function login_content_mini($type = 0){
+function login_content_mini($type){
+	if ($_GET['q'] == 'user/login')
+		return;
+		
 	if ($_SESSION['userlevel'] == SSC_USER_GUEST){
-		return ssc_generate_form('login_form');
+		return array('User login', ssc_generate_form('login_form'));
 	}
 	else{
 		return t('Welcome, !name', array('!name' => $_SESSION['username']));
@@ -119,37 +108,32 @@ function login_form($type = 'mini'){
 	$form = array();
 	
 	// Build base form
-	$form['#action'] = '/user/login';
-	$form['#method'] = 'post';
-	$form['user_login'] = array('#title' => t('User Login'),
-						  		'#type' => 'fieldset');
-	
-	$form['user_login']['user'] = array(
-									'#title' => t('Username') . ': ',
+	$form['#action'] = '';
+	$form['#method'] = 'post';	
+	$form['user'] = array(
+									'#title' => t('Username'),
 									'#type' => 'text',
-									'#size' => $size,
+									'#required' => true,
 									'#maxlen' => 20
 									);
-	$form['user_login']['pass'] = array(
-									'#title' => t('Password') . ': ',
+	$form['pass'] = array(
+									'#title' => t('Password'),
 									'#type' => 'password',
-									'#size' => $size
+									'#required' => true,
 									);
-	$form['user_login']['submit'] = array(
+	$form['submit'] = array(
 									'#type' => 'submit',
 									'#value' => t('Log In')
 									);
 	
 	switch($type){
 	case 'mini':
-		$size = 15;
-		$form['#id'] = 'login-side';
+		$form['user']['#size'] = 15;
+		$form['pass']['#size'] = 15;
 		break;
 	case 'main':
-		$size = 30;
-		$form['#id'] = 'login-main';
-		$form['user_login']['user']['#description'] = t('Your username');
-		$form['user_login']['pass']['#description'] = t('Your password associated with your username');
+		$form['user']['#description'] = t('Your username');
+		$form['pass']['#description'] = t('Your password associated with your username');
 		break;
 	}
 	return $form;
@@ -167,7 +151,14 @@ function login_form_validate($values){
  * Form valided.  Log the user in
  */
 function login_form_submit($values){
-	
+	/*
+	 	out .= t('<h1>Welcome, !name</h1><p>You last logged in to your account on !date from !ip.<br /><br />The time now is currently !datenow.</p><p>Continue to the <a href="!admin">admin</a> page or your return to your <a href="!refer">original</a> location.</p>', 
+	 		array('!name' => $_SESSION['username'],
+	 			  '!date' =>  date(SSC_LANG_DATE_FORMAT, $data['accessed']),
+	 			  '!ip' => $data['ip'],
+	 			  '!datenow' => date(SSC_LANG_DATE_FORMAT, $now),
+	 			  '!admin' => $ssc_site_url . '/admin',
+	 			  '!refer' => $_SERVER['HTTP_REFERER']));*/
 }
 
 
@@ -177,35 +168,30 @@ function login_form_submit($values){
 function login_form_handler(){
 	global $ssc_database;
 	
-	// Branch depending on form
-	switch ($_POST['form-id']){
-	case 'login-main':
-	case 'login-side':
-		$pass = new PasswordHash(8, true);
-		
-		// Attempt to find relevant username
-		$result = $ssc_database->query("SELECT id, accessed, password, fname, gid FROM #__user WHERE name = '%s' LIMIT 1", $_POST['user']);
-		if ($ssc_database->number_rows() < 1){
-			// Bad user details.  Tell user
-			ssc_add_message(SSC_MSG_CRIT, t('Invalid user name or password'));
-			return;
-		}
-		
-		// Check password
-		$data = $ssc_database->fetch_assoc($result);
-		if (!$pass->CheckPassword($_POST['pass'], $data['password'])){
-			// Was wrong!
-			ssc_add_message(SSC_MSG_CRIT, t('Invalid user name or password'));
-			return;
-		}
-			
-		// Correct details
-		_login_kill_session();
-		session_regenerate_id();
-		$_SESSION['username'] = $data['fname'];
-		$_SESSION['userlevel'] = $data['gid'];
-		$_SESSION['id'] = $data['id'];
+	$pass = new PasswordHash(8, true);
+	
+	// Attempt to find relevant username
+	$result = $ssc_database->query("SELECT id, accessed, password, fname, gid FROM #__user WHERE name = '%s' LIMIT 1", $_POST['user']);
+	if ($ssc_database->number_rows() < 1){
+		// Bad user details.  Tell user
+		ssc_add_message(SSC_MSG_CRIT, t('Invalid user name or password'));
+		return;
 	}
+	
+	// Check password
+	$data = $ssc_database->fetch_assoc($result);
+	if (!$pass->CheckPassword($_POST['pass'], $data['password'])){
+		// Was wrong!
+		ssc_add_message(SSC_MSG_CRIT, t('Invalid user name or password'));
+		return;
+	}
+		
+	// Correct details
+	_login_kill_session();
+	session_regenerate_id();
+	$_SESSION['username'] = $data['fname'];
+	$_SESSION['userlevel'] = $data['gid'];
+	$_SESSION['id'] = $data['id'];
 }
 
 /**

@@ -17,6 +17,8 @@ define("SSC_LANG_USER_LOGIN", 'User Login');
 define("SSC_LANG_USER_USERNAME", 'Username');
 define("SSC_LANG_USER_PASSWORD", 'Password');
 define("SSC_LANG_USER_BAD_USER", 'Invalid username or password');
+define("SSC_LANG_USER_NEW", 'Create a new account');
+define("SSC_LANG_USER_FORGOT", 'Reset your password');
 
 define("SSC_LANG_WELCOME", 'Welcome, ');
 

@@ -111,10 +111,12 @@ function theme_render(&$body){
 	$meta = _theme_get_meta() . '<title>' . ssc_set_title() . ($title ? " | " . $title : '') ."</title>\n";
 	$lang = ssc_var_get('language', 'en');
 	$logo = ssc_var_get('theme_show_logo', false) ? ssc_var_get('theme_logo', '') : false;
-	$title = ssc_var_get('theme_show_title', false) ? $title : false;
+	$title = ssc_var_get('theme_show_title', false) ? "<h1>$title</h1>" : false;
 	$quip = ssc_var_get('theme_show_quip', false) ? ssc_var_get('theme_quip', '') : false;
 	$breadcrumb = ssc_var_get('theme_breadcrumb', false);
 	//$side = array();
+	
+	$body = '<h2>' . ssc_set_title() . '</h2>' . $body;
 	
 	// Show the page
 	include "$ssc_site_path/themes/$theme/$theme.theme.php";
@@ -154,7 +156,9 @@ function theme_side($count){
 	}
 	$ret = array();
 	while ($data = $ssc_database->fetch_assoc($result)){
-		$ret[] = module_hook('content_mini', $data['filename'], $data['args']);
+		$dat = module_hook('content_mini', $data['filename'], $data['args']);
+		if ($dat)
+			$ret[] = theme_render_sidebar($dat);
 	}
 	
 	return implode("\n", $ret);
@@ -243,11 +247,21 @@ function theme_render_form($structure){
 }
 
 /**
+ * Form themeing function - fieldset
+ * @param array $structure Form structure
+ * @return string HTML construction
+ */
+function theme_render_fieldset($structure){
+	$out = '<fieldset>' . (isset($structure['#title']) ? '<legend>' . $structure['#title'] . '</legend>' : '');
+	$out .= $structure['#value'] . '</fieldset>';
+	return $out;
+}
+/**
  * Form element wrappers
  * @param array $structure Element structure
  * @return string HTML construction
  */
-function theme_render_form_component($structure){
+function theme_render_form_element($structure){
 	$structure += array('#required' => false);
 	$out = '<div class="form-item">';
 	
@@ -263,5 +277,44 @@ function theme_render_form_component($structure){
 	$out .= $structure['#value'];
 	$out .= '<div class="form-desc">' . $structure['#description'] . '</div>';
 	$out .= '</div>';
+	return $out;
+}
+
+
+/**
+ * Renders a simple xhtml element
+ * @param array $structure Element structure
+ * @return string HTML construction
+ */
+function theme_render_input($structure){
+	$out  = '<input type="' . $structure['#type'] . '" value="' . $structure['#value'] . '"';
+	$out .= ' name="' . $structure['#name'] . '"';
+	$out .= (isset($structure['#id']) ? ' id="' . $structure['#id'] . '"' : '');
+	$out .= (isset($structure['#size']) ? ' size="' . $structure['#size'] . '"' : ''); 
+	$out .= (isset($structure['#maxlength']) ? ' maxlength="' . $structure['#maxlength'] . '"' : ''); 
+	$out .= ' />';
+	return $out;
+}
+
+/**
+ * Render the body of the page
+ * @param string $body Primary bodily content
+ * @return string Markup wrapped version of the body
+ */
+function theme_render_content($body){
+	$out = '';
+	
+	return $out;
+}
+
+/**
+ * Add a wrapper to a side bar block
+ * @param array $sidebar Marked up version of the side bar
+ * @return string Theme wrapped sidebar
+ */
+function theme_render_sidebar($sidebar){
+	$out = '<div class="side"><div class="side-title">';
+	$out .= $sidebar[0] . '</div><div class="side-body">' . $sidebar[1]; 
+	$out .= '</div></div>';
 	return $out;
 }

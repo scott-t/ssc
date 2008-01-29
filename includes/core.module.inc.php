@@ -37,7 +37,7 @@ $SSC_MODULES;
  * @return string File name of the module handling the request
  */
 function module_find_handler(){
-	global $ssc_database, $SSC_SETTINGS;
+	global $ssc_database;
 	
 	// Prepare application argument
 	if (!isset($_GET['q']))
@@ -47,15 +47,10 @@ function module_find_handler(){
 	
 	$result = $ssc_database->query("SELECT #__module.id, filename, path FROM #__module, #__handler WHERE #__handler.id = #__module.id AND '%s' LIKE CONCAT(path,'%%') ORDER BY path DESC LIMIT 1", $_GET['q']);
 	if ($ssc_database->number_rows() == 0){
-		$SSC_SETTINGS['runtime']['handler_id'] = 0;
-		$SSC_SETTINGS['runtime']['handler_name'] = 'module_error';
-		$SSC_SETTINGS['runtime']['error'] = 404;
-		return 'module_error';
+		ssc_not_found();
 	}
 	
 	$data = $ssc_database->fetch_assoc($result);
-	$SSC_SETTINGS['runtime']['handler_id'] = $data['id'];
-	$SSC_SETTINGS['runtime']['handler_name'] = $data['filename'];
 	
 	// Split path arguments		
 	$_GET['path'] = $data['path'];
@@ -135,9 +130,6 @@ function module_load(){
 		ssc_debug(array('title'=>'module_load','body'=>"Loading '$data[name]' ($data[filename].module.php)"));
 		include "$ssc_site_path/modules/$data[filename]/$data[filename].module.php";
 	}
-
-	// Find the module responsible for the current URI
-	module_find_handler();
 	
 	// Initialise module
 	module_hook("init");
@@ -145,38 +137,3 @@ function module_load(){
 	// Mark function as run
 	$has_run = 1;
 }
-
-/**
- * Called when a module responsible for page content has an invalid parameter or no module is
- * available for handling the requested URI.  Invokes a contingency plan to keep operating
- * but handle the error and quit normally.
- * 
- * @param int $error Status error relating to reason for dieing
- * /
-function module_error_content($error){
-	global $SSC_SETTINGS;
-	if (isset($SSC_SETTINGS['runtime']['error'])){
-		$error = $SSC_SETTINGS['runtime']['error'];
-	}
-	
-	echo 'Called at Status error ' . $error;
-}
-
-/**
- * Causes an error to be tripped
- * @param int $error Status error
- * @param string $message Description for dieing
- * @param bool $change Whether or not the core should take over the problem
- * /
-function module_error($error, $message, $change = true){
-	global $SSC_SETTINGS;
-	
-	$SSC_SETTINGS['runtime']['error_msg'] = $message;
-	
-	if ($change){
-		module_error_content($error);
-	}
-	else{
-		$SSC_SETTINGS['runtime']['error'] = $error;
-	}
-}*/

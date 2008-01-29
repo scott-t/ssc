@@ -343,7 +343,7 @@ function ssc_generate_form($name, $args = null){
 		
 	// Are there any args?
 	if (isset($args)){
-		$args = function_args();
+		$args = func_get_args();
 		// Pop off the function name
 		array_shift($args);
 		$form = call_user_func_array($name, $args);	
@@ -352,79 +352,16 @@ function ssc_generate_form($name, $args = null){
 		$form = $name();
 	}
 
-	$form['#type'] = 'form';
+	$form += array('#type' => 'form',
+				   '#parent' => true,
+				   'form-id' => array('#type' => 'hidden',
+				   		 			  '#value' => $name),
+				   '#formname' => str_replace('_', '-', $name));
 	
 	// Grab output
 	$out = ssc_generate_html($form);
 	return $out;
 
-	/*
-	$out = "<form action=\"", ($struct['action'] == '' ? '' : $ssc_site_url . $struct['action']), "\" method=\"$struct[method]\" id=\"$struct[id]\"";
-	// Optional form enc-types
-	if (isset($struct['enc'])){
-		echo ' enctype="';
-		switch ($struct['enc']){
-		case 'multi':
-			echo 'multipart/form-data';
-			break;
-		default:
-			echo 'application/x-www-form-urlencoded';
-			break;
-		}
-		echo '">';
-	}else{
-		echo '>';
-	}
-	
-	// Parse the fieldsets
-	foreach ($struct['fields'] as $fieldset){
-		echo '<fieldset>';
-		// Legend field
-		if (isset($fieldset['legend'])){
-			echo "<legend>$fieldset[legend]</legend>";
-			unset($fieldset['legend']);
-		}
-		
-		if (isset($struct['id'])){
-			echo '<input type="hidden" name="form-id" value="', $struct['id'],'" />';
-			unset($struct['id']);
-		}
-		
-		foreach ($fieldset as $id => $s){
-			if (!isset($s['type']))
-				continue;
-				
-			// Display field types
-			switch($s['type']){
-			// Text inputs
-			case 'text':
-			case 'password':
-				if (isset($s['label']))
-					echo '<label for="', $id, '">', $s['label'], '</label>';
-					
-				echo '<input type="', $s['type'], '" id="', $id, '" name="' , 
-					(isset($s['name']) ? $s['name'] : $id), '"',
-					(isset($s['size']) ? ' size="' . $s['size'] . '"' : ''),
-					(isset($s['maxlen']) ? ' maxlength="' . $s['maxlen'] . '"' : ''), 
-					(isset($s['value']) ? ' value="' . $s['value'] . '"' : ''), ' />'; 
-				break;
-				
-			// Buttons
-			case 'submit':
-			case 'button':
-			case 'reset':
-				echo '<input type="', $s['type'], '" id="', $id, '" name="' , 
-					(isset($s['name']) ? $s['name'] : $id), '"', 
-					(isset($s['value']) ? ' value="' . $s['value'] . '"' : ''), ' />';
-					
-			}
-		}
-			
-		echo '</fieldset>';
-	}
-	
-	echo '</form>';
-*/
 }
 
 
@@ -437,7 +374,9 @@ function ssc_form_check(){
 	if (isset($_POST['form-id']) && strpos($_SERVER['HTTP_REFERER'], $ssc_site_url) === 0){
 		// We have a submitted form sitting here
 		$module = explode('-', $_POST['form-id']);
-		module_hook('form_handler', $module[0]);
+		if (module_hook('_validate', $module[0])){
+			module_hook('_submit', $module[0]);
+		}
 	}
 }
 
@@ -488,12 +427,11 @@ function _ssc_magic_check(&$item){
 		array_walk($item, '_ssc_magic_check');
 	}
 	else{
-		if ($sysbase == 2)
+		if ($sysbase == 1)
 			$item = stripslashes($item);
 		else
 			$item = str_replace("''","'",$item);
-	}
-	
+	}	
 }
 
 /**
@@ -677,7 +615,7 @@ function ssc_lang(){
  * @param string $form_name Name of the form in the form of 'module_formname' representing the
  * 					function to call to generate said form
  */
-function ssc_form($form_name){
+function ssc_form_handler($form_name){
 
 	//return ssc_generate_html($form_name());
 }
@@ -693,26 +631,43 @@ function ssc_generate_html(&$structure){
 	$keys = array_keys($structure);
 	rsort($keys);
 
-	// Generate the field content
-	foreach ($structure as $tag => $value){
-		if ($tag[0] == '#')
-			continue;
+	if (isset($structure['#parent'])){
+		// Generate the field content
+		foreach ($structure as $tag => $value){
+			if ($tag[0] == '#')
+				continue;
 			
-		$out .= ssc_generate_html($value);
-		unset($structure[$tag]);
+			$value['#name'] = $tag;
+			$value['#id'] = $structure['#formname'] . "-$tag";
+			$value['#formname'] = $structure['#formname'];
+			$out .= ssc_generate_html($value);
+			unset($structure[$tag]);
+		}
+		
+		$structure['#value'] = $out;
+		$out = '';
 	}
-	
-	$structure['#value'] = $out;
-	$out = '';
-	
-	ssc_debug(array('title'=>'gen_html', 'body'=>'  ' . 'theme render ' . $structure['#type']));
 	
 	$hook = 'theme_render_' . $structure['#type'];
 	if (function_exists($hook)){
 		$out = $hook($structure);
 	}
 	else {
-		return null;
+		switch ($structure['#type']){
+		case 'text':
+		case 'password':
+		case 'file':
+			$structure['#value'] = theme_render_input($structure);
+			$out = theme_render_form_element($structure);
+			break;
+		case 'hidden':
+		case 'submit':
+		case 'reset':
+			$out = theme_render_input($structure);
+			break;
+		default:
+			$out = $structure['#value'];
+		}
 	}
 	
 	return $out;
@@ -723,8 +678,9 @@ function ssc_generate_html(&$structure){
  * Runs page related queries to handle form submissions, etc
  */
 function ssc_execute(){
-	// Check for form contents
-	//if (isset($_POST['form-id']))
+	// Find the module responsible for the current URI
+	$handler = module_find_handler();
+	return module_hook('content', $handler);
 }
 
 /**

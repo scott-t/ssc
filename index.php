@@ -19,10 +19,9 @@ $ssc_execute_time = microtime(true);
 include('./includes/core.inc.php');
 ssc_init();
 
-// Start output
-$data = theme_load();
+$page = ssc_execute();
 
-theme_render($data);
-
+theme_render($page);
+ssc_debug_show();
 // Clean up
 ssc_close();
