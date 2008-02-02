@@ -4,6 +4,8 @@
  * @package SSC
  */
 
+setlocale(LC_ALL, "en_AU.utf8");
+
 /**
  * Define if an included file is accessed through the core
  */

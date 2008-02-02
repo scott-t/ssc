@@ -28,7 +28,7 @@ input {
 	font-size: 1.2em;
 }
 
-.side-title {
+.widget-title {
 	font-size: 1.1em;
 	font-weight: bold;
 	text-align: center;
@@ -38,12 +38,12 @@ input {
 	background-color: #cccccc;
 }
 
-.side {
+.widget {
 	border: #999999 1px dotted;
 	padding: 2px;
 }
 
-.side-body {
+.widget-body {
 	padding: 5px;
 	background-color: #ffffff;
 }
@@ -80,10 +80,17 @@ h6 {
 	padding: 10px 1em 1em 0.5em;
 	background-position: 0.5em 0.5em;
 	background-repeat: no-repeat;
+	margin-bottom: 1em; 
 }
 
 .message span{
 	padding-left: 30px;
+	display: block;
+}
+
+.message br{
+	line-height: 2em;
+	vertical-align: top;
 }
 
 .message-crit{
@@ -103,3 +110,4 @@ h6 {
 	background-color: #99CCFF;
 	border: #0066CC 2px dashed;
 }
+

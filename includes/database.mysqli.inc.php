@@ -368,7 +368,7 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 				$param[$i] = $this->escape_string($param[$i]);
 			
 		}
-		
+
 		// Replace table name
 		$param[0] = preg_replace('/#__(\w+)/e', "sscAbstractDatabase::_set_table_prefix('$1')", $sql);
 
@@ -414,7 +414,7 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 	 * @return string Escaped string ready for insertion into the database
 	 */
 	function escape_string($str){
-		$this->link->real_escape_string($str);
+		$str = $this->link->real_escape_string($str);
 		return $str;
 		//return str_replace(array('_', '%'), array('\\_', '\\%'),$str);
 	}

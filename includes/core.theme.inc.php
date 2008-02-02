@@ -120,7 +120,7 @@ function theme_render(&$body){
 	$body = '<h2>' . ssc_set_title() . '</h2>' . $body;
 	
 	// Show the page
-	include "$ssc_site_path/themes/$theme/$theme.theme.php";
+	include "$ssc_site_path/themes/$theme/site.tpl.php";
 
 }	
 
@@ -161,9 +161,9 @@ function theme_side($count){
 	}
 	$ret = array();
 	while ($data = $ssc_database->fetch_assoc($result)){
-		$dat = module_hook('content_mini', $data['filename'], $data['args']);
+		$dat = module_hook('widget', $data['filename'], $data['args']);
 		if ($dat)
-			$ret[] = theme_render_sidebar($dat);
+			$ret[] = theme_template('widget', $dat);
 	}
 	
 	return implode("\n", $ret);
@@ -216,7 +216,7 @@ function theme_messages(){
 		
 	foreach ($messages as $message){
 		$out .= '<div class="message ' . $classes[$message[0]] . '"><span>';
-		$out .= do_plain($message[1]) . '</span></div>';
+		$out .= $message[1] . '</span></div>';
 	}
 	return $out;
 }
@@ -322,12 +322,27 @@ function theme_render_content($body){
 
 /**
  * Add a wrapper to a side bar block
- * @param array $sidebar Marked up version of the side bar
+ * @param string $type Object type to template
+ * @param array $data Associative array containing template data
  * @return string Theme wrapped sidebar
  */
-function theme_render_sidebar($sidebar){
-	$out = '<div class="side"><div class="side-title">';
-	$out .= $sidebar[0] . '</div><div class="side-body">' . $sidebar[1]; 
-	$out .= '</div></div>';
-	return $out;
+function theme_template($file, $data){
+	global $ssc_site_path;
+	
+	$theme = ssc_var_get('theme_default', SSC_DEFAULT_THEME);
+	$f = "$ssc_site_path/themes/$theme/$file.tpl.php";
+	
+	// Check it exists
+	if (!file_exists($f))
+		return '';
+	
+	// Populate template data
+	extract($data, EXTR_SKIP);
+
+	ob_start();
+	include $f;
+	$return = ob_get_contents();
+	ob_end_clean();
+	
+	return $return;
 }

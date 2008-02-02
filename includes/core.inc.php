@@ -18,6 +18,19 @@ define('SSC_INIT_DATABASE', 2);
 define('SSC_INIT_FULL', 3);
 
 /**
+ * Date formats
+ */
+define('SSC_DATE_SHORT', 'j-m-y');
+define('SSC_DATE_LONG', 'l F jS Y');
+define('SSC_DATE_MED', 'D j M Y');
+
+/**
+ * Time formats
+ */
+define('SSC_TIME_FULL', 'g:i:s A T');
+define('SSC_TIME_SHORT', 'g:ia');
+
+/**
  * Module error status: Forbidden
  */
 //define("SSC_ERROR_FORBIDDEN", 403);
@@ -512,7 +525,7 @@ function l($title, $path, $op = array()){
 		$op += array('ext' => true);
 	}
 	
-	return '<a href="' . $path . '" ' . core_attributes($op['attributes']) . '>' . ($op['html'] ? $title : do_plain($text)). '</a>';
+	return '<a href="' . $path . '" ' . ssc_attributes($op['attributes']) . '>' . ($op['html'] ? $title : check_plain($title)). '</a>';
 }
 
 /**
@@ -533,7 +546,7 @@ function ssc_attributes($attrib){
 /**
  * Checks the supplied parameter for plain-text only
  */
-function do_plain($text){
+function check_plain($text){
 	return htmlspecialchars($text);
 }
 
@@ -551,7 +564,7 @@ function t($text, $vars = array()){
 		switch ($key[0]){
 		case '#':
 			// Plaintext
-			$vars[$key] = do_plain($text);
+			$vars[$key] = check_plain($text);
 		case '!':
 			break;
 		}
