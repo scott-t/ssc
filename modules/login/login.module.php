@@ -89,7 +89,11 @@ function login_widget($type){
 		return array('title' => t('User login'), 'body' => ssc_generate_form('login_form'));
 	}
 	else{
-		return array('body' => t('Welcome, !name', array('!name' => $ssc_user->fullname)));
+		$menu = array();
+		$menu[] = array('t' => t('Edit profile'), 'p' => '/user/profile');
+		$menu[] = array('t' => t('Log out'), 'p' => '/user/logout');
+		$links = nav_widget($menu);
+		return array('body' => t('Welcome, !name', array('!name' => $ssc_user->fullname)) . $links['body']);
 	}
 	
 }

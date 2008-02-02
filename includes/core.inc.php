@@ -525,7 +525,7 @@ function l($title, $path, $op = array()){
 		$op += array('ext' => true);
 	}
 	
-	return '<a href="' . $path . '" ' . ssc_attributes($op['attributes']) . '>' . ($op['html'] ? $title : check_plain($title)). '</a>';
+	return '<a href="' . $ssc_site_url . $path . '" ' . (!empty($op['attributes']) ? ssc_attributes($op['attributes']) : '') . '>' . ($op['html'] ? $title : check_plain($title)). '</a>';
 }
 
 /**
@@ -577,7 +577,10 @@ function t($text, $vars = array()){
  */
 function ssc_not_found(){
 	header("HTTP/1.1 404 Not Found");
-	
+	$body = "404 Not Found";
+	theme_render($body);
+	ssc_close();
+	exit;
 }
 
 /**
@@ -585,7 +588,10 @@ function ssc_not_found(){
  */
 function ssc_not_allowed(){
 	header("HTTP/1.1 403 Forbidden");
-	
+	$body = "403 Forbidden";
+	theme_render($body);
+	ssc_close();
+	exit;
 }
 
 /**

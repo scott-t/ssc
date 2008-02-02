@@ -32,7 +32,7 @@ function nav_widget($block){
 	else{
 		// Grab data from DB
 		global $ssc_database;
-		$result = $ssc_database->query("SELECT node.url, node.desc, node.title, (COUNT(parent.title) - 1) AS depth
+		$result = $ssc_database->query("SELECT node.id, node.url, node.desc, node.title, (COUNT(parent.title) - 1) AS depth
 				FROM #__navigation AS node,
 				#__navigation AS parent
 				WHERE node.l BETWEEN parent.l AND parent.r AND node.bid = %d AND parent.bid = %d
@@ -44,13 +44,27 @@ function nav_widget($block){
 		if (!$ssc_database->number_rows())
 			return;
 		
+		// Get path to current
+		$path = $ssc_database->query("SELECT parent.id FROM #__navigation AS node,
+				#__navigation AS parent
+				WHERE node.l BETWEEN parent.l AND parent.r
+				AND node.url = '%s' AND node.bid = %d AND parent.bid = %d
+				ORDER BY parent.l;", $_GET['q'], $block, $block);
+		
+		$tree = array();
+		
+		while ($data = $ssc_database->fetch_object($path)){
+			$tree[] = $data->id;
+		}
+			
 		$out .= '<li>';
 			
 		$prev_depth = 0;
 		$i = 0;
+		
 		// Loop through
 		while ($data = $ssc_database->fetch_object($result)){
-				
+	
 			// Prepare tooltip
 			if (!empty($data->desc))
 				$op = array('attributes' => array('title' => $data->desc));
@@ -60,8 +74,27 @@ function nav_widget($block){
 			// Are we a child of previous?
 			if ($data->depth > $prev_depth){
 				// New level
-				$prev_depth++;
-				$out .= "  <ul>\n    <li>";
+				// Do we accept new level?
+				if (array_search($data->id, $tree) === false){
+					// Not in there so ignore it
+					do {
+						$data = $ssc_database->fetch_object($result);
+					} while ($data->depth > $prev_depth);
+					// Check if there is another link
+					if ($data){
+						// Yes - prepare to show it
+						$out .= "</li>\n<li>";
+					}
+					else{
+						// No - cut and run
+						break;
+					}
+				}	
+				else {
+					// Count it
+					$prev_depth++;
+					$out .= "  <ul>\n    <li>";
+				}
 			}
 			elseif ($data->depth < $prev_depth){
 				// We're dropping levels instead
@@ -93,3 +126,4 @@ function nav_widget($block){
 	$out .= '</ul>'; 
 	return array('body' => $out);
 }
+
