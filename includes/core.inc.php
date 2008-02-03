@@ -598,7 +598,10 @@ function ssc_not_allowed(){
  * Called to redirect the current page
  */
 function ssc_redirect($path = '', $response_code = 302){
-	header("Location: $path", true, $response_code);
+	global $ssc_site_url;
+	ssc_close();
+	header("Location: $ssc_site_url$path", true, $response_code);
+	exit;
 }
 
 /**

@@ -46,7 +46,7 @@ function login_close(){
  * Implements module_content
  */
 function login_content(){
-	global $ssc_site_url, $ssc_database;
+	global $ssc_site_url, $ssc_database, $ssc_user;
 	
 	$out = '';
 	
@@ -64,7 +64,9 @@ function login_content(){
 	
 	case 'logout':
 		// Log the user out
+		$ssc_user = _login_anonymous;
 		ssc_add_message(SSC_MSG_INFO, t('Do Logout'));
+		ssc_redirect('/');
 		break;
 	case '':
 		
