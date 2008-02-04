@@ -68,6 +68,16 @@ function login_content(){
 		ssc_add_message(SSC_MSG_INFO, t('Do Logout'));
 		ssc_redirect('/');
 		break;
+		
+	case 'register':
+		// Ensure user registrations are allowed
+		if (!ssc_var_get('login_user_create', true))
+			ssc_not_found();
+		
+		// They are, so show from
+		$out = ssc_generate_form('login_registration');
+		break;
+		
 	case '':
 		
 	default:
@@ -88,7 +98,17 @@ function login_widget($type){
 		return;
 		
 	if ($ssc_user->gid == SSC_USER_GUEST){
-		return array('title' => t('User login'), 'body' => ssc_generate_form('login_form'));
+		// Do we show the login box?
+		if (!ssc_var_get('login_show_login', true))
+			return;
+			
+		$menu[] = array('t' => t('Forgotten password'), 'p' => '/user/forgot', 'h' => t('Reset the password on an account'));
+			
+		if (ssc_var_get('login_user_create', true))
+			$menu[] = array('t' => t('Create new account'), 'p' => '/user/register');
+		
+		$links = nav_widget($menu);
+		return array('title' => t('User login'), 'body' => ssc_generate_form('login_form') . $links['body']);
 	}
 	else{
 		$menu = array();
@@ -101,6 +121,106 @@ function login_widget($type){
 }
 
 /**
+ * Generate registration form
+ */
+function login_registration(){
+	$form = array(	'#action' => '',
+					'#method' => 'post');
+	
+	$form['user'] = array(	'#title' => t('Username'),
+							'#type' => 'text',
+							'#required' => true,
+							'#maxlen' => 20,
+							'#description' => t('Requested username.  Alphanumeric characters only')
+							);
+							
+	$form['email'] = array(	'#title' => t('Email address'),
+							'#type' => 'text',
+							'#required' => true,
+							'#maxlen' => 50,
+							'#description' => t('Your registration details will be sent to this address.  This address will remain private.')
+							);
+							
+	$form['submit'] = array('#type' => 'submit',
+							'#value' => t('Create account'));
+							
+	return $form;
+}
+
+/**
+ * Validate registration
+ */
+function login_registration_validate(){
+	if (empty($_POST['user']) || empty($_POST['email'])){
+		ssc_add_message(SSC_MSG_CRIT, t('Both username and email fields need to be filled in'));
+		return false;
+	}
+	
+	$email = $_POST['email'] = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL);
+	
+	if (empty($email) || !$email || strpos($email, "\n") !== false || strpos($email, ":") !== false){
+		ssc_add_message(SSC_MSG_CRIT, t('The email address provided was invalid'));
+		return false;
+	}
+	
+	global $ssc_database;
+	$result = $ssc_database->query("SELECT id FROM #__user WHERE username = '%s' OR email = '%s' LIMIT 1", $_POST['user'], $email);
+	if ($ssc_database->number_rows()){
+		ssc_add_message(SSC_MSG_CRIT, t('The provided username or email address has already been used to register.  Have you !forgotten your password?', array('!forgotten', l('forgotten', 'user/forgot'))));
+		return false;
+	}
+	
+	return true;
+}
+
+/**
+ * Registration submission
+ */
+function login_registration_submit(){
+	global $ssc_site_url, $ssc_database;
+	 
+	if (!ssc_load_library('sscMail')){
+		ssc_add_message(SSC_MSG_CRIT, t("An error creating your account has occurred"));
+		return false;
+	}
+	
+	$pass = md5($_POST['user'] . time() . $_SERVER['SERVER_NAME']);
+	
+	$mail = sscMail($_POST['email'], t("#server account registration", array('#server' => $_SERVER['SERVER_NAME'])));
+	
+	if (!$mail){
+		ssc_add_message(SSC_MSG_CRIT, t("An error creating your account has occurred"));
+		return false;
+	}
+	
+	$message = t("#user,\n\nThank you for registering at #server.\nYou can now log in using the following credentials\nat #url\n\n".
+						"  Username: #user\n" .
+						"  Password: #pass\n\n" .
+						"You will then be directed to a form where you may update your details and set a new\n" .
+						"password.  If you do not login within 3 days of signing up, your account will be\n" .
+						"deleted and you will need to recreate this account." . 
+						"\n\nIf you receive this message in error, please ignore it and you will not receive" .
+						"any further messages from us.",
+				array(	"#user" => $_POST['user'],
+						"#server" => $ssc_site_url,
+						"#url" => $ssc_site_url . "user/login",
+						"#pass" => $pass));	
+	
+	$result = $ssc_database->query("INSERT INTO #__user (username, fullname, displayname, email, gid, ip, useragent, created, accessed, password, data) VALUES ('%s', '', '', '%s', 0, '', '', %d, 0, '%s', '')", $_POST['user'], $email, time(), $pass);
+	if ($result){
+		$sent = $mail->send($message);
+		
+		if ($sent)
+			ssc_add_message(SSC_MSG_INFO, t("Success.  An email has been sent to your nominated address with further details."));
+		else {
+			ssc_add_message(SSC_MSG_CRIT, t("An error creating your account has occurred"));
+			$ssc_database->query("DELETE FROM #__user WHERE id = %d LIMIT 1", $ssc_database->last_id());
+		}
+			
+	}
+}
+
+/**
  * Generate login form's
  */
 function login_form($type = 'mini'){
@@ -110,20 +230,20 @@ function login_form($type = 'mini'){
 	$form['#action'] = '';
 	$form['#method'] = 'post';	
 	$form['user'] = array(
-									'#title' => t('Username'),
-									'#type' => 'text',
-									'#required' => true,
-									'#maxlen' => 20
-									);
+							'#title' => t('Username'),
+							'#type' => 'text',
+							'#required' => true,
+							'#maxlen' => 20
+							);
 	$form['pass'] = array(
-									'#title' => t('Password'),
-									'#type' => 'password',
-									'#required' => true,
-									);
+							'#title' => t('Password'),
+							'#type' => 'password',
+							'#required' => true,
+							);
 	$form['submit'] = array(
-									'#type' => 'submit',
-									'#value' => t('Log In')
-									);
+							'#type' => 'submit',
+							'#value' => t('Log In')
+							);
 	
 	switch($type){
 	case 'mini':
@@ -183,7 +303,7 @@ function login_form_submit(){
 	}
 	
 	// Password good too - valid credentials
-	session_regenerate_id();
+	session_regenerate_id(true);
 	
 	ssc_add_message(SSC_MSG_INFO, t('Welcome, !user.<br />You last logged in on !date at !time from !ip', 
 								array(	'!user' => $user->fullname,
@@ -197,6 +317,9 @@ function login_form_submit(){
 	$ssc_user->useragent = md5($_SERVER['HTTP_USER_AGENT']);
 	
 	$ssc_database->query("UPDATE #__user SET accessed = %d, ip = '%s', useragent = '%s' WHERE id = %d LIMIT 1", time(), $_SERVER['REMOTE_ADDR'], $ssc_user->useragent, $ssc_user->uid);
+	
+	if ($_GET['q'] = 'user/path')
+		ssc_redirect('');
 }
 
 
@@ -235,11 +358,11 @@ function login_form_handler(){
 
 /**
  * Logs the current user out
- */
+ *
 function login_logout(){
 	global $ssc_user;
 	_login_kill_session();
-	session_regenerate_id();
+	session_regenerate_id(true);
 	$ssc_user = _login_anonymous();
 }
 
@@ -273,6 +396,7 @@ function _login_anonymous($sid = ''){
 	$user->id = SSC_USER_GUEST;
 	$user->username = t('Guest');
 	$user->fullname = t('Guest');
+	$user->displayname = t('Guest');
 	$user->gid = SSC_USER_GUEST;
 	$user->useragent = '';
 	
@@ -314,7 +438,7 @@ function _login_sess_read($id){
 	}
 	
 	// Proper user
-	if ($result = $ssc_database->query("SELECT s.data, s.uid, u.useragent, u.username, u.fullname, u.gid FROM #__session s LEFT JOIN #__user u ON s.uid = u.id WHERE s.id = '%s' LIMIT 1", $id)){
+	if ($result = $ssc_database->query("SELECT s.data, s.uid, u.useragent, u.username, u.fullname, u.displayname, u.gid FROM #__session s LEFT JOIN #__user u ON s.uid = u.id WHERE s.id = '%s' LIMIT 1", $id)){
 		// Invalid session id
 		if (!($ssc_user = $ssc_database->fetch_object($result))){
 			$ssc_user = _login_anonymous();

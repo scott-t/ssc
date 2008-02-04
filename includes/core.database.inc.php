@@ -133,6 +133,12 @@ abstract class sscAbstractDatabase{
 	abstract public function error();
 	
 	/**
+	 * Returns the id relating the the previous insert
+	 * @return string Error message
+	 */
+	abstract public function last_id();
+	
+	/**
 	 * Sets and execute a query on the current database object
 	 * @param string $sql SQL query to exectute
 	 * @param mixed $sql,... Arguments to be passed to the query for escaping  
@@ -172,4 +178,6 @@ abstract class sscAbstractDatabase{
 				"previous" => ($page == 1 ? false : true)
 				);
 	}
+	
+	
 }

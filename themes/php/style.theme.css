@@ -41,11 +41,19 @@ input {
 .widget {
 	border: #999999 1px dotted;
 	padding: 2px;
+	margin-bottom: 1em;
 }
 
 .widget-body {
 	padding: 5px;
 	background-color: #ffffff;
+}
+
+.widget ul {
+	padding: 0.5em 1em;
+}
+.widget ul li {
+	padding: 0.2em 0;
 }
 
 #body * fieldset,#body * legend {

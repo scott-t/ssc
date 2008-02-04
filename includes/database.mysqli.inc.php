@@ -409,6 +409,13 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 	}
 	
 	/**
+	 * @see ssciDatabase::last_id()
+	 */
+	public function last_id(){
+		return $this->link->insert_id;
+	}
+	
+	/**
 	 * Escape the current string
 	 * @param string $str String to be escaped
 	 * @return string Escaped string ready for insertion into the database

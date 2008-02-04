@@ -15,7 +15,8 @@ defined('_VALID_SSC') or die('Restricted access');
  */
 define('SSC_INIT_CONFIG', 1);
 define('SSC_INIT_DATABASE', 2);
-define('SSC_INIT_FULL', 3);
+define('SSC_INIT_EXTENSION', 3);
+define('SSC_INIT_FULL', 4);
 
 /**
  * Date formats
@@ -29,6 +30,24 @@ define('SSC_DATE_MED', 'D j M Y');
  */
 define('SSC_TIME_FULL', 'g:i:s A T');
 define('SSC_TIME_SHORT', 'g:ia');
+
+/**
+ * Version numbers - Major trunk change
+ */
+define('SSC_VER_MAJOR', 3);
+/**
+ * Version numbers - Minor featureset update
+ */
+define('SSC_VER_MINOR', 0);
+/**
+ * Version numbers - Bugfix/stability update
+ */
+define('SSC_VER_REV', '0a');
+/**
+ * Version numbers - Major trunk change
+ */
+define('SSC_VER_FULL', SSC_VER_MAJOR . '.' . SSC_VER_MINOR . '.' . SSC_VER_REV);
+define('SSC_VER_UA', 'SSC/' . SSC_VER_FULL);
 
 /**
  * Module error status: Forbidden
@@ -90,7 +109,10 @@ $SSC_VARS;
  */
 function ssc_close(){
 	global $ssc_database;
-	module_hook('close');
+	
+	if (function_exists('module_hook'))
+		module_hook('close');
+		
 	unset($ssc_database);
 }
 
@@ -162,10 +184,6 @@ function ssc_conf_init(){
 			'body'  => 'It seems SSC was not successfully uploaded as some files are missing!'
 			));
 	}
-	
-	// Set theme path
-	$SSC_SETTINGS['theme']['path'] = "$ssc_site_path/themes/{$SSC_SETTINGS['theme']['name']}";
-	$SSC_SETTINGS['theme']['url'] = "$ssc_site_url/themes/{$SSC_SETTINGS['theme']['name']}";
 	
 	// Set referer if none present
 	if (!isset($_SERVER['HTTP_REFERER']))
@@ -295,13 +313,27 @@ function _ssc_load($level){
 		case SSC_INIT_DATABASE:
 			ssc_database_init();
 			break;
+
+		case SSC_INIT_EXTENSION:
+			ssc_var_init();
+			ssc_extension_init();
+			break;
 			
 		case SSC_INIT_FULL:
-			ssc_var_init();
 			ssc_frontend_init();
 			break;
 	
 	}
+}
+
+/**
+ * Boot up extensions
+ */
+function ssc_extension_init(){
+	global $ssc_site_path;
+	// Load up all enabled modules
+	require_once "$ssc_site_path/includes/core.module.inc.php";
+	module_load();
 }
 
 /**
@@ -320,10 +352,6 @@ function ssc_frontend_init(){
 					'title' => 'Bad language',
 					'body'  => "Language '" . $SSC_SETTINGS['lang']['tag'] . "' is currently not installed"
 					));
-					
-	// Load up all enabled modules
-	require_once "$ssc_site_path/includes/core.module.inc.php";
-	module_load();
 	
 	// Check inputs
 	ssc_magic_check();
@@ -770,5 +798,27 @@ function ssc_set_title($title = null){
 		$t = $title;
 	
 	return $t;
+}
 
+/**
+ * Loads up a library from the lib folder
+ * @param string $lib Library name to load
+ * @return boolean True if library was included, false if otherwise
+ */
+function ssc_load_library($lib){
+	global $ssc_site_path;
+	static $loaded = array();
+	
+	// Check if already loaded
+	if (array_search($lib, $loaded) === false){
+		// Need to load
+		$path = $ssc_site_path . "/lib/$lib.lib.php";
+		if (!file_exists($path))
+			return false;
+			
+		include $path;
+		$loaded[] = $lib;
+	}
+	
+	return true;
 }
