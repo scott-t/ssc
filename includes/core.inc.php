@@ -592,7 +592,7 @@ function t($text, $vars = array()){
 		switch ($key[0]){
 		case '#':
 			// Plaintext
-			$vars[$key] = check_plain($text);
+			$vars[$key] = check_plain($val);
 		case '!':
 			break;
 		}

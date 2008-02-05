@@ -20,7 +20,7 @@ defined('_VALID_SSC') or die('Restricted access');
  *     $pass = new PasswordHash(8, true);	// Use portable version
  * 
  *     // Calculate a hash
- *     $hash = $pass->HassPassword('password');
+ *     $hash = $pass->HashPassword('password');
  * 
  *     // Check if match
  *     $match = $pass->CheckPassword('password', $hash);  // $match now == true

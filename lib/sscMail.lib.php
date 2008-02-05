@@ -34,7 +34,7 @@ class sscMail {
 	 * Constructor
 	 */
 	function __construct($to, $subject, $from = null){
-		$this->header = array('X-Mailer' => SSC_VAR_UA);
+		$this->header = array('X-Mailer' => SSC_VER_UA);
 
 		// To field
 		if (!empty($to)){
@@ -44,6 +44,9 @@ class sscMail {
 		// From field
 		if (!empty($from)){
 			$this->set_header('From', $from);
+		}
+		else {
+			$this->set_header('From', ssc_var_get("admin_email", 'noreply@' . $_SERVER['SERVER_NAME']));
 		}
 		
 		$this->subject = $subject;
@@ -78,13 +81,10 @@ class sscMail {
  	 */
 	function send($message){
 		// Ensure required fields set
-		if (empty($this->to) || empty($this->subject) || empty($this->message) || )
+		if (empty($this->to) || empty($this->subject) || empty($message)){
 			return false;
-
-		// Set default 'From' header
-		if (empty($this->header['From']))
-			$this->set_header('From', ssc_get_var("admin_email", 'noreply@' . $_SERVER['SERVER_NAME']));
-			
+		}
+		
 		$headers = '';
 		foreach ($this->header as $key => $value){
 			$headers .= "$key: $value\n";

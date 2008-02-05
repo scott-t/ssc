@@ -27,11 +27,14 @@ function login_init(){
 	global $ssc_site_path;
 	
 	// Include password encryption library
-	require_once "$ssc_site_path/lib/phpass.lib.php";
+	if (ssc_load_library('phpass')){
+		session_set_save_handler('_login_sess_open', '_login_sess_close', '_login_sess_read', '_login_sess_write', '_login_sess_destroy', '_login_sess_clean');
 	
-	session_set_save_handler('_login_sess_open', '_login_sess_close', '_login_sess_read', '_login_sess_write', '_login_sess_destroy', '_login_sess_clean');
-	
-	session_start();
+		session_start();
+	}
+	else{
+		die ("module bad");
+	}
 	
 }
 
@@ -40,6 +43,15 @@ function login_init(){
  */
 function login_close(){
 	session_write_close();
+}
+
+/**
+ * Implements module_cron
+ */
+function login_cron(){
+	global $ssc_database;
+	// Delete 3 day old unaccessed accounts
+	$ssc_database->query("DELETE FROM #__user WHERE created < %d AND accessed = 0", time() - (60 * 60 * 24 * 3));
 }
 
 /**
@@ -74,6 +86,8 @@ function login_content(){
 		if (!ssc_var_get('login_user_create', true))
 			ssc_not_found();
 		
+		ssc_set_title('Register an account');
+			
 		// They are, so show from
 		$out = ssc_generate_form('login_registration');
 		break;
@@ -166,7 +180,7 @@ function login_registration_validate(){
 	global $ssc_database;
 	$result = $ssc_database->query("SELECT id FROM #__user WHERE username = '%s' OR email = '%s' LIMIT 1", $_POST['user'], $email);
 	if ($ssc_database->number_rows()){
-		ssc_add_message(SSC_MSG_CRIT, t('The provided username or email address has already been used to register.  Have you !forgotten your password?', array('!forgotten', l('forgotten', 'user/forgot'))));
+		ssc_add_message(SSC_MSG_CRIT, t('The provided username or email address has already been used to register.  Have you !forgotten your password?', array('!forgotten' => l('forgotten', '/user/forgot'))));
 		return false;
 	}
 	
@@ -184,29 +198,33 @@ function login_registration_submit(){
 		return false;
 	}
 	
-	$pass = md5($_POST['user'] . time() . $_SERVER['SERVER_NAME']);
+	$pass = substr(base64_encode(md5($_POST['user'] . time() . $_SERVER['SERVER_NAME'])), 0, 16);
 	
-	$mail = sscMail($_POST['email'], t("#server account registration", array('#server' => $_SERVER['SERVER_NAME'])));
+	$hash = new PasswordHash(8, true);
+	
+	$mail = new sscMail($_POST['email'], t("#server account registration", array('#server' => $_SERVER['SERVER_NAME'])));
 	
 	if (!$mail){
 		ssc_add_message(SSC_MSG_CRIT, t("An error creating your account has occurred"));
 		return false;
 	}
 	
-	$message = t("#user,\n\nThank you for registering at #server.\nYou can now log in using the following credentials\nat #url\n\n".
+	$message = t("#user,\n\nThank you for registering at #server.\nYou can now log in using the following credentials\nat #url\n\n" .
 						"  Username: #user\n" .
 						"  Password: #pass\n\n" .
 						"You will then be directed to a form where you may update your details and set a new\n" .
 						"password.  If you do not login within 3 days of signing up, your account will be\n" .
 						"deleted and you will need to recreate this account." . 
-						"\n\nIf you receive this message in error, please ignore it and you will not receive" .
+						"\n\nIf you receive this message in error, please ignore it and you will not receive\n" .
 						"any further messages from us.",
 				array(	"#user" => $_POST['user'],
 						"#server" => $ssc_site_url,
 						"#url" => $ssc_site_url . "user/login",
 						"#pass" => $pass));	
 	
-	$result = $ssc_database->query("INSERT INTO #__user (username, fullname, displayname, email, gid, ip, useragent, created, accessed, password, data) VALUES ('%s', '', '', '%s', 0, '', '', %d, 0, '%s', '')", $_POST['user'], $email, time(), $pass);
+	$pass = $hash->HashPassword($pass);
+				
+	$result = $ssc_database->query("INSERT INTO #__user (username, fullname, displayname, email, gid, ip, useragent, created, accessed, password, data) VALUES ('%s', '', '', '%s', 0, '', '', %d, 0, '%s', '')", $_POST['user'], $_POST['email'], time(), $pass);
 	if ($result){
 		$sent = $mail->send($message);
 		
@@ -217,6 +235,9 @@ function login_registration_submit(){
 			$ssc_database->query("DELETE FROM #__user WHERE id = %d LIMIT 1", $ssc_database->last_id());
 		}
 			
+	}
+	else{
+		ssc_add_message(SSC_MSG_CRIT, t("An error creating your account has occurred"));
 	}
 }
 
