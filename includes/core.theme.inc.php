@@ -310,13 +310,20 @@ function theme_render_input($structure){
 }
 
 /**
- * Render the body of the page
- * @param string $body Primary bodily content
- * @return string Markup wrapped version of the body
- *
-function theme_render_content($body){
-	$out = '';
-	
+ * Render the dropdown box for a form
+ * @param array $structure Element structure
+ * @return string Markup representing the select box
+ */
+function theme_render_select($structure){
+	$out = '<select name="' . $structure['#name'] . '"' . (isset($structure['#id']) ? ' id="' . $structure['#id'] . '"' : '') . '>';
+	// Get values
+	$sel = empty($structure['#selected']) ? null : $structure['#selected'];
+	foreach ($structure['#value'] as $val => $name){
+		$out .= "\n<option value=\"$val\"" . ($sel == $val ? ' selected="selected" ' : '') . ">$name</option>";
+	}
+	$out .= '</select>';
+	$structure['#value'] = $out;
+	$out = theme_render_form_element($structure);
 	return $out;
 }
 
