@@ -107,11 +107,11 @@ function theme_render(&$body){
 	$side[2] = ob_get_contents();
 	ob_end_clean();
 	
-	$title = ssc_var_get('site_name', false);
-	$meta = _theme_get_meta() . '<title>' . ssc_set_title() . ($title ? " | " . $title : '') ."</title>\n";
+	$site_name = ssc_var_get('site_name', false);
+	$meta = _theme_get_meta() . '<title>' . ssc_set_title() . ($site_name ? " | " . $site_name : '') ."</title>\n";
 	$lang = ssc_var_get('language', 'en');
 	$logo = ssc_var_get('theme_show_logo', false) ? ssc_var_get('theme_logo', '') : false;
-	$title = ssc_var_get('theme_show_title', false) ? "<h1>$title</h1>" : false;
+	$title = ssc_var_get('theme_show_title', false) ? "<h1>$site_name</h1>" : false;
 	$quip = ssc_var_get('theme_show_quip', false) ? ssc_var_get('theme_quip', '') : false;
 	$breadcrumb = ssc_var_get('theme_breadcrumb', false);
 	$messages = theme_messages();

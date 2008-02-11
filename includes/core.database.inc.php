@@ -169,7 +169,7 @@ abstract class sscAbstractDatabase{
 		
 		$args[2] .= " LIMIT " . ($page - 1) * $per_page . ", " . $page * $per_page;
 		
-		$result = call_user_func_array('$this->query', $args);
+		$result = call_user_func_array(array($this, 'query'), $args);
 		$rows = $this->number_rows();
 		
 		return array(

@@ -56,8 +56,8 @@ input {
 	padding: 0.2em 0;
 }
 
-#body * fieldset,#body * legend {
-	border: none;
+#body fieldset,#body legend {
+	border: #666666 1px dashed;
 }
 
 h1 {
@@ -119,3 +119,85 @@ h6 {
 	border: #0066CC 2px dashed;
 }
 
+/*********** ADMIN *****************************/
+
+a.admin-block {
+	display: block;
+	border: #cccccc 1px solid;
+	padding: 1em;
+	margin-bottom: 1em;
+	text-decoration: none;
+	color: #666666;
+}
+
+a.admin-block img{
+	float: left;
+	border: none;
+	margin-right: 0.5em;
+	background-color: #ffffff;
+	padding-right: 1em;
+}
+
+div.admin-block img{
+	float: left;
+	margin: 0;
+	padding: 1em;
+}
+
+div.admin-block h3{
+	line-height: 48px;
+	padding: 1em 0;
+	border-bottom: #666666 1px solid;
+}
+
+a.admin-block span{
+	display: block;
+}
+
+a.admin-block span span:first-child{
+	margin-bottom: 0.5em;
+	padding-bottom: 0.5em;
+	border-bottom: #666666 1px solid;
+	font-size: 110%;
+	font-weight: bold;
+}
+
+/************ Admin table **************/
+
+.admin-table {
+	width: 100%;
+	background-color: #f4f4f4;
+	border: #666666 1px solid;
+	border-collapse: collapse;
+}
+
+.row1{
+	background-color: #eeeeee;
+}
+
+.row0{
+	background-color: #e8e8e8;
+}
+
+.admin-table th{
+	border-bottom: #ababab 1px solid;
+}
+
+.admin-table tr:hover{
+	background-color: #e0e0e0;
+}
+
+.admin-table tr:first-child:hover{
+	background-color: transparent;
+}
+
+.admin-table td, .admin-table th {
+	border-left: #ababab 1px solid;
+	padding: 0.2em 0.6em;
+	margin: 0;
+}
+
+.admin-table td:first-child, .admin-table th:first-child {
+	border-left: none;
+	text-align: center;
+}

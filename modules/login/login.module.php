@@ -46,6 +46,44 @@ function login_close(){
 }
 
 /**
+ * Implements module_admin
+ */
+function login_admin(){
+	$out = '';
+	
+	// Work out what we want to do 
+	$action = array_shift($_GET['param']);
+	switch ($action){
+	case 'edit':
+		$out = ssc_generate_form('login_profile');
+		break;
+		
+	case 'page':
+		// Allow for paging
+		array_unshift($_GET['param'], 'page');
+	case '':
+		// Main admin page - list users and groups
+		// 
+		$out = ssc_admin_table("Users", 
+			"SELECT u.id AS ID, username, fullname, g.name AS group_name, email 
+			FROM #__user u LEFT JOIN #__group g ON g.id = u.gid 
+			ORDER BY username ASC", null, 
+			array('link' => 'username', 'linkpath' => '/admin/login/edit/',
+					'perpage' => 30, 'pagelink' => '/admin/login/page/'));
+		$out .= ssc_admin_table("Permission groups", 
+			"SELECT id AS ID, name, description 
+			FROM #__group g ORDER BY name ASC", null, 
+			array('link' => 'name', 'linkpath' => '/admin/login/gedit/'));
+		break;
+	default:
+		ssc_not_found();
+		break;
+	}
+	
+	return $out;
+}
+
+/**
  * Implements module_cron
  */
 function login_cron(){
@@ -79,6 +117,11 @@ function login_content(){
 		$ssc_user = _login_anonymous;
 		ssc_add_message(SSC_MSG_INFO, t('Do Logout'));
 		ssc_redirect('/');
+		break;
+		
+	case 'forgot':
+		ssc_set_title('Reset a forgotten password');
+		$out = ssc_generate_form('login_forgotten');
 		break;
 		
 	case 'register':
@@ -198,8 +241,7 @@ function login_registration_submit(){
 		return false;
 	}
 	
-	$pass = substr(base64_encode(md5($_POST['user'] . time() . $_SERVER['SERVER_NAME'])), 0, 16);
-	
+	$pass = substr(base64_encode(md5($_POST['user'] . mt_rand() . $_SERVER['SERVER_NAME'])), 0, 16);
 	$hash = new PasswordHash(8, true);
 	
 	$mail = new sscMail($_POST['email'], t("#server account registration", array('#server' => $_SERVER['SERVER_NAME'])));
@@ -343,38 +385,150 @@ function login_form_submit(){
 		ssc_redirect('');
 }
 
+/**
+ * Form to reset a lost password
+ */
+function login_forgotten(){
+	$form = array('#action' => '', '#method' => 'post');
+	$form['name'] = array(	'#type' => 'text',
+							'#title' => t('Username'),
+							'#description' => t('Username for which you wish to recover password for.  An email will be sent to your nominated email account.'));
+	$form['submit'] = array('#type' => 'submit',
+							'#value' => t('Reset password'));
+	
+	return $form;
+}
 
 /**
- * 
- 
-function login_form_handler(){
+ * Forgotten password recovery validation
+ */
+function login_forgotten_validate(){
+	if (empty($_POST['name'])){
+		ssc_add_message(SSC_MSG_CRIT, t('You need to fill in the username to recover details for.'));
+		return false;
+	}
+	
+	return true;
+}
+
+/**
+ * Forgotten password recovery submission
+ */
+function login_fogotten_submit(){
+	global $ssc_site_url, $ssc_database;
+	 
+	if (!ssc_load_library('sscMail')){
+		ssc_add_message(SSC_MSG_CRIT, t("An error resetting your account password has occurred"));
+		return false;
+	}
+	
+	// Retrieve email for user
+	$result = $ssc_database->query("SELECT id, username, email FROM #__user WHERE username = '%s' LIMIT 1", $_POST['name']);
+	if (!($data = $ssc_database->fetch_object($result))){
+		ssc_add_message(SSC_MSG_CRIT, t('The username specified does not exist'));
+		return false;
+	}
+	
+	// Set new password
+	$pass = substr(base64_encode(md5($_POST['name'] . mt_rand() . $_SERVER['SERVER_NAME'])), 0, 16);
+	$hash = new PasswordHash(8, true);
+	
+	$mail = new sscMail($_POST['email'], t("#server password reset", array('#server' => $_SERVER['SERVER_NAME'])));
+	
+	if (!$mail){
+		ssc_add_message(SSC_MSG_CRIT, t("An error resetting your account password has occurred"));
+		return false;
+	}
+	
+	$message = t("#user,\n\nA password reset was placed at #server for your username,\nand as such, your password has been reset to the following details:\n\n" .
+						"  Username: #user\n" .
+						"  Password: #pass\n\n" .
+						"You can use these details to log in and then change your password\n" .
+						"from your profile page.\n\n" .
+						"If you did not authorize this, you are still requird to use the password\n" .
+						"above to login.",
+				array(	"#user" => $_POST['user'],
+						"#server" => $ssc_site_url,
+						"#url" => $ssc_site_url . "user/login",
+						"#pass" => $pass));	
+	
+	$pass = $hash->HashPassword($pass);
+				
+	$result = $ssc_database->query("UPDATE #__user SET password = '%s' WHERE id = %d", $pass, $data->id);
+	if ($result){
+		$sent = $mail->send($message);
+		
+		if ($sent)
+			ssc_add_message(SSC_MSG_INFO, t("Success.  An email has been sent to your nominated address with further details."));
+		else {
+			ssc_add_message(SSC_MSG_CRIT, t("An error occurred sending the email.  Please contact an administrator."));
+		}
+			
+	}
+	else{
+		ssc_add_message(SSC_MSG_CRIT, t("An error resetting your account password has occurred"));
+	}
+}
+
+/**
+ * User profile edit
+ */
+function login_profile(){
 	global $ssc_database;
 	
-	$pass = new PasswordHash(8, true);
-	$i = 1 / 0;
-	echo $i;
-	// Attempt to find relevant username
-	$result = $ssc_database->query("SELECT id, accessed, password, fname, gid FROM #__user WHERE name = '%s' LIMIT 1", $_POST['user']);
-	if ($ssc_database->number_rows() < 1){
-		// Bad user details.  Tell user
-		ssc_add_message(SSC_MSG_CRIT, t('Invalid user name or password'));
-		return;
+	// Are we superprofile editing?
+	if ($_GET['path'] == 'admin'){
+		$uid = (int)array_shift($_GET['param']);
+		if ($uid == 0){
+			// New
+			$ssc_user = new StdClass();
+		}
+		else{
+			// Existing - need to attempt retrieval
+			$result = $ssc_database->query("SELECT id, username, fullname, displayname, email, gid FROM #__user WHERE id = %d LIMIT 1", $uid);
+			if (!$result)
+				ssc_add_message(SSC_MSG_WARN, $ssc_database->error());
+				
+			$ssc_user = $ssc_database->fetch_object($result);
+			if (!$ssc_user)
+				ssc_add_message(SSC_MSG_WARN, 'duh');
+		}
 	}
+	else {
+		// Just self-editing
+		global $ssc_user;
+	}
+
+	$form = array(	'#action' => '',
+					'#method' => 'post');
 	
-	// Check password
-	$data = $ssc_database->fetch_assoc($result);
-	if (!$pass->CheckPassword($_POST['pass'], $data['password'])){
-		// Was wrong!
-		ssc_add_message(SSC_MSG_CRIT, t('Invalid user name or password'));
-		return;
-	}
-		
-	// Correct details
-	_login_kill_session();
-	session_regenerate_id();
-	$_SESSION['username'] = $data['fname'];
-	$_SESSION['userlevel'] = $data['gid'];
-	$_SESSION['id'] = $data['id'];
+	$fieldset = array(	'#type' => 'fieldset',
+						'#title' => t('User details'),
+						'#parent' => true);
+	
+	$fieldset['uid'] = array(	'#type' => 'hidden',
+								'#value' => $ssc_user->id);
+	$fieldset['user'] = array(	'#type' => 'text',
+								'#value' => $ssc_user->username,
+								'#maxlen' => 20,
+								'#required' => true,
+								'#title' => t('Username'),
+								'#description' => t('Username used to log in with'));
+	$fieldset['disp'] = array(	'#type' => 'text',
+								'#value' => $ssc_user->displayname,
+								'#maxlen' => 20,
+								'#required' => true,
+								'#title' => t('Display name'),
+								'#description' => t('Name to display when shown on main page'));
+	$fieldset['full'] = array(	'#type' => 'text',
+								'#value' => $ssc_user->fullname,
+								'#maxlen' => 30,
+								'#required' => true,
+								'#title' => t('Full name'),
+								'#description' => t('Full name for administration uses'));
+	$form['details'] = $fieldset;
+	
+	return $form;
 }
 
 /**

@@ -359,7 +359,7 @@ function ssc_frontend_init(){
 	
 	// Set up the theme
 	require_once "$ssc_site_path/includes/core.theme.inc.php";
-	$theme = ssc_var_get('theme_default', SSC_DEFAULT_THEME);
+	$theme = ssc_var_get('theme_default', SSC_DEFAULT_THEME);	
 	$file = "$ssc_site_path/themes/$theme/$theme.";
 	if (!file_exists($file . 'theme.php') && !file_exists($file . 'info'))
 		ssc_die(array(
@@ -656,6 +656,9 @@ function ssc_parse_ini_file($type, $path){
 
 		if (isset($info['mini_count']))
 			return $info;
+	
+	case 'module':
+		return $info;
 	}
 	return;
 }
@@ -672,7 +675,7 @@ function ssc_lang(){
  * Form processing
  * @param string $form_name Name of the form in the form of 'module_formname' representing the
  * 					function to call to generate said form
- */
+ *
 function ssc_form_handler($form_name){
 
 	//return ssc_generate_html($form_name());
@@ -775,9 +778,11 @@ function ssc_add_css($path = null, $media = 'all'){
 				$file = file_get_contents($ssc_site_path . $path);
 				if (strpos($file, '$') !== false){
 					$file = str_replace('$base_url$', $ssc_site_url, $file);
+					$file = str_replace('$theme_url$', "$ssc_site_url/themes/" .ssc_var_get('theme_default', SSC_DEFAULT_THEME), $file);
 				}
 				
 				file_put_contents($ssc_site_path . $p, $file);
+				chmod($ssc_site_path . $p, 0644);
 			//}
 			
 			$css[md5($path)] = array($ssc_site_url . $p, $media);

@@ -45,7 +45,7 @@ function module_find_handler(){
 	elseif (substr($_GET['q'], -1) == '/')
 		$_GET['q'] = substr($_GET['q'], 0, -1);
 	
-	$result = $ssc_database->query("SELECT #__module.id, filename, path FROM #__module, #__handler WHERE #__handler.id = #__module.id AND '%s' LIKE CONCAT(path,'%%') ORDER BY path DESC LIMIT 1", $_GET['q']);
+	$result = $ssc_database->query("SELECT m.id, filename, path FROM #__module m, #__handler h WHERE h.id = m.id AND '%s' LIKE CONCAT(path,'%%') ORDER BY path DESC LIMIT 1", $_GET['q']);
 	if ($ssc_database->number_rows() == 0){
 		ssc_not_found();
 	}
@@ -122,12 +122,12 @@ function module_load(){
 	
 		
 	// Retrieve all enabled modules
-	$result = $ssc_database->query("SELECT name, filename, weight FROM #__module WHERE status >= %d ORDER BY weight ASC", SSC_MODULE_ENABLED);
+	$result = $ssc_database->query("SELECT  filename, weight FROM #__module WHERE status >= %d ORDER BY weight ASC", SSC_MODULE_ENABLED);
 
 	// Load each module
 	while ($data = $ssc_database->fetch_assoc($result)){
 		$SSC_MODULES[] = $data;
-		ssc_debug(array('title'=>'module_load','body'=>"Loading '$data[name]' ($data[filename].module.php)"));
+		ssc_debug(array('title'=>'module_load','body'=>"Loading $data[filename].module.php"));
 		include "$ssc_site_path/modules/$data[filename]/$data[filename].module.php";
 	}
 	
