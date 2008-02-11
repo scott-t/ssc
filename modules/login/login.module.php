@@ -480,8 +480,12 @@ function login_profile(){
 	if ($_GET['path'] == 'admin'){
 		$uid = (int)array_shift($_GET['param']);
 		if ($uid == 0){
-			// New
+			// New user
 			$ssc_user = new StdClass();
+			// Set up neat default values
+			$ssc_user->fullname = t('New user');
+			$ssc_user->gid = 0;
+			$ssc_user->id = 0;
 		}
 		else{
 			// Existing - need to attempt retrieval
@@ -499,6 +503,8 @@ function login_profile(){
 		global $ssc_user;
 	}
 
+	ssc_set_title($ssc_user->fullname);
+	
 	$form = array(	'#action' => '',
 					'#method' => 'post');
 	
@@ -526,9 +532,139 @@ function login_profile(){
 								'#required' => true,
 								'#title' => t('Full name'),
 								'#description' => t('Full name for administration uses'));
+	$fieldset['email'] = array(	'#type' => 'text',
+								'#value' => $ssc_user->email,
+								'#maxlen' => 50,
+								'#size' => 30,
+								'#required' => true,
+								'#title' => t('Email address'),
+								'#description' => t('Required for administration uses'));
+	
+	// Populate list
+	$options = array(-1 => 'Guest');
+	$result = $ssc_database->query("SELECT id, name FROM #__group WHERE id > 0 ORDER BY name ASC");
+	while ($data = $ssc_database->fetch_assoc($result)){
+		$options[$data['id']] = $data['name'];
+	}
+	
+	$fieldset['grp'] = array(	'#type' => 'select',
+								'#value' => $options,
+								'#selected' => $ssc_user->gid,
+								'#title' => t('Permission group'),
+								'#description' => t('Group for the user to belong to'));
+	
+	$submit = array('#type' => 'submit',
+					'#value' => t('Save'));
+	//$fieldset['sub'] = $submit;
 	$form['details'] = $fieldset;
 	
+	$fieldset = array(	'#type' => 'fieldset',
+						'#title' => t('Update password'),
+						'#parent' => true);
+	if ($_GET['path'] == 'admin')
+		$fieldset['admin'] = array(	'#type' => 'password',
+									'#title' => t('Admin password'),
+									'#description' => t('Administrator password for verification'),
+									'#required' => true);
+	else
+		$fieldset['old'] = array(	'#type' => 'password',
+									'#title' => t('Current password'),
+									'#description' => t('Current password for verification'),
+									'#required' => true);
+		
+	$fieldset['n1'] = array(	'#type' => 'password',
+								'#title' => t('New password'),
+								'#description' => t('Password to change for user'),
+								'#required' => true);
+	
+	$fieldset['n2'] = array(	'#type' => 'password',
+								'#title' => t('Repeat new password'),
+								'#description' => t('Repeat to avoid typos'),
+								'#required' => true);
+	$form['pass'] = $fieldset;
+	$form['sub'] = $submit;
 	return $form;
+}
+
+/**
+ * Profile validation 
+ */
+function login_profile_validate(){
+	global $ssc_user, $ssc_database;
+	
+	// Are we accessing via admin page?
+	$admin = ($_GET['page'] == 'admin');
+	$_POST['id'] = intval($_POST['id']);
+	// ********* Check required fields ************
+	//
+	if (!empty($_POST['n1'])){
+		// No admin confirmation
+		if ($admin && empty($_POST['admin'])){
+			ssc_add_message(SSC_MSG_CRIT, t('To set a user\'s password, you must enter your own admin password to confirm the action'));
+			return false;
+		}
+			
+		// No user confirmation
+		if (!$admin && empty($_POST['old'])){
+			ssc_add_message(SSC_MSG_CRIT, t('To set a new password, you must enter your current password'));
+			return false;
+		}
+		
+		// No repeat confirmation
+		if (empty($_POST['n2'])){
+			ssc_add_message(SSC_MSG_CRIT, t('You must enter a repeat the password to confirm it'));
+			return false;
+		}
+		
+		// Passwords don't match
+		if ($_POST['n2'] != $_POST['n1']){
+			ssc_add_message(SSC_MSG_CRIT, t('The entered passwords did not match'));
+			return false;
+		}
+		
+	}
+	
+	// Check email
+	$_POST['email'] = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL);
+	if (empty($_POST['email'])){
+		ssc_add_message(SSC_MSG_CRIT, t('The email address provided was invalid'));
+		return false;
+	}
+	
+	if ($admin){
+		// Verify user we are changing
+		if ($_POST['id'] > 0){
+			// Only required for changing existing
+			$result = $ssc_database->query("SELECT id FROM #__user WHERE id = %d LIMIT 1", $_POST['id']);
+			if ($ssc_database->number_rows() != 1){
+				// Impossible error under normal circumstances
+				ssc_add_message(SSC_MSG_CRIT, "Invalid UID number");
+				return false;
+			}
+			
+			// Check if any other superusers
+			if ($ssc_user == SSC_USER_ROOT){
+				$result = $ssc_database->query("SELECT id FROM #__user WHERE gid = %d LIMIT 2", SSC_USER_ROOT);
+				if ($ssc_database->number_rows() < 2){
+					ssc_add_message(SSC_MSG_CRIT, t('There needs to be at least 1 superuser at all times'));
+					return false;
+				}
+			}
+		}
+		
+		
+	}
+	else {
+		// Not admin profile edit
+		
+		// Check we are only changing ourselves
+		if ($_POST['uid'] != $ssc_user->id){
+			// Impossible error under normal circumstances
+			ssc_add_message(SSC_MSG_CRIT, "Invalid UID number");
+			return false;
+		}
+	}
+	return true;
 }
 
 /**
@@ -613,7 +749,7 @@ function _login_sess_read($id){
 	}
 	
 	// Proper user
-	if ($result = $ssc_database->query("SELECT s.data, s.uid, u.useragent, u.username, u.fullname, u.displayname, u.gid FROM #__session s LEFT JOIN #__user u ON s.uid = u.id WHERE s.id = '%s' LIMIT 1", $id)){
+	if ($result = $ssc_database->query("SELECT s.data, s.uid, u.useragent, u.username, u.fullname, u.displayname, u.gid, u.email FROM #__session s LEFT JOIN #__user u ON s.uid = u.id WHERE s.id = '%s' LIMIT 1", $id)){
 		// Invalid session id
 		if (!($ssc_user = $ssc_database->fetch_object($result))){
 			$ssc_user = _login_anonymous();

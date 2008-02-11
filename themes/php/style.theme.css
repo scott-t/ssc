@@ -28,6 +28,14 @@ input {
 	font-size: 1.2em;
 }
 
+#body fieldset,#body legend {
+	border: #666666 1px dashed;
+}
+
+#body fieldset{
+	margin-bottom: 1em;
+}
+
 .widget-title {
 	font-size: 1.1em;
 	font-weight: bold;
@@ -54,10 +62,6 @@ input {
 }
 .widget ul li {
 	padding: 0.2em 0;
-}
-
-#body fieldset,#body legend {
-	border: #666666 1px dashed;
 }
 
 h1 {
