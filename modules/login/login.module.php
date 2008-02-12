@@ -31,6 +31,9 @@ function login_init(){
 		session_set_save_handler('_login_sess_open', '_login_sess_close', '_login_sess_read', '_login_sess_write', '_login_sess_destroy', '_login_sess_clean');
 	
 		session_start();
+		
+		// Check for form validity
+		
 	}
 	else{
 		die ("module bad");
@@ -50,7 +53,7 @@ function login_close(){
  */
 function login_admin(){
 	$out = '';
-	
+
 	// Work out what we want to do 
 	$action = array_shift($_GET['param']);
 	switch ($action){
@@ -133,6 +136,10 @@ function login_content(){
 			
 		// They are, so show from
 		$out = ssc_generate_form('login_registration');
+		break;
+		
+	case 'profile':
+		$out = ssc_generate_form('login_profile');
 		break;
 		
 	case '':
@@ -342,7 +349,7 @@ function login_form_submit(){
 	// Perform user login
 	global $ssc_database, $ssc_user;
 	
-	if ($ssc_user->uid > 0){
+	if ($ssc_user->id > 0){
 		ssc_add_message(SSC_MSG_WARN, t('You are already logged in as !name! To re-login, logout first.', array('!name' => $ssc_user->username)));
 		return;
 	}
@@ -350,7 +357,7 @@ function login_form_submit(){
 	$pass = new PasswordHash(8, true);
 	
 	// Get user details
-	$result = $ssc_database->query("SELECT id uid, password, ip, fullname, username, gid, accessed FROM #__user WHERE username = '%s' LIMIT 1", $_POST['user']);
+	$result = $ssc_database->query("SELECT id, password, ip, fullname, username, gid, accessed FROM #__user WHERE username = '%s' LIMIT 1", $_POST['user']);
 	if (!$result){
 		return;
 	}
@@ -379,9 +386,9 @@ function login_form_submit(){
 	$ssc_user = $user;
 	$ssc_user->useragent = md5($_SERVER['HTTP_USER_AGENT']);
 	
-	$ssc_database->query("UPDATE #__user SET accessed = %d, ip = '%s', useragent = '%s' WHERE id = %d LIMIT 1", time(), $_SERVER['REMOTE_ADDR'], $ssc_user->useragent, $ssc_user->uid);
+	$ssc_database->query("UPDATE #__user SET accessed = %d, ip = '%s', useragent = '%s' WHERE id = %d LIMIT 1", time(), $_SERVER['REMOTE_ADDR'], $ssc_user->useragent, $ssc_user->id);
 	
-	if ($_GET['q'] = 'user/path')
+	if ($_GET['q'] == 'user/login')
 		ssc_redirect('');
 }
 
@@ -491,11 +498,12 @@ function login_profile(){
 			// Existing - need to attempt retrieval
 			$result = $ssc_database->query("SELECT id, username, fullname, displayname, email, gid FROM #__user WHERE id = %d LIMIT 1", $uid);
 			if (!$result)
-				ssc_add_message(SSC_MSG_WARN, $ssc_database->error());
+				ssc_add_message(SSC_MSG_CRIT, t('Error retrieving user details'));
 				
 			$ssc_user = $ssc_database->fetch_object($result);
-			if (!$ssc_user)
-				ssc_add_message(SSC_MSG_WARN, 'duh');
+			if (!$ssc_user){
+				ssc_not_found();
+			}
 		}
 	}
 	else {
@@ -547,12 +555,14 @@ function login_profile(){
 		$options[$data['id']] = $data['name'];
 	}
 	
-	$fieldset['grp'] = array(	'#type' => 'select',
-								'#value' => $options,
-								'#selected' => $ssc_user->gid,
-								'#title' => t('Permission group'),
-								'#description' => t('Group for the user to belong to'));
-	
+	// Admin only the permission
+	if ($_GET['path'] == 'admin')
+		$fieldset['grp'] = array(	'#type' => 'select',
+									'#value' => $options,
+									'#selected' => $ssc_user->gid,
+									'#title' => t('Permission group'),
+									'#description' => t('Group for the user to belong to'));
+		
 	$submit = array('#type' => 'submit',
 					'#value' => t('Save'));
 	//$fieldset['sub'] = $submit;
@@ -561,6 +571,8 @@ function login_profile(){
 	$fieldset = array(	'#type' => 'fieldset',
 						'#title' => t('Update password'),
 						'#parent' => true);
+	
+	// Choose whether we need users password or admin password	
 	if ($_GET['path'] == 'admin')
 		$fieldset['admin'] = array(	'#type' => 'password',
 									'#title' => t('Admin password'),
@@ -591,10 +603,10 @@ function login_profile(){
  */
 function login_profile_validate(){
 	global $ssc_user, $ssc_database;
-	
+
 	// Are we accessing via admin page?
-	$admin = ($_GET['page'] == 'admin');
-	$_POST['id'] = intval($_POST['id']);
+	$admin = ($_GET['path'] == 'admin');
+	$_POST['uid'] = intval($_POST['uid']);
 	// ********* Check required fields ************
 	//
 	if (!empty($_POST['n1'])){
@@ -622,6 +634,36 @@ function login_profile_validate(){
 			return false;
 		}
 		
+		$result = $ssc_database->query("SELECT password FROM #__user WHERE id = %d LIMIT 1", $ssc_user->id);
+		if (!($data = $ssc_database->fetch_assoc($result))){
+			if ($admin)
+				ssc_add_message(SSC_MSG_CRIT, t('Admin password was not correct'));
+			else
+				ssc_add_message(SSC_MSG_CRIT, t('Current password was not correct'));
+			return false;
+		}
+		$hash = new PasswordHash(8, true);
+		if (!$hash->CheckPassword($_POST['admin'], $data['password'])){
+			if ($admin)
+				ssc_add_message(SSC_MSG_CRIT, t('Admin password was not correct'));
+			else
+				ssc_add_message(SSC_MSG_CRIT, t('Current password was not correct'));
+			return false;
+		}
+	}
+	elseif(!empty($_POST['n2'])) {
+		ssc_add_message(SSC_MSG_CRIT, t('You must enter the new password in both boxes to change'));
+		return false;
+	}
+	
+	if (!empty($_POST['admin']) || !empty($_POST['old'])){
+		// Both new's empty
+		if (empty($_POST['n1']) && empty($_POST['n2'])){
+			if ($admin)
+				ssc_add_message(SSC_MSG_WARN, t('Admin password not required unless setting a new password'));
+			else
+				ssc_add_message(SSC_MSG_WARN, t('Current password not required unless setting a new password'));
+		}	
 	}
 	
 	// Check email
@@ -631,11 +673,17 @@ function login_profile_validate(){
 		return false;
 	}
 	
+	// Required fields
+	if (empty($_POST['user']) || empty($_POST['disp']) || empty($_POST['full'])){
+		ssc_add_message(SSC_MSG_CRIT, t('Username, display name and full name each need to be filled in'));
+		return false;
+	}
+	
 	if ($admin){
 		// Verify user we are changing
-		if ($_POST['id'] > 0){
+		if ($_POST['uid'] > 0){
 			// Only required for changing existing
-			$result = $ssc_database->query("SELECT id FROM #__user WHERE id = %d LIMIT 1", $_POST['id']);
+			$result = $ssc_database->query("SELECT id FROM #__user WHERE id = %d LIMIT 1", $_POST['uid']);
 			if ($ssc_database->number_rows() != 1){
 				// Impossible error under normal circumstances
 				ssc_add_message(SSC_MSG_CRIT, "Invalid UID number");
@@ -651,12 +699,18 @@ function login_profile_validate(){
 				}
 			}
 		}
+		else{
+			if (empty($_POST['admin']) || empty($_POST['n2']) || empty($_POST['n1'])){
+				ssc_add_message(SSC_MSG_CRIT, t('You must fill out the password information to create a new user'));
+				return false;
+			}
+		}
 		
 		
 	}
 	else {
 		// Not admin profile edit
-		
+		unset($_POST['grp']);
 		// Check we are only changing ourselves
 		if ($_POST['uid'] != $ssc_user->id){
 			// Impossible error under normal circumstances
@@ -665,6 +719,94 @@ function login_profile_validate(){
 		}
 	}
 	return true;
+}
+
+/**
+ * Profile edit saving
+ */
+function login_profile_submit(){
+	global $ssc_database;
+	$admin = ($_GET['path'] == 'admin');
+	
+	if (!empty($_POST['n2'])){
+		$hash = new PasswordHash(8, true);
+		$pass = $hash->HashPassword($_POST['n2']);
+	}
+	else{
+		$pass = null;
+	}
+
+	// Ready to submit
+	if ($_POST['uid'] <= 0){
+		// New user
+		$result = $ssc_database->query("INSERT INTO #__user SET
+		username = '%s', fullname = '%s', displayname = '%s', email = '%s',
+		gid = %d, password = '%s', created = %d", $_POST['user'], $_POST['full'], 
+		$_POST['disp'], $_POST['email'], $_POST['grp'], $pass, time());
+		if (!$result){
+			ssc_add_message(SSC_MSG_CRIT, t('There was an error submitting this form'));
+			return;
+		}
+		
+		$id = $ssc_database->last_id();
+		ssc_add_message(SSC_MSG_INFO, t('User details saved'));
+		ssc_redirect("/admin/login/edit/$id");
+	}
+	else{
+		// Update existing
+		if ($admin){
+			if ($pass){
+				$result = $ssc_database->query("UPDATE #__user SET
+				username = '%s', fullname = '%s', displayname = '%s', email = '%s',
+				gid = %d, password = '%s' WHERE id = %d", $_POST['user'], $_POST['full'], 
+				$_POST['disp'], $_POST['email'], $_POST['grp'], $pass, $_POST['uid']);
+				if ($result){
+					ssc_add_message(SSC_MSG_INFO, t('User details saved'));
+				}
+				else {
+					ssc_add_message(SSC_MSG_CRIT, t('There was an error submitting this form'));
+				}
+			}
+			else {
+			 	$result = $ssc_database->query("UPDATE #__user SET
+				username = '%s', fullname = '%s', displayname = '%s', email = '%s',
+				gid = %d WHERE id = %d", $_POST['user'], $_POST['full'], 
+				$_POST['disp'], $_POST['email'], $_POST['grp'], $_POST['uid']);
+				if ($result){
+					ssc_add_message(SSC_MSG_INFO, t('User details saved'));
+				}
+				else {
+					ssc_add_message(SSC_MSG_CRIT, t('There was an error submitting this form'));
+				}
+			}
+		}
+		else{
+			if ($pass){
+				$result = $ssc_database->query("UPDATE #__user SET
+				username = '%s', fullname = '%s', displayname = '%s', email = '%s',
+				password = '%s' WHERE id = %d", $_POST['user'], $_POST['full'], 
+				$_POST['disp'], $_POST['email'], $pass, $_POST['uid']);
+				if ($result){
+					ssc_add_message(SSC_MSG_INFO, t('User details saved'));
+				}
+				else {
+					ssc_add_message(SSC_MSG_CRIT, t('There was an error submitting this form'));
+				}
+			}
+			else {
+			 	$result = $ssc_database->query("UPDATE #__user SET
+				username = '%s', fullname = '%s', displayname = '%s', email = '%s'
+				WHERE id = %d", $_POST['user'], $_POST['full'], 
+				$_POST['disp'], $_POST['email'], $_POST['uid']);
+				if ($result){
+					ssc_add_message(SSC_MSG_INFO, t('User details saved'));
+				}
+				else {
+					ssc_add_message(SSC_MSG_CRIT, t('There was an error submitting this form'));
+				}
+			}
+		}
+	}
 }
 
 /**
@@ -749,7 +891,7 @@ function _login_sess_read($id){
 	}
 	
 	// Proper user
-	if ($result = $ssc_database->query("SELECT s.data, s.uid, u.useragent, u.username, u.fullname, u.displayname, u.gid, u.email FROM #__session s LEFT JOIN #__user u ON s.uid = u.id WHERE s.id = '%s' LIMIT 1", $id)){
+	if ($result = $ssc_database->query("SELECT s.data, s.uid id, u.useragent, u.username, u.fullname, u.displayname, u.gid, u.email FROM #__session s LEFT JOIN #__user u ON s.uid = u.id WHERE s.id = '%s' LIMIT 1", $id)){
 		// Invalid session id
 		if (!($ssc_user = $ssc_database->fetch_object($result))){
 			$ssc_user = _login_anonymous();
@@ -759,7 +901,7 @@ function _login_sess_read($id){
 		$data = $ssc_user->data;
 		unset($ssc_user->data);
 		// Check if logged in user
-		if (!$ssc_user->uid){
+		if (!$ssc_user->id){
 			// Not logged in?
 			$ssc_user = _login_anonymous();
 			return $data;
@@ -777,7 +919,6 @@ function _login_sess_read($id){
 		return $data;
 
 	}
-	
 	// Fallthough, probably from bad DB
 	$ssc_user = _login_anonymous();
 	return '';
@@ -799,7 +940,7 @@ function _login_sess_write($id, $data){
 	switch ($SSC_SETTINGS['db-engine']){
 	case 'mysqli':
 	case 'mysql':
-		$ret = $ssc_database->query("REPLACE INTO #__session (id, data, uid) VALUES ('%s', '%s', %d)", $id, $data, $ssc_user->uid);
+		$ret = $ssc_database->query("REPLACE INTO #__session (id, data, uid) VALUES ('%s', '%s', %d)", $id, $data, $ssc_user->id);
 		break;
 	default:
 		return false;

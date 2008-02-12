@@ -33,10 +33,8 @@ $SSC_MODULES;
 
 /**
  * Finds which module should handle the current navigation request
- * 
- * @return string File name of the module handling the request
  */
-function module_find_handler(){
+function module_handler_init(){
 	global $ssc_database;
 	
 	// Prepare application argument
@@ -55,7 +53,7 @@ function module_find_handler(){
 	// Split path arguments		
 	$_GET['path'] = $data['path'];
 	$_GET['param'] = substr($_GET['q'], strlen($data['path'])+1);
-	return $data['filename'];
+	$_GET['handler'] = $data['filename'];
 	
 }
 

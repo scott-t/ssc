@@ -353,10 +353,6 @@ function ssc_frontend_init(){
 					'body'  => "Language '" . $SSC_SETTINGS['lang']['tag'] . "' is currently not installed"
 					));
 	
-	// Check inputs
-	ssc_magic_check();
-	ssc_form_check();
-	
 	// Set up the theme
 	require_once "$ssc_site_path/includes/core.theme.inc.php";
 	$theme = ssc_var_get('theme_default', SSC_DEFAULT_THEME);	
@@ -368,6 +364,13 @@ function ssc_frontend_init(){
 				));
 				
 	theme_get_info($theme);
+	
+	// Prepare environment
+	module_handler_init();	
+	
+	// Check inputs
+	ssc_magic_check();
+	ssc_form_check();
 }
 
 /**
@@ -740,8 +743,7 @@ function ssc_generate_html(&$structure){
  */
 function ssc_execute(){
 	// Find the module responsible for the current URI
-	$handler = module_find_handler();
-	return module_hook('content', $handler);
+	return module_hook('content', $_GET['handler']);
 }
 
 /**

@@ -36,6 +36,10 @@ input {
 	margin-bottom: 1em;
 }
 
+select {
+	display:block;
+}
+
 .widget-title {
 	font-size: 1.1em;
 	font-weight: bold;
