@@ -31,9 +31,6 @@ function login_init(){
 		session_set_save_handler('_login_sess_open', '_login_sess_close', '_login_sess_read', '_login_sess_write', '_login_sess_destroy', '_login_sess_clean');
 	
 		session_start();
-		
-		// Check for form validity
-		
 	}
 	else{
 		die ("module bad");
@@ -46,6 +43,31 @@ function login_init(){
  */
 function login_close(){
 	session_write_close();
+}
+
+/**
+ * Checks for authorisation to access the current page
+ * @param string $module Module keyname to check access for
+ * @return bool Whether or not access is allowed
+ */
+function login_check_auth($module){
+	global $ssc_database, $ssc_user;
+	// Permission storage
+	static $perm;
+	
+	if ($ssc_user->gid == SSC_USER_ROOT)
+		return true;
+	
+	if (!$perm){
+		$perm = array();
+		$result = $ssc_database->query("SELECT filename FROM #__permission p LEFT JOIN #__module m ON module_id = m.id WHERE group_id = %d", $ssc_user->gid);
+		while ($data = $ssc_database->fetch_assoc($result)){
+			$perm[] = $data['filename'];
+		}
+	}
+	
+	return in_array($module, $perm);
+	
 }
 
 /**
@@ -604,8 +626,12 @@ function login_profile(){
 function login_profile_validate(){
 	global $ssc_user, $ssc_database;
 
+	// Drop silently if guest
+	if ($ssc_user->gid == SSC_USER_GUEST)
+		return false;
+	
 	// Are we accessing via admin page?
-	$admin = ($_GET['path'] == 'admin');
+	$admin = (($_GET['path'] == 'admin') && login_check_auth("login"));
 	$_POST['uid'] = intval($_POST['uid']);
 	// ********* Check required fields ************
 	//
@@ -683,15 +709,15 @@ function login_profile_validate(){
 		// Verify user we are changing
 		if ($_POST['uid'] > 0){
 			// Only required for changing existing
-			$result = $ssc_database->query("SELECT id FROM #__user WHERE id = %d LIMIT 1", $_POST['uid']);
+			$result = $ssc_database->query("SELECT id, gid FROM #__user WHERE id = %d LIMIT 1", $_POST['uid']);
 			if ($ssc_database->number_rows() != 1){
 				// Impossible error under normal circumstances
 				ssc_add_message(SSC_MSG_CRIT, "Invalid UID number");
 				return false;
 			}
-			
+			$data = $ssc_database->fetch_assoc($result);
 			// Check if any other superusers
-			if ($ssc_user == SSC_USER_ROOT){
+			if ($data['gid'] == SSC_USER_ROOT){
 				$result = $ssc_database->query("SELECT id FROM #__user WHERE gid = %d LIMIT 2", SSC_USER_ROOT);
 				if ($ssc_database->number_rows() < 2){
 					ssc_add_message(SSC_MSG_CRIT, t('There needs to be at least 1 superuser at all times'));
@@ -725,8 +751,8 @@ function login_profile_validate(){
  * Profile edit saving
  */
 function login_profile_submit(){
-	global $ssc_database;
-	$admin = ($_GET['path'] == 'admin');
+	global $ssc_database, $ssc_user;
+	$admin = (($_GET['path'] == 'admin') && login_check_auth("login"));
 	
 	if (!empty($_POST['n2'])){
 		$hash = new PasswordHash(8, true);
@@ -737,7 +763,7 @@ function login_profile_submit(){
 	}
 
 	// Ready to submit
-	if ($_POST['uid'] <= 0){
+	if ($_POST['uid'] <= 0 && $admin){
 		// New user
 		$result = $ssc_database->query("INSERT INTO #__user SET
 		username = '%s', fullname = '%s', displayname = '%s', email = '%s',
@@ -785,7 +811,7 @@ function login_profile_submit(){
 				$result = $ssc_database->query("UPDATE #__user SET
 				username = '%s', fullname = '%s', displayname = '%s', email = '%s',
 				password = '%s' WHERE id = %d", $_POST['user'], $_POST['full'], 
-				$_POST['disp'], $_POST['email'], $pass, $_POST['uid']);
+				$_POST['disp'], $_POST['email'], $pass, $ssc_user->id);
 				if ($result){
 					ssc_add_message(SSC_MSG_INFO, t('User details saved'));
 				}
@@ -797,7 +823,7 @@ function login_profile_submit(){
 			 	$result = $ssc_database->query("UPDATE #__user SET
 				username = '%s', fullname = '%s', displayname = '%s', email = '%s'
 				WHERE id = %d", $_POST['user'], $_POST['full'], 
-				$_POST['disp'], $_POST['email'], $_POST['uid']);
+				$_POST['disp'], $_POST['email'], $ssc_user->id);
 				if ($result){
 					ssc_add_message(SSC_MSG_INFO, t('User details saved'));
 				}

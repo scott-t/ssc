@@ -18,7 +18,7 @@ function admin_content(){
 	
 	$out = '';
 	
-	if ($_GET['path'] != 'admin'){
+	if ($_GET['path'] != 'admin' || $ssc_user->gid == SSC_USER_GUEST){
 		ssc_not_found();
 		return;
 	}
@@ -33,7 +33,10 @@ function admin_content(){
 		// Check for sub-page.  args can be claimed from $_GET[param]
 		$_GET['param'] = explode("/", $_GET['param']);
 		$_GET['admin_page'] = array_shift($_GET['param']);
-		$out = module_hook('admin', $_GET['admin_page']);
+		if (!login_check_auth($_GET['admin_page']))
+			ssc_not_allowed();
+		else
+			$out = module_hook('admin', $_GET['admin_page']);
 		
 		if (empty($out))
 			ssc_not_found();
