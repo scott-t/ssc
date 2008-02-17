@@ -60,7 +60,7 @@ function _admin_base_content(){
 		$result = $ssc_database->query("SELECT filename FROM #__module ORDER BY filename ASC");
 	}
 	else{
-		$result = $ssc_database->query("Select 0");
+		$result = $ssc_database->query("SELECT filename FROM #__permission p LEFT JOIN #__module m ON module_id = m.id WHERE group_id = %d", $ssc_user->gid);
 	}
 	
 	// For storage
