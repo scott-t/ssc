@@ -776,7 +776,7 @@ function ssc_add_css($path = null, $media = 'all'){
 		}
 		else {
 			$p = str_replace('.theme.css', '.css', $path);
-			//if (!file_exists($p)){
+			//if (!file_exists($ssc_site_path . $p)){
 				$file = file_get_contents($ssc_site_path . $path);
 				if (strpos($file, '$') !== false){
 					$file = str_replace('$base_url$', $ssc_site_url, $file);

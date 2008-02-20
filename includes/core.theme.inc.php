@@ -161,7 +161,7 @@ function theme_side($count){
 	}
 	$ret = array();
 	while ($data = $ssc_database->fetch_assoc($result)){
-		$dat = module_hook('widget', $data['filename'], $data['args']);
+		$dat = module_hook('widget', $data['filename'], explode(',', $data['args']));
 		if ($dat)
 			$ret[] = theme_template('widget', $dat);
 	}
@@ -322,6 +322,9 @@ function theme_render_select($structure){
 		$out .= "\n<option value=\"$val\"" . ($sel == $val ? ' selected="selected" ' : '') . ">$name</option>";
 	}
 	$out .= '</select>';
+	if (!empty($structure['#elementonly']))
+		return $out;
+		
 	$structure['#value'] = $out;
 	$out = theme_render_form_element($structure);
 	return $out;
