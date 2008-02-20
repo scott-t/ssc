@@ -209,3 +209,7 @@ a.admin-block span span:first-child{
 	border-left: none;
 	text-align: center;
 }
+
+.center-input input, .center-input select {
+	margin: 0 auto;
+}

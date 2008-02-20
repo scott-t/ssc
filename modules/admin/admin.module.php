@@ -117,7 +117,7 @@ function ssc_admin_table($title, $sql, $sql_args = null, $table_args = null){
 		
 		$args = array($page, $table_args['perpage'], $sql);
 		if ($sql_args)
-			$args += $sql_args;
+			$args = array_merge($args, $sql_args);
 			
 		$args = call_user_func_array(array($ssc_database, 'query_paged'), $args);
 		$result = $args['result'];
@@ -130,7 +130,11 @@ function ssc_admin_table($title, $sql, $sql_args = null, $table_args = null){
 	else {
 		$perpage = 32000;
 		$out = "<div class=\"admin-block\"><img src=\"$ssc_site_url/images/{$_GET[admin_page]}.png\" alt=\"\" /><h3>$title</h3></div>";
-		$result = call_user_func_array(array($ssc_database, 'query'), $sql);
+		$args = array($sql);
+		if ($sql_args)
+			$args = array_merge($args, $sql_args);
+
+		$result = call_user_func_array(array($ssc_database, 'query'), $args);
 	}
 	
 	// Valid SQL and at least one result
@@ -145,8 +149,8 @@ function ssc_admin_table($title, $sql, $sql_args = null, $table_args = null){
 		$row = 0;
 		$i = 1;
 		// Output rows.  Do-while because already retrieved first row for headers
-		$id = null; 
 		do {
+			$id = null; 
 			$out .= "\n<tr class=\"row" . ($row++ % 2) . '">';
 			foreach ($data as $head => $val){
 				if (!$id)
