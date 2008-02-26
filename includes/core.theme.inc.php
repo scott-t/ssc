@@ -115,6 +115,7 @@ function theme_render(&$body){
 	$quip = ssc_var_get('theme_show_quip', false) ? ssc_var_get('theme_quip', '') : false;
 	$breadcrumb = ssc_var_get('theme_breadcrumb', false);
 	$messages = theme_messages();
+	$foot = ssc_var_get('theme_show_foot', false) ? ssc_var_get('theme_foot', '') : '';
 	//$side = array();
 	
 	$body = '<h2>' . ssc_set_title() . '</h2>' . $body;
@@ -288,7 +289,9 @@ function theme_render_form_element($structure){
 	}
 	
 	$out .= $structure['#value'];
-	$out .= '<div class="form-desc">' . $structure['#description'] . '</div>';
+	if (!empty($structure['#description']))
+		$out .= '<div class="form-desc">' . $structure['#description'] . '</div>';
+		
 	$out .= '</div>';
 	return $out;
 }
@@ -300,7 +303,7 @@ function theme_render_form_element($structure){
  * @return string HTML construction
  */
 function theme_render_input($structure){
-	$out  = '<input type="' . $structure['#type'] . '" value="' . $structure['#value'] . '"';
+	$out  = '<input type="' . $structure['#type'] . '" value="' . (empty($structure['#value']) ? '' : $structure['#value']) . '"';
 	$out .= ' name="' . $structure['#name'] . '"';
 	$out .= (isset($structure['#id']) ? ' id="' . $structure['#id'] . '"' : '');
 	$out .= (isset($structure['#size']) ? ' size="' . $structure['#size'] . '"' : ''); 
@@ -346,6 +349,7 @@ function theme_template($file, $data){
 	if (!file_exists($f))
 		return '';
 	
+	$title = null;
 	// Populate template data
 	extract($data, EXTR_SKIP);
 

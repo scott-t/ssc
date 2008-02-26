@@ -40,6 +40,7 @@ function nav_admin(){
 							#__navigation n, #__navigation p WHERE n.l BETWEEN p.l AND p.r
 							AND p.bid = %d GROUP BY n.id ORDER BY n.l", array($data[0], $data[0]),
 							array('link' => 'title', 'linkpath' => '/admin/nav/link/'));/**/
+				$out .= ssc_generate_form('nav_add_link', $data[0]);
 			}
 		}
 		else{
@@ -103,7 +104,7 @@ function _nav_edit_table($bid){
 	$struct['#items'] = $items;
 	$out = '<form action="" method="post"><table class="admin-table center-input"><tr><th>ID</th><th>Parent</th><th>Title</th><th>Description</th><th>Path</th></tr>';
 	$out .= _nav_edit_table_parser($struct);
-	$out .= '</table><div><input type="hidden" name="form-id" value="_nav_edit_table" />' . theme_render_input(array('#type' => 'submit', '#value' => 'Save')) . '</div></form>';
+	$out .= '</table><div><input type="hidden" name="form-id" value="_nav_edit_table" />' . theme_render_input(array('#type' => 'submit', '#value' => 'Save', '#name' => 'sub')) . '</div></form>';
 	return $out;
 }
 
@@ -153,25 +154,46 @@ function _nav_input($val, $name, $prefix, $len = 10){
 }
 
 function _nav_edit_table_validate(){
+	global $ssc_database;
 	// Check privileges
-  	if (!login_check_auth("module"))
+  	if (!login_check_auth("nav"))
     	return false;
 
 	// Check for empty fields
-	foreach ($_POST['nav-row'] as $id => $vals){
+	$del = array();
+	foreach ($_POST['nav-row'] as $id => &$vals){
 		$pid = $_POST['nav-row'][$id]['pid'] = intval($vals['pid']);
-		if ($pid < 1){
-			ssc_add_message(SSC_MSG_CRIT, t('Invalid row parent'));
-			return false;
-		}
+
 		if (empty($vals['title'])){
-			ssc_add_message(SSC_MSG_CRIT, t('All link titles need to be filled in'));
-			return false;
+			array_push($del, $id);
+			continue;
 		}
-		if (empty($vals['url'])){
-			ssc_add_message(SSC_MSG_CRIT, t('All link urls need to be filled in'));
-			return false;
+		else{
+			if ($pid < 1){
+				ssc_add_message(SSC_MSG_CRIT, t('Invalid row parent'));
+				return false;
+			}
+			if (empty($vals['url'])){
+				ssc_add_message(SSC_MSG_CRIT, t('All link urls need to be filled in'));
+				return false;
+			}
 		}
+	}
+	
+	// Check deletions
+	while (count($del) > 0){
+		$did = array_pop($del);
+		// Search for children
+		foreach ($_POST['nav-row'] as $id => &$vals){
+			if ($vals['pid'] == $did && $id != $did && !empty($vals['title'])){
+				ssc_add_message(SSC_MSG_CRIT, t('Unable to delete link to \'!path\' as not all children are marked for deletion',
+										array('!path' => $_POST['nav-row'][$did]['url'])));
+				continue 2;
+			}
+		}
+		// Safe to delete
+		unset($_POST['nav-row'][$did]);
+		$ssc_database->query("DELETE FROM #__navigation WHERE id = %d LIMIT 1", $did);
 	}
 	
 	// WARNING: Ugly code follows till end of function
@@ -243,22 +265,68 @@ function _nav_edit_table_submit(){
 /**
  * Navigation link edit form
  */
-function nav_edit_link(){
+function nav_add_link($bid){
+	$form = array(	'#method' => 'post',
+					'#action' => '');
+	
+	$form['wid'] = array(	'#type' => 'hidden',
+							'#value' => $bid);
+	$form['add'] = array(	'#parent' => true,
+							'#type' => 'fieldset',
+							'#title' => 'Add new link');
+	$form['add']['title'] = array(	'#type' => 'text',
+									'#required' => true,
+									'#title' => t('Link name'),
+									'#description' => t('Text to display on the navigation widget'));
+	$form['add']['desc'] = array(	'#type' => 'text',
+									'#title' => t('Description'),
+									'#description' => t('Extra information to display on link mouse-hover'));
+	$form['add']['url'] = array('#type' => 'text',
+								'#required' => true,
+								'#title' => t('Link path'),
+								'#description' => t('Link relative to site base or full url (including http://)'));
 
+	$form['add']['sub'] = array('#value' => t('Add link'),
+								'#type' => 'submit');
+	
+	return $form;
 }
 
 /**
  * Edit link validation
  */
-function nav_edit_link_validate(){
-
+function nav_add_link_validate(){
+	// Check privileges
+  	if (!login_check_auth("nav"))
+    	return false;
+    	
+	if (empty($_POST['title']) || empty($_POST['url']) || empty($_POST['wid'])){
+		ssc_add_message(SSC_MSG_CRIT, t('Both link title and path need to be entered'));
+		return false;
+	}
+	
+	if (empty($_POST['desc']))
+		$_POST['desc'] = '';
+		
+	return true;
 }
 
 /**
  * Edit link submission
  */
-function nav_edit_link_submit(){
-
+function nav_add_link_submit(){
+	global $ssc_database;
+	$result = $ssc_database->query("SELECT r FROM #__navigation WHERE bid = %d ORDER BY r DESC LIMIT 1", $_POST['wid']);
+	if (!$data = $ssc_database->fetch_assoc($result))
+		return;
+		
+	$result = $ssc_database->query("INSERT INTO #__navigation SET url = '%s', title = '%s', description = '%s', l = %d, r = %d, bid = %d", $_POST['url'], $_POST['title'], $_POST['desc'], $data['r']+1, $data['r']+2, $_POST['wid']);
+	if ($result){
+		ssc_add_message(SSC_MSG_INFO, t('Link was added'));
+	}
+	else{
+		ssc_add_message(SSC_MSG_CRIT, t('Link unable to be added'));
+	}
 }
 
 /**
@@ -351,7 +419,7 @@ function nav_widget($block, $title = ''){
 					// Not in there so ignore it
 					do {
 						$data = $ssc_database->fetch_object($result);
-					} while ($data->depth > $prev_depth);
+					} while ($data && $data->depth > $prev_depth);
 					// Check if there is another link
 					if ($data){
 						// Yes - prepare to show it
@@ -389,7 +457,7 @@ function nav_widget($block, $title = ''){
 		}
 
 		// We finish with more levels to close?
-		while ($prev_depth > $data->depth) {
+		while ($data && $prev_depth > $data->depth) {
 			$prev_depth--;
 			$out .= " </li></ul>\n";
 		}

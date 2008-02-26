@@ -28,6 +28,10 @@ input {
 	font-size: 1.2em;
 }
 
+#body fieldset{
+	margin-top: 1em;
+}
+
 #body fieldset,#body legend {
 	border: #666666 1px dashed;
 }
