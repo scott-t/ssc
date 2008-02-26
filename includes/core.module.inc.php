@@ -43,7 +43,7 @@ function module_handler_init(){
 	elseif (substr($_GET['q'], -1) == '/')
 		$_GET['q'] = substr($_GET['q'], 0, -1);
 	
-	$result = $ssc_database->query("SELECT m.id, filename, path FROM #__module m, #__handler h WHERE h.handler = m.id AND '%s' LIKE CONCAT(path,'%%') ORDER BY path DESC LIMIT 1", $_GET['q']);
+	$result = $ssc_database->query("SELECT m.id, h.id hid, filename, path FROM #__module m, #__handler h WHERE h.handler = m.id AND '%s' LIKE CONCAT(path,'%%') ORDER BY path DESC LIMIT 1", $_GET['q']);
 	if ($ssc_database->number_rows() == 0){
 		ssc_not_found();
 	}
@@ -54,6 +54,7 @@ function module_handler_init(){
 	$_GET['path'] = $data['path'];
 	$_GET['param'] = substr($_GET['q'], strlen($data['path'])+1);
 	$_GET['handler'] = $data['filename'];
+	$_GET['path-id'] = $data['hid'];
 	
 }
 
