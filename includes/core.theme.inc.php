@@ -305,7 +305,11 @@ function theme_render_form_element($structure){
  */
 
 function theme_render_textarea($structure){
-	$structure['#value'] = '<textarea cols="45" rows="4">' . $structure['#value'] . '</textarea>';
+	$out = '<textarea cols="45" rows="4"';
+	$out .= ' name="' . $structure['#name'] . '"';
+	$out .= (isset($structure['#id']) ? ' id="' . $structure['#id'] . '"' : '');
+	$out .= '>' . $structure['#value'] . '</textarea>';
+	$structure['#value'] = $out;
 	return theme_render_form_element($structure);
 }
 

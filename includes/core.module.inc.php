@@ -107,6 +107,16 @@ function module_hook($hook, $modules = NULL, $args = NULL){
 }
 
 /**
+ * Retrieves the internal ID for the module
+ * @param string $name Module short-name
+ * @return int Module ID
+ */
+function module_id($name){
+	global $SSC_MODULES;
+	return array_search($name, $SSC_MODULES);
+}
+
+/**
  * Loop through and load up each module as needed
  */
 function module_load(){
@@ -121,11 +131,11 @@ function module_load(){
 	
 		
 	// Retrieve all enabled modules
-	$result = $ssc_database->query("SELECT  filename, weight FROM #__module WHERE status >= %d ORDER BY weight ASC", SSC_MODULE_ENABLED);
+	$result = $ssc_database->query("SELECT id, filename, weight FROM #__module WHERE status >= %d ORDER BY weight ASC", SSC_MODULE_ENABLED);
 
 	// Load each module
 	while ($data = $ssc_database->fetch_assoc($result)){
-		$SSC_MODULES[] = $data;
+		$SSC_MODULES[$data['id']] = $data;
 		ssc_debug(array('title'=>'module_load','body'=>"Loading $data[filename].module.php"));
 		include "$ssc_site_path/modules/$data[filename]/$data[filename].module.php";
 	}
