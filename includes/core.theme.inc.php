@@ -266,10 +266,12 @@ function theme_render_form($structure){
  * @return string HTML construction
  */
 function theme_render_fieldset($structure){
-	$out = '<fieldset>' . (isset($structure['#title']) ? '<legend>' . $structure['#title'] . '</legend>' : '');
+	$out = '<fieldset' . (isset($structure['#attributes']) ? ssc_attributes($structure['#attributes']) : '')
+			 . '>' . (isset($structure['#title']) ? '<legend>' . $structure['#title'] . '</legend>' : '');
 	$out .= $structure['#value'] . '</fieldset>';
 	return $out;
 }
+
 /**
  * Form element wrappers
  * @param array $structure Element structure
@@ -296,6 +298,17 @@ function theme_render_form_element($structure){
 	return $out;
 }
 
+/**
+ * Renders a text-area object
+ * @param array $structure Element structure
+ * @return string XHTML construction
+ */
+
+function theme_render_textarea($structure){
+	$structure['#value'] = '<textarea cols="45" rows="4">' . $structure['#value'] . '</textarea>';
+	return theme_render_form_element($structure);
+}
+
 
 /**
  * Renders a simple xhtml element
@@ -303,7 +316,7 @@ function theme_render_form_element($structure){
  * @return string HTML construction
  */
 function theme_render_input($structure){
-	$out  = '<input type="' . $structure['#type'] . '" value="' . (empty($structure['#value']) ? '' : $structure['#value']) . '"';
+	$out  = '<input type="' . $structure['#type'] . '" value="' . (isset($structure['#value']) ? $structure['#value'] : '') . '"';
 	$out .= ' name="' . $structure['#name'] . '"';
 	$out .= (isset($structure['#id']) ? ' id="' . $structure['#id'] . '"' : '');
 	$out .= (isset($structure['#size']) ? ' size="' . $structure['#size'] . '"' : ''); 

@@ -16,8 +16,12 @@ legend {
 	border: #000000 1px solid;
 }
 
-input {
+input, textarea {
 	display: block;
+}
+
+textarea {
+	width: 95%;
 }
 
 .form-item {

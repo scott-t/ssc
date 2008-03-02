@@ -729,6 +729,9 @@ function ssc_generate_html(&$structure){
 		case 'reset':
 			$out = theme_render_input($structure);
 			break;
+		case 'textarea':
+			$out = theme_render_textarea($structure);
+			break;
 		default:
 			$out = $structure['#value'];
 		}
@@ -776,7 +779,7 @@ function ssc_add_css($path = null, $media = 'all'){
 		}
 		else {
 			$p = str_replace('.theme.css', '.css', $path);
-			if (!file_exists($ssc_site_path . $p)){
+			if (ssc_var_get('theme.rebuild', false) || !file_exists($ssc_site_path . $p)){
 				$file = file_get_contents($ssc_site_path . $path);
 				if (strpos($file, '$') !== false){
 					$file = str_replace('$base_url$', $ssc_site_url, $file);
