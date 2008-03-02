@@ -113,7 +113,7 @@ function module_hook($hook, $modules = NULL, $args = NULL){
  */
 function module_id($name){
 	global $SSC_MODULES;
-	return array_search($name, $SSC_MODULES);
+	return (isset($SSC_MODULES[$name]) ? $SSC_MODULES[$name]['id'] : 0);
 }
 
 /**
@@ -135,11 +135,11 @@ function module_load(){
 
 	// Load each module
 	while ($data = $ssc_database->fetch_assoc($result)){
-		$SSC_MODULES[$data['id']] = $data;
+		$SSC_MODULES[$data['filename']] = $data;
 		ssc_debug(array('title'=>'module_load','body'=>"Loading $data[filename].module.php"));
 		include "$ssc_site_path/modules/$data[filename]/$data[filename].module.php";
 	}
-	
+
 	// Initialise module
 	module_hook("init");
 	

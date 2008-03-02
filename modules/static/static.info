@@ -1,0 +1,4 @@
+; Navigation module
+name = Simple page
+description = Allows for simple page's to be displayed.  For example an about-us page
+version = 3.x
