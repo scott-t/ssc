@@ -36,9 +36,9 @@ function static_admin(){
 	case '':
 		$out = ssc_admin_table(t('Simple pages'), 
 			"SELECT s.id, title, path FROM #__static s 
-			LEFT JOIN #__handler h ON h.id = hid ORDER BY path ASC",
+			LEFT JOIN #__handler h ON h.id = s.id ORDER BY path ASC",
 			null,
-			array('perpage' => 10, 'link' => 'title', 'linkpath' => 'admin/static/edit/'));
+			array('perpage' => 10, 'link' => 'title', 'linkpath' => '/admin/static/edit/'));
 		$out .= l(t('New page'),'/admin/static/edit/0');
 		break;
 	default:
@@ -175,7 +175,7 @@ function static_form_validate(){
 			
 		return false;
 	}
-		print_r($_POST);
+
 	if (empty($_POST['title']) || !isset($_POST['url']) || empty($_POST['body'])){
 		ssc_add_message(SSC_MSG_CRIT, t('Not all required fields were filled in'));
 		if (!empty($_POST['url']) && $_POST['url'][0] == '/')
