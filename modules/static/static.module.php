@@ -60,12 +60,12 @@ function static_content(){
 		ssc_not_found();
 		
 	// Find content
-	$result = $ssc_database->query("SELECT created, modified, body FROM #__static WHERE id = %d LIMIT 1", $_GET['path-id']);
+	$result = $ssc_database->query("SELECT title, created, modified, body FROM #__static WHERE id = %d LIMIT 1", $_GET['path-id']);
 	if ($result && $data = $ssc_database->fetch_assoc($result)){
 		if (!ssc_load_library('sscText')){
 			ssc_not_found();	// Strictly speaking, the library /wasn't/ found...
 		}
-		
+		ssc_set_title($data['title']);
 		return sscText::convert($data['body']);
 	}
 	
