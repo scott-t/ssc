@@ -79,35 +79,31 @@ class sscText {
  	 */
 	static function _parse_tags($body){
 		// Possible tags here.  Lets get cracking
-		$tagstack = 0;
+		$prev = 0;
 		$offset = 0;
-		$tagstart = -2;
-		while (($next = strpos($body, "[[", $tagstart+2)) !== false) {
-			$tagstart = strpos($body, "[[");
-			$tagstop = strpos($body, "]]");
-			$next = strpos($body, "[[", $tagstart+2);
-			if ($next === false || $next > $tagstop){
-				// No next tag or more tags but not nested
-				$diff = $tagstop - $tagstart;
-				$tag = substr($body, $tagstart + 2, $diff - 2);
-				$tag = sscText::_convert_tag($tag);
-				$body = substr_replace($body, $tag, $tagstart, $diff + 2);				
-			}
-			else {
-				// Nexted tags
-				while ($next < $tagstop){
-					$tagstack = $next;
-					$next = strpos($body, "[[", $next + 1);
+		$start = 0;
+		while (($start = strpos($body, "[[")) !== false) {
+			$stop = strpos($body, "]]", $start + 2);
+			$next = strpos($body, "[[", $start + 2);
+			
+			if ($next !== false && $next < $stop){
+				// Nexted tags - perhaps not the most efficient but most nestings will
+				// be simple ones anyway so shouldn't make that much a difference
+				while ($next !== false && $next < $stop){
+					// Grab most inner one
+					$prev = $next;
+					$next = strpos($body, "[[", $next + 2);
 				}
-				$tagstart = $tagstack;
-				$diff = $tagstop - $tagstart;
-				$tag = substr($body, $tagstart + 2, $diff - 2);
-				$tag = sscText::_convert_tag($tag);
-				$body = substr_replace($body, $tag, $tagstart, $diff + 2);	
+				$start = $prev;
 			}
 			
-		} 
-		
+			$diff = $stop - $start;
+			$tag = substr($body, $start + 2, $diff - 2);
+			ssc_debug(array('title' => 'tags', 'body'=> 'Parsing ' . $tag));
+			$tag = sscText::_convert_tag($tag);
+			ssc_debug(array('title' => 'tags', 'body'=> 'returned ' . $tag));
+			$body = substr_replace($body, $tag, $start, $diff + 2);							
+		}
 		return $body;
 	}
 	
@@ -117,13 +113,14 @@ class sscText {
 	 * @return string XHTML version
 	 */
 	function _convert_tag($tag){
-		global $ssc_site_url;
+		global $ssc_site_url, $ssc_site_path;
 		$param = explode("|", $tag);
 		switch ($param[0]){
 		case "url":
 			if (empty($param[1])){
 				// Need url - blank tag
-				return "";
+				$tag = "&#91;&#91;$tag&#93;&#93;";
+				break;
 			}
 			
 			if (empty($param[2])){
@@ -141,7 +138,56 @@ class sscText {
 			break;
 		
 		case "img":
-			$tag = "IMAGE PARSER";
+			if (empty($param[1])){
+				// Need img path - blank tag
+				$tag = "&#91;&#91;$tag&#93;&#93;";
+				break;
+			}
+			
+			array_shift($param);
+			$path = array_shift($param); 
+			
+			// Do some path mix/matching
+			if (strpos($path, "://") === false){
+				// Relative path
+				if (file_exists($ssc_site_path . "/images/$path")){
+					// Default to image directory base-dir
+					$path = $ssc_site_url . "/images/$path";
+				}
+				elseif (file_exists($ssc_site_path . '/' . $path)){
+					// Relative to site root instead
+					$path = $ssc_site_url . '/' . $path;
+				}
+				else{
+					// Bad local path - ignore tag
+					$tag = "&#91;&#91;$tag&#93;&#93;";
+					break;
+				}
+				echo "aba";
+				
+			}
+			
+			$tag = "<img src=\"$path\"";
+			while ($op = array_shift($param)){
+				$o = explode("=", $op);
+				if (empty($o[1]))
+					continue; 	// Bad argument
+					
+				// Parse possible arguments
+				switch ($o[0]){
+				case "float":
+					$tag .= " class=\"$o[1]\"";
+					break;
+				case "title":
+					$tag .= " title=\"$o[1]\"";
+					break;
+				case "alt":
+					$tag .= " alt=\"$o[1]\"";
+					break;
+				}
+			}
+
+			$tag .= " />";
 			break;
 
 		default:
