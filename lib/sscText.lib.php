@@ -115,6 +115,7 @@ class sscText {
 	function _convert_tag($tag){
 		global $ssc_site_url, $ssc_site_path;
 		$param = explode("|", $tag);
+		$tag = str_replace("|", "&#124;", $tag);
 		switch ($param[0]){
 		case "url":
 			if (empty($param[1])){
