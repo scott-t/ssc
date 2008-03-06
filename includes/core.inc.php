@@ -729,9 +729,6 @@ function ssc_generate_html(&$structure){
 		case 'reset':
 			$out = theme_render_input($structure);
 			break;
-		case 'textarea':
-			$out = theme_render_textarea($structure);
-			break;
 		default:
 			$out = $structure['#value'];
 		}

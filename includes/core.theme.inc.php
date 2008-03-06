@@ -313,6 +313,22 @@ function theme_render_textarea($structure){
 	return theme_render_form_element($structure);
 }
 
+/**
+ * Render a checkbox
+ * @param array $structure Element structure
+ * @return string XHTML construction
+ */
+function theme_render_checkbox($structure){
+	$out = '<div class="form-item form-checkbox"><label ' . (isset($structure['#id']) ? 'for="' . $structure['#id'] . '"' : '') . '>';
+	$out .= theme_render_input($structure) . $structure['#title'] . '</label>';
+
+	if (!empty($structure['#description']))
+		$out .= '<div class="form-desc">' . $structure['#description'] . '</div>';
+		
+	$out .= '</div>';
+	
+	return $out;
+}
 
 /**
  * Renders a simple xhtml element
@@ -325,6 +341,7 @@ function theme_render_input($structure){
 	$out .= (isset($structure['#id']) ? ' id="' . $structure['#id'] . '"' : '');
 	$out .= (isset($structure['#size']) ? ' size="' . $structure['#size'] . '"' : ''); 
 	$out .= (isset($structure['#maxlength']) ? ' maxlength="' . $structure['#maxlength'] . '"' : ''); 
+	$out .= (isset($structure['#checked']) && $structure['#checked'] == true ? ' checked="checked"' : '');
 	$out .= ' />';
 	return $out;
 }
