@@ -84,7 +84,7 @@ function _admin_base_content(){
 			if ($file == 'admin')
 				continue;
 				
-			$block = "<img src=\"$ssc_site_url/images/$file.png\" alt=\"\" /><span><span>$module[name]</span><span>$module[description]</span></span><span class=\"clear\"></span>";
+			$block = "<img src=\"$ssc_site_url/images/$file.png\" alt=\"\" /><span><span>$module[name]</span><span>$module[description]</span></span>";
 			$out .= l($block, "/admin/$file", $op);
 		}
 	}
@@ -121,7 +121,7 @@ function ssc_admin_table($title, $sql, $sql_args = null, $table_args = null){
 			
 		$args = call_user_func_array(array($ssc_database, 'query_paged'), $args);
 		$result = $args['result'];
-		$out = "<div class=\"admin-block\"><img src=\"$ssc_site_url/images/{$_GET[admin_page]}.png\" alt=\"\" /><h3>$title";
+		$out = "<div class=\"admin-block\"><img src=\"$ssc_site_url/images/{$_GET['admin_page']}.png\" alt=\"\" /><h3>$title";
 		if ($args['next'] || $args['previous'])
 			$out .= " - page $page</h3></div>";
 		else
@@ -129,7 +129,7 @@ function ssc_admin_table($title, $sql, $sql_args = null, $table_args = null){
 	}
 	else {
 		$perpage = 32000;
-		$out = "<div class=\"admin-block\"><img src=\"$ssc_site_url/images/{$_GET[admin_page]}.png\" alt=\"\" /><h3>$title</h3></div>";
+		$out = "<div class=\"admin-block\"><img src=\"$ssc_site_url/images/{$_GET['admin_page']}.png\" alt=\"\" /><h3>$title</h3></div>";
 		$args = array($sql);
 		if ($sql_args)
 			$args = array_merge($args, $sql_args);

@@ -89,7 +89,7 @@ function static_form(){
 	else{
 		// Retrieve from DB
 		$result = $ssc_database->query("SELECT title, path, s.id, body FROM #__static s LEFT JOIN #__handler h ON s.id = h.id WHERE s.id = %d LIMIT 1", intval(array_shift($_GET['param'])));
-		if (!($data = $ssc_database->fetch_object($result))){		
+		if (!($data = $ssc_database->fetch_object($result))){
 			$data = new stdClass();
 			$data->title = '';
 			$data->path = '';
@@ -217,7 +217,6 @@ function static_form_submit(){
 		// Update
 		$ssc_database->query("UPDATE #__static s, #__handler h SET s.title = '%s', s.body = '%s', h.path = '%s', s.modified = %d WHERE s.id = h.id AND s.id = %d", 
 				$_POST['title'], $_POST['body'], $_POST['url'], time(), $id);
-		echo $ssc_database->error();
 	}
 	ssc_add_message(SSC_MSG_INFO, t('Page saved'));
 }
