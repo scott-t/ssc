@@ -2,3 +2,5 @@
 name = User authentication
 description = Provides user authentication and access control
 version = 3.x
+
+package = Administration

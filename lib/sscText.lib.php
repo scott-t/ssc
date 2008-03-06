@@ -99,9 +99,7 @@ class sscText {
 			
 			$diff = $stop - $start;
 			$tag = substr($body, $start + 2, $diff - 2);
-			ssc_debug(array('title' => 'tags', 'body'=> 'Parsing ' . $tag));
 			$tag = sscText::_convert_tag($tag);
-			ssc_debug(array('title' => 'tags', 'body'=> 'returned ' . $tag));
 			$body = substr_replace($body, $tag, $start, $diff + 2);							
 		}
 		return $body;

@@ -2,3 +2,5 @@
 name = Administration
 description = Overviews the administration of the application
 version = 3.x
+
+package = Administration
