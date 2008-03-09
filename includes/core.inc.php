@@ -23,7 +23,7 @@ define('SSC_INIT_FULL', 4);
  */
 define('SSC_DATE_SHORT', 'j-m-y');
 define('SSC_DATE_LONG', 'l F jS Y');
-define('SSC_DATE_MED', 'D j M Y');
+define('SSC_DATE_MED', 'D, M d, Y');
 
 /**
  * Time formats
@@ -552,11 +552,14 @@ function l($title, $path, $op = array()){
 	}
 
 	// Check for absolute path
-	if (strpos('://', $path) !== false){
-		$op += array('ext' => true);
+	if (strpos($path, '://') !== false){
+		$op['ext'] = true;
+	}
+	else{
+		$path = $ssc_site_url . $path;
 	}
 	
-	return '<a href="' . $ssc_site_url . $path . '" ' . (!empty($op['attributes']) ? ssc_attributes($op['attributes']) : '') . '>' . ($op['html'] ? $title : check_plain($title)). '</a>';
+	return '<a href="' . $path . '" ' . (!empty($op['attributes']) ? ssc_attributes($op['attributes']) : '') . '>' . ($op['html'] ? $title : check_plain($title)). '</a>';
 }
 
 /**

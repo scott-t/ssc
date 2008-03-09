@@ -163,12 +163,11 @@ abstract class sscAbstractDatabase{
 	 */
 	public function query_paged(){
 		$args = func_get_args();
-		$page = intval($args[0]);
-		$per_page = intval($args[1]);
-		unset($args[0], $args[1]);
-		
-		$args[2] .= " LIMIT " . ($page - 1) * $per_page . ", " . $page * $per_page;
-		
+		$page = intval(array_shift($args));
+		$per_page = intval(array_shift($args));
+	
+		$args[0] .= " LIMIT " . ($page - 1) * $per_page . ", " . $page * $per_page;
+
 		$result = call_user_func_array(array($this, 'query'), $args);
 		$rows = $this->number_rows();
 		
