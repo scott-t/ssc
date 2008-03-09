@@ -20,6 +20,11 @@ input, textarea {
 	display: block;
 }
 
+.form-checkbox input{
+	display: inline;
+	margin-right: 1em;
+}
+
 textarea {
 	width: 95%;
 }
@@ -133,6 +138,20 @@ h6 {
 	background-image: url("$base_url$/images/messagebox_info.png");
 	background-color: #99CCFF;
 	border: #0066CC 2px dashed;
+}
+
+.blog-notspam-icon{
+	background-image: url("$base_url$/images/blog-notspam.png");
+	background-repeat: no-repeat;
+}
+
+.blog-spam-icon{
+	background-image: url("$base_url$/images/blog-spam.png");
+	background-repeat: no-repeat;
+}
+
+div.blog-notspam-icon, div.blog-spam-icon{
+	padding-left:75px;
 }
 
 /*********** ADMIN *****************************/
