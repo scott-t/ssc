@@ -254,7 +254,8 @@ function blog_content(){
 								$out .= t("Posted !date at !time by !author\n", 
 										array(	'!date' => date(ssc_var_get('date_med', SSC_DATE_MED), $data->created),
 												'!time' => date(ssc_var_get('time_short', SSC_TIME_SHORT), $data->created),
-												'!author' => l($data->author, $data->site))) . '</p>';
+												'!author' => 
+										(empty($data->site) ? $data->author : l($data->author, $data->site)))) . '</p>';
 
 								$sub_hide = array('#value' => 'Hide comment', '#type' => 'submit');
 								$sub_show = array('#value' => 'Show comment', '#type' => 'submit');
@@ -302,7 +303,8 @@ function blog_content(){
 								$out .= t("Posted !date at !time by !author\n", 
 										array(	'!date' => date(ssc_var_get('date_med', SSC_DATE_MED), $data->created),
 												'!time' => date(ssc_var_get('time_short', SSC_TIME_SHORT), $data->created),
-												'!author' => l($data->author, $data->site))) . '</p><hr />';
+												'!author' => 
+											(empty($data->site) ? $data->author : l($data->author, $data->site)))) . '</p><hr />';
 							}
 						}
 						
@@ -802,12 +804,11 @@ function blog_guest_comment_validate(){
  * Comment submission
  */
 function blog_guest_comment_submit(){
-	global $ssc_database;
+	global $ssc_database, $ssc_site_url;
 	
 	$details['n'] = $_POST['n'];
 	$details['s'] = $_POST['s'];
 	$details['e'] = $_POST['e'];
-	$details['c'] = $_POST['c'];
 	ssc_cookie('comment_details', serialize($details), 15552000);
 
 		// Load antispam
@@ -830,9 +831,9 @@ function blog_guest_comment_submit(){
 		$is_spam = SSC_BLOG_SPAM;
 	}
 	
-	$result = $ssc_database->query("INSERT INTO #__blog_comment (post_id, author, email, site, created, status, body)
-		VALUES (%d, '%s', '%s', '%s', %d, %d, '%s')", 
-		$_POST['i'], $_POST['n'], $_POST['e'], $_POST['s'], time(), $is_spam, $_POST['c']);
+	$result = $ssc_database->query("INSERT INTO #__blog_comment (post_id, author, email, site, created, status, body, ip)
+		VALUES (%d, '%s', '%s', '%s', %d, %d, '%s', '%s')", 
+		$_POST['i'], $_POST['n'], $_POST['e'], $_POST['s'], time(), $is_spam, $_POST['c'], $_SERVER['REMOTE_ADDR']);
 	// Result tree
 	if ($result){
 		// Submission successful
