@@ -66,9 +66,68 @@ class sscText {
 		// Parsing of paragraphs (normal and specialised), lists, etc
 		
 		$bulk = explode("\n", $body);
+		$inpara = false;
+		$body = '';
+		$count = count($bulk);
+		// Loop through each line
+		for ($i = 0; $i < $count; $i++){
+			// Check first character
+			if (empty($bulk[$i]))
+				continue;
+				
+			switch ($bulk[$i][0]){
+			case ' ':	// Space - denotes pre-formatted stuff for code
+				if ($inpara){
+					$body .= '</p>';
+					$inpara = false;
+				}
+				$body .= '<pre>';
+				do {
+					$body .= $bulk[$i] . '\n';
+					$i++;
+				} while(isset($bulk[$i]) && $bulk[$i][0] == ' ');
+				$body .= '</pre>';
+				$i--;
+				break;
+				
+			case '*':	// Asterisk - denotes bulleted list
+				if ($inpara){
+					$body .= '</p>';
+					$inpara = false;
+				}
+				$body .= sscText::_do_list($bulk, $i);
+				break;
+				
+			default:
+				$body .= $bulk[$i];
+			}
+		}
+		
 		$n = count($bulk);
 			
 		return $body;
+	}
+	
+	/**
+	 * Generate a list from sscText
+	 * @param array $bulk Lines representing body content
+	 * @param int $i Index in content array representing next line
+	 * @param int $level Level of indentation 
+	 * @return string XHTML markup equivalent
+	 */
+	static function _do_list(&$input, &$i, $level = 0){
+		$out = '<ul>';
+		while (isset($input[$i]) && substr($input[$i], $level, 1) == '*'){
+			while (isset($input[$i]) && substr($input[$i], $level+1, 1) == '*'){
+				$out .= '<li>' . sscText::_do_list($input, $i, $level+1) . '</li>';
+			}
+			if (substr($input[$i] ,$level, 1) == '*'){
+				$out .= '<li>' . substr($input[$i], $level + 1) . '</li>';
+				$i++;
+			}
+		}
+	
+		return $out . '</ul>';
 	}
 	
 	/**
