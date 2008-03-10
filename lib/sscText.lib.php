@@ -75,7 +75,7 @@ class sscText {
 			if (empty($bulk[$i]))
 				continue;
 				
-			switch ($bulk[$i][0]){
+			switch (substr($bulk[$i], 0, 1)){
 			case ' ':	// Space - denotes pre-formatted stuff for code
 				if ($inpara){
 					$body .= '</p>';
@@ -98,12 +98,37 @@ class sscText {
 				$body .= sscText::_do_list($bulk, $i);
 				break;
 				
+			case "":
+				if ($inpara){
+					$body .= '</p><p>';
+				}
+				else{
+					$body .= '<p>';
+					$inpara = true;
+				}
+				
+				break;
+				
 			default:
+				if (strpos($bulk[$i], '<h') !== false){
+					if ($inpara){
+						$inpara = false;
+						$body .= '</p>';
+					}
+				}
+				else{
+					if (!$inpara){
+						$body .= '<p>';
+						$inpara = true;
+					}
+				}
 				$body .= $bulk[$i];
 			}
 		}
 		
-		$n = count($bulk);
+		while(strpos($body, '<p></p>') !== false){
+			$body = str_replace('<p></p>', '', $body);
+		}
 			
 		return $body;
 	}
