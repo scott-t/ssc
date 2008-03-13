@@ -91,8 +91,6 @@ class sscAkismet{
 						 "Content-Type: application/x-www-form-urlencoded; charset=utf-8\r\n" .
 						 "Content-Length: " . strlen($request) . 
 						 "\r\nUser-Agent: $this->userAgent\r\n\r\n$request";
-
-	ssc_debug(array('title' => 'sscAkismet', 'body' => $query));
 		
 		$ret = '';
 		if (($socket = fsockopen($host, 80)) !== false){
@@ -192,7 +190,7 @@ class sscAkismet{
 			
 
 		$ret = $this->http_post($query, $this->akismetAPIHost, $do);
-		echo $ret;
+		print_r( $ret);
 	}
 }
 

@@ -229,8 +229,7 @@ function ssc_database_init(){
 	include_once "$ssc_site_path/includes/database.".$SSC_SETTINGS['db-engine'].".inc.php";
 	
 	// Create database object
-	$ssc_database = new $SSC_SETTINGS['db-engineclass']();
-	
+	$ssc_database = new $SSC_SETTINGS['db-engineclass']();	
 }
 
 /**
@@ -331,6 +330,9 @@ function _ssc_load($level){
  */
 function ssc_extension_init(){
 	global $ssc_site_path;
+	// Load image libraries
+	include_once "$ssc_site_path/includes/core.image.inc.php";
+	
 	// Load up all enabled modules
 	require_once "$ssc_site_path/includes/core.module.inc.php";
 	module_load();

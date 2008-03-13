@@ -1,0 +1,6 @@
+; Gallery module
+name = Image gallery
+description = Used to upload images for display elsewhere on the site or in a gallery
+version = 3.x
+
+package = Content
