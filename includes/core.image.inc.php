@@ -50,11 +50,7 @@ class sscImage{
 		// Can't have both don't-care width AND height
 		if ($width < 1 && $height < 1)
 			return false;
-			
-		// Check the file exists
-		if(!file_exists($path))
-			return false;
-		
+					
 		// Check target location writability
 		$dir = dirname($target);
 		if (!is_dir($dir) || ((fileperms($dir) & 0200) == 0))
@@ -65,7 +61,7 @@ class sscImage{
 		if (!ssc_load_library($lib))
 			return false;
 			
-		if ($imgLib = new $lib($file)){
+		if ($imgLib = new $lib($this->file)){
 			return $imgLib->_resize($target, $width, $height);
 		}
 		else{
@@ -87,12 +83,24 @@ class sscImage{
 			// Check if already within limits
 			if ($y <= $max_y)
 				return;
+				
+			$ratio = $max_y / $y;
+			echo $ratio;
+			$y = $max_y;
+			$x = (int)floor($x * $ratio);
+			return;				
 		}
 		elseif ($max_y < 0){
 			// Only concerned about x
 			// Check if already within limits
 			if ($x <= $max_x)
 				return;
+				
+			$ratio = $max_x / $x;
+			echo $ratio;
+			$x = $max_x;
+			$y = (int)floor($y * $ratio);
+			return;
 		}
 		else{
 			// Both constraints in place

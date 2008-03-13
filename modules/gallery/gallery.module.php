@@ -253,13 +253,15 @@ function gallery_form_submit(){
 			return;
 		}
 		
+		mkdir($ssc_site_path . '/images/gallery/' . $id);
+		
 		ssc_add_message(SSC_MSG_INFO, t('Gallery saved'));
 		ssc_redirect('/admin/gallery/edit/' . $id);
 		
 	}
 	else{
 		$result = $ssc_database->query("UPDATE #__gallery g, #__handler h SET title = '%s', description = '%s', 
-				visible = %d, path = '%s' WHERE g.id = %d AND g.id = h.id LIMIT 1",
+				visible = %d, path = '%s' WHERE g.id = %d AND g.id = h.id ",
 				$_POST['name'], $_POST['desc'], $_POST['vis'], $_POST['url'], $_POST['gid']);
 				
 	}
@@ -268,13 +270,14 @@ function gallery_form_submit(){
 		// Uploading single file
 		$ext = pathinfo($_FILES['single']['name']);
 		$ext = "." . $ext['extension'];
-		$file = $ssc_site_path . '/tmp/' . $_FILES['single']['tmp_name'] . ".$ext"
+		$file = $ssc_site_path . '/tmp/' . time() . "$ext";
 		if (!move_uploaded_file($_FILES['single']['tmp_name'], $file))
 			return;
 						
 		$image = new sscImage($file);
 		// Possibly messy, but insert before resizing
-		$result = $ssc_database->query("INSERT INTO #__gallery_content c (gallery_id, caption, mid) VALUES (%d, '', 0)", $_POST['gid']);
+		$result = $ssc_database->query("INSERT INTO #__gallery_content (gallery_id, caption, mid) VALUES (%d, '', 0)", $_POST['gid']);
+
 		if (!$result)
 			return;
 			
@@ -293,7 +296,7 @@ function gallery_form_submit(){
 			return;
 		}
 			
-		if (!$image->resize($path . $id . "_t.$ext", 150, -1){
+		if (!$image->resize($path . $id . "_t.$ext", 150, -1)){
 			$ssc_database->query("DELETE FROM #__gallery_content WHERE id = %d LIMIT 1", $id);
 			unlink($file);
 			unlink($path . $id . $ext);

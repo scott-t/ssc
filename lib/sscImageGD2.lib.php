@@ -26,15 +26,16 @@ class sscImageGD2 extends sscAbstractImage{
 		case 'jpg':
 			// JPG support?
 			if ($gdinfo['JPG Support'] == false)
-				return false
-			$img = imagecreatefromjpeg($path);
+				return false;
+				
+			$img = imagecreatefromjpeg($this->file);
 			break;			
 					
 		case 'png':
 			if ($gdinfo['PNG Support'] == false)
 				return false;
 				
-			$img = imagecreatefrompng($path);
+			$img = imagecreatefrompng($this->file);
 			break;
 		}
 
@@ -45,13 +46,13 @@ class sscImageGD2 extends sscAbstractImage{
 		// Work out approximage compression levels
 		switch (true){		
 		case ($width <= 150):
-			$comp = 60;
+			$comp = 70;
 			break;
 		case ($width <= 500):
-			$comp = 65;
+			$comp = 75;
 			break;
 		case ($width <= 1024):	
-			$comp = 75;
+			$comp = 80;
 			break;
 		default:
 			$comp = 65;
@@ -61,10 +62,10 @@ class sscImageGD2 extends sscAbstractImage{
 		// Calculate resize values
 		$nx = $x = imagesx($img);
 		$ny = $y = imagesy($img);
-		$this::_get_resize($x, $width, $y, $height);
+		$this->_get_resize($nx, $width, $ny, $height);
 		
 		// Perform resize
-		$new_img = imagecreatetrucolor($nx, $ny);
+		$new_img = imagecreatetruecolor($nx, $ny);
 		imagecopyresampled($new_img, $img, 0, 0, 0, 0, $nx, $ny, $x, $y);
 
 		// Destroy old image reference
