@@ -143,13 +143,18 @@ function gallery_form(){
 						'#title' => t('Gallery content'),
 						'#parent' => true);
 	
+	// Generate caption listing
+	$input = array('#type' => 'text','#maxlength' => 150);
+	$input_border = array('#title' => t('Caption'),
+						'#description' => t('Short caption for the image'));
+		
 	while ($data = $ssc_database->fetch_object($result)){
-		$out = "<div class=\"form-img\"><img src=\"$ssc_site_url/images/gallery/$galID/$data->id\" alt=\"\" />";
-		$out .= theme_render_input(array('#type' => 'text',
-										'#name' => "item[$data->id][cap]",
-										'#maxlength' => 150,
-										'#title' => t('Caption'),
-										'#description' => t('Short caption for the image')));
+		$input['#name'] = "item[$data->id][cap]";
+		$input['#value'] = $data->caption;
+		$input_border['#value'] = theme_render_input($input);
+		$out = "<div class=\"form-img\"><img src=\"$ssc_site_url/images/gallery/$galID/{$data->id}_t\" alt=\"\" />";
+		
+		$out .= theme_render_form_element($input_border);
 		
 		$out .= '</div>';
 	
