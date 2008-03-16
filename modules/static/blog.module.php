@@ -95,7 +95,7 @@ function blog_admin(){
 			else{
 				$out = ssc_admin_table(t('Current posts'),
 					"SELECT p.id, title, COUNT(c.body) comments FROM #__blog_post p LEFT JOIN #__blog_comment c ON p.id = post_id
-					WHERE blog_id = %d GROUP BY post_id ",
+					WHERE blog_id = %d GROUP BY p.id ",
 					array($_GET['param'][0]),
 					array('perpage' => 10, 'link' => 'title', 
 						'linkpath' => "/admin/blog/edit/{$_GET['param'][0]}/post/"));
@@ -170,8 +170,8 @@ function blog_content(){
 				
 			return _blog_gen_post($data['page'], $_GET['path'] . '/page/', 
 				"SELECT p.title, p.created, p.urltext, u.displayname author, count(c.post_id) count, p.body FROM #__blog_post p LEFT JOIN
-				#__blog_comment c ON post_id = p.id LEFT JOIN #__user u ON u.id = p.author_id WHERE blog_id = %d GROUP BY c.post_id
-				ORDER BY p.created DESC", $_GET['path-id']);
+				#__user u ON u.id = p.author_id LEFT JOIN #__blog_comment c ON (post_id = p.id AND (status & %d = 0)) WHERE blog_id = %d  
+				GROUP BY p.id ORDER BY p.created DESC", SSC_BLOG_SPAM, $_GET['path-id']);
 		}		
 		elseif ($action == 'tag'){
 			// Show posts for the tag
@@ -323,9 +323,9 @@ function blog_content(){
 				// Yearly archive
 				return _blog_gen_post(10000, $_GET['path'] . '/page/', 
 					"SELECT p.title, p.created, p.urltext, u.displayname author, count(c.post_id) count FROM #__blog_post p LEFT JOIN
-					#__blog_comment c ON post_id = p.id LEFT JOIN #__user u ON u.id = p.author_id WHERE blog_id = %d 
-					AND p.created >= %d AND p.created < %d GROUP BY c.post_id ORDER BY p.created DESC", $_GET['path-id'], 
-					mktime(0, 0, 0, 1, 1, $action), mktime(0, 0, 0, 1, 0, $action + 1));
+					#__blog_comment c ON (post_id = p.id AND (c.status & %d = 0)) LEFT JOIN #__user u ON u.id = p.author_id WHERE blog_id = %d 
+					AND p.created >= %d AND p.created < %d GROUP BY p.id ORDER BY p.created DESC",
+					SSC_BLOG_SPAM, $_GET['path-id'], mktime(0, 0, 0, 1, 1, $action), mktime(0, 0, 0, 1, 0, $action + 1));
 			}
 		}
 	}
@@ -366,7 +366,7 @@ function _blog_gen_post($perpage, $pagelink, $sql, $args = null){
 	$result =& $paged_result['result'];
 	$out = '';
 	// For each blog post listed
-	while (($data = $ssc_database->fetch_object($result)) && (--$perpage > 0)){
+	while (($data = $ssc_database->fetch_object($result)) && ($perpage-- > 0)){
 		$posturl = '/' . $_GET['path'] . date("/Y/m/d/", $data->created) . $data->urltext;
 		$out .= "\n<h3>" . l($data->title, $posturl) . "</h3>\n";
 		$out .= t("Posted !date at !time by !author\n", 
@@ -396,13 +396,13 @@ function _blog_gen_post($perpage, $pagelink, $sql, $args = null){
 	$out .= '<div class="paging"><span>';
 	// Is there a previous page?
 	if ($page > 1)
-		$out .= l(t('Previous page'), $pagelink . $page - 1);
+		$out .= l(t('Previous page'), $pagelink . ($page - 1));
 
 	$out .= '</span><span>';
-	
+
 	// Next page?
 	if ($paged_result['next'])
-		$out .= l(t('Next page'), $pagelink . $page + 1);
+		$out .= l(t('Next page'), $pagelink . ($page + 1));
 		
 	$out .= '</span></div>';
 
@@ -559,6 +559,7 @@ function blog_post(){
 			$data->body = '';
 			$data->keywords = '';
 			$data->desc = '';
+			$data->url = '';
 		}
 		else{
 			$data->keywords = '';

@@ -125,7 +125,8 @@ class sscText {
 				$body .= $bulk[$i];
 			}
 		}
-		
+		if ($inpara)
+			$body .= '</p>';
 		while(strpos($body, '<p></p>') !== false){
 			$body = str_replace('<p></p>', '', $body);
 		}
@@ -246,11 +247,11 @@ class sscText {
 					$tag = "&#91;&#91;$tag&#93;&#93;";
 					break;
 				}
-				echo "aba";
 				
 			}
 			
 			$tag = "<img src=\"$path\"";
+			$donealt = false;
 			while ($op = array_shift($param)){
 				$o = explode("=", $op);
 				if (empty($o[1]))
@@ -266,10 +267,13 @@ class sscText {
 					break;
 				case "alt":
 					$tag .= " alt=\"$o[1]\"";
+					$donealt = true;
 					break;
 				}
 			}
-
+			if (!$donealt){
+				$tag .= ' alt=""';
+			}
 			$tag .= " />";
 			break;
 
