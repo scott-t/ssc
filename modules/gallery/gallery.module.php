@@ -11,6 +11,47 @@
 defined('_VALID_SSC') or die('Restricted access');
 
 /**
+ * Implementation of module_content()
+ */
+function gallery_content(){
+	global $ssc_database, $ssc_site_url;
+	if (is_array($_GET['param'])){
+		$page = array_shift($_GET['param']);
+		// Check page
+		if ($page == 'page'){
+			$page = (int)array_shift($_GET['param']);
+		}
+		else{
+			ssc_not_found();
+		}
+	}
+	else{
+		$page = 1;
+	}
+	
+	$gid = (int)$_GET['path-id'];
+	
+	// Check if gallery exists and is visible
+	$result = $ssc_database->query("SELECT title, description FROM #__gallery WHERE id = %d AND visible = 1 LIMIT 1", $gid);
+	if ($result && $data = $ssc_database->fetch_assoc($result))
+		ssc_set_title($data['title']);
+	else
+		ssc_not_found();
+	
+	// Fetch contents
+	$res = $ssc_database->query_paged($page, 20, "SELECT id, caption FROM #__gallery_content WHERE gallery_id = %d ORDER BY id ASC", $gid);
+	$result =& $res['result'];
+	$count = 20;
+	$out = '';
+	while (($data = $ssc_database->fetch_assoc($result)) && $count--){
+		$out .= "<a href=\"$ssc_site_url/images/gallery/$gid/${data['id']}\"><img src=\"$ssc_site_url/images/gallery/$gid/${data['id']}_t\" alt=\"\" /></a> \n";
+	}
+	
+	return $out;
+	
+}
+
+/**
  * Implementation of module_admin()
  */
 function gallery_admin(){
@@ -29,10 +70,11 @@ function gallery_admin(){
 	case '':
 		// "Main" admin page - show galleries
 		$out = ssc_admin_table(t('Current galleries'), 
-			"SELECT id, title, description, if (visible, 'Yes', 'No') as Visible FROM #__gallery 
+			"SELECT g.id, title, description, COUNT(c.id) items, if (visible, 'Yes', 'No') Visible FROM 
+			#__gallery g LEFT JOIN #__gallery_content c ON g.id = gallery_id GROUP BY gallery_id
 			ORDER BY visible DESC, title asc", null, 
 				array('perpage' => 10, 'link' => 'title', 
-					'linkpath' => "/admin/blog/edit/"));
+					'linkpath' => "/admin/gallery/edit/"));
 				
 		$out .= l(t('New gallery'),"/admin/gallery/edit/0");
 		

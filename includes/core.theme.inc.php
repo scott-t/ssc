@@ -99,23 +99,19 @@ function theme_render(&$body){
 		$side[$i] = theme_side($i);
 	}
 	
-	ob_start();
-	echo 'GET: ';
-	print_r($_GET);
-	echo '<br />POST: ';
-	print_r($_POST);
-	$side[2] = ob_get_contents();
-	ob_end_clean();
-	
 	$site_name = ssc_var_get('site_name', false);
 	$meta = _theme_get_meta() . '<title>' . ssc_set_title() . ($site_name ? " | " . $site_name : '') ."</title>\n";
 	$lang = ssc_var_get('language', 'en');
 	$logo = ssc_var_get('theme_show_logo', false) ? ssc_var_get('theme_logo', '') : false;
-	$title = ssc_var_get('theme_show_title', false) ? "<h1>$site_name</h1>" : false;
+	$title = ssc_var_get('theme_show_title', false) ? "$site_name" : false;
 	$quip = ssc_var_get('theme_show_quip', false) ? ssc_var_get('theme_quip', '') : false;
 	$breadcrumb = ssc_var_get('theme_breadcrumb', false);
 	$messages = theme_messages();
 	$foot = ssc_var_get('theme_show_foot', false) ? ssc_var_get('theme_foot', '') : '';
+	if (empty($foot))
+		$foot = 'XHTML and CSS valid<br />Powered by <a href="http://www.smoothsailingcms.org">SSC</a>';
+	else
+		$foot .= 'XHTML and CSS valid<br />Powered by <a href="http://www.smoothsailingcms.org">SSC</a>';
 	//$side = array();
 	
 	$body = '<h2>' . ssc_set_title() . '</h2>' . $body;
