@@ -25,4 +25,6 @@ $lastrun = ssc_var_get("cron_last_run", 0);
 if ($lastrun < (time() - SSC_CRON_MIN_TIME))
 	module_hook('cron');
 
+ssc_var_set("cron_last_run", time());
+
 ssc_close();

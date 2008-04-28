@@ -135,6 +135,8 @@ function ssc_conf_file(){
 	}
 
 	$path = explode('.', $_SERVER['SERVER_NAME']);
+if ($path[0] == 'www')
+array_shift($path);
 	do{
 		$filepath = implode('.', $path);
 		unset($path[count($path)-1]);
@@ -161,7 +163,12 @@ function ssc_conf_init(){
 	$SSC_SETTINGS = array();
 	
 	// Fill in environment information
-	$ssc_site_url = "http://" . $_SERVER['SERVER_NAME'] . substr($_SERVER['SCRIPT_NAME'], 0, -10);
+$ssc_site_url = $_SERVER['SERVER_NAME'];
+if (strpos($ssc_site_url,"www.")===0)
+	$ssc_site_url = "http://" . $ssc_site_url . substr($_SERVER['SCRIPT_NAME'], 0, -10);
+else
+$ssc_site_url = "http://www." . $ssc_site_url . substr($_SERVER['SCRIPT_NAME'], 0, -10);
+
 	$ssc_site_path = substr($_SERVER['SCRIPT_FILENAME'], 0, -10);
 
 	ssc_debug(array(
@@ -707,6 +714,7 @@ function ssc_generate_html(&$structure){
 				continue;
 			
 			$value['#name'] = $tag;
+if (empty($value['#id']))
 			$value['#id'] = $structure['#formname'] . "-$tag";
 			$value['#formname'] = $structure['#formname'];
 			$out .= ssc_generate_html($value);

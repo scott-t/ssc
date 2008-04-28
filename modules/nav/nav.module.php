@@ -38,14 +38,14 @@ function nav_admin(){
 				$out .= _nav_edit_table($data[0]);
 				/*$out .= ssc_admin_table($data[1], "SELECT n.id, p.title parent, n.title, n.desc description, n.url, COUNT(n.id) FROM
 							#__navigation n, #__navigation p WHERE n.l BETWEEN p.l AND p.r
-							AND p.bid = %d GROUP BY n.id ORDER BY n.l", array($data[0], $data[0]),
+							AND p.bid = %d AND n.bid = %d GROUP BY n.id ORDER BY n.l", array($data[0], $data[0]),
 							array('link' => 'title', 'linkpath' => '/admin/nav/link/'));/**/
 				$out .= ssc_generate_form('nav_add_link', $data[0]);
 			}
 		}
 		else{
 			ssc_add_message(SSC_MSG_INFO, t('No navigation widgets exist yet.') . $ssc_database->error());
-			$out = l(t('Create widget'), 'admin/nav/widget');
+			$out = l(t('Create widget'), '/admin/nav/widget');
 		}
 		break;
 		
@@ -65,45 +65,62 @@ function nav_admin(){
 function _nav_edit_table($bid){
 	global $ssc_database;
 	
-	$result = $ssc_database->query("SELECT n.id, p.id pid, p.title parent, n.title, n.description, n.url, COUNT(n.id) lvl FROM
+	$result = $ssc_database->query("SELECT n.id, n.title, n.description, n.url, COUNT(n.id) lvl FROM
 							#__navigation n, #__navigation p WHERE n.l BETWEEN p.l AND p.r
-							AND p.bid = %d GROUP BY n.id ORDER BY n.l", $bid);
+							AND p.bid = %d AND n.bid = %d GROUP BY n.id ORDER BY n.l", $bid, $bid);
 	
 	if (!$result || $ssc_database->number_rows() == 0){
 		//blank
 		return '';
 	}
 	
-	$items = array();
-	$struct = array();
-	$prev = array();
-	$ptr =& $struct;
-	$pid = -1;
-	$lvl = 1;
+	$items = array();	// Store the "parent" dropdown
+	$parent = array(0);	// Item->parent relationship temp storage
+	$p = -1;
+	$struct = array();	// Store menu widget hierarchy
+	$ptr =& $struct;	// Pointer to structure
+	$id = -1;
+	$prev = array();	// Pointers to previous hierarchy nodes
+	$lvl = 1;			// Current level
 	while ($data = $ssc_database->fetch_object($result)){
+		
 		if ($data->lvl > $lvl){
 			// Taking a step IN
 			$prev[$lvl] =& $ptr;
-			$ptr =& $ptr[$pid];
+			$ptr =& $ptr[$id];
 			$lvl++;
+			$parent[$data->lvl] = $data->id;	// Save current parent			
+			$p = $parent[$lvl - 1];
 		}
-		else{
-			while ($data->lvl < $lvl){
+		else if($data->lvl < $lvl){
+			do {
 				// Step back
 				$ptr =& $prev[--$lvl];
-			}
+			} while ($data->lvl < $lvl);
+			$parent[$lvl] = $data->id;
+			$p = $parent[$lvl - 1];
+		}
+		else{
+			$parent[$data->lvl] = $data->id;	// Save current parent
 		}
 		
 		// (Now?) Within the same level
-		$pid = $data->id;
-		$ptr[$pid]['#data'] = $data;
-		$items[$pid] = $data->title;
+		$id = $data->id;
+		
+		if ($lvl == 1){
+			$p = $id;
+			$parent[1] = $id;
+		}
+		$data->pid = $p;		
+		
+		$ptr[$id]['#data'] = $data;
+		$items[$id] = $data->title;
 	}	
-	
+
 	// Now to parse this link structure
 	$struct['#items'] = $items;
 	$out = '<form action="" method="post"><table class="admin-table center-input"><tr><th>ID</th><th>Parent</th><th>Title</th><th>Description</th><th>Path</th></tr>';
-	$out .= _nav_edit_table_parser($struct);
+	$out .= _nav_edit_table_parser($struct, true);
 	$out .= '</table><div><input type="hidden" name="form-id" value="_nav_edit_table" />' . theme_render_input(array('#type' => 'submit', '#value' => 'Save', '#name' => 'sub')) . '</div></form>';
 	return $out;
 }
@@ -113,10 +130,10 @@ function _nav_edit_table($bid){
  * @param array $struct Structured hierarchial tree
  * @return string things
  */
-function _nav_edit_table_parser(&$struct){
+function _nav_edit_table_parser(&$struct, $clear = false){
 	static $row = 0;
 	static $items;
-	if (!$items)
+	if (!$items || $clear)
 		$items = $struct['#items'];
 		
 	$out = '';
@@ -372,12 +389,12 @@ function nav_widget($block, $title = ''){
 	else{
 		// Grab data from DB
 		global $ssc_database;
-		$result = $ssc_database->query("SELECT node.id, node.url, node.description, node.title, (COUNT(parent.title) - 1) AS depth
+		$result = $ssc_database->query("SELECT node.id, node.url, node.description, node.title, (COUNT(node.id) - 1) AS depth
 				FROM #__navigation AS node,
 				#__navigation AS parent
 				WHERE node.l BETWEEN parent.l AND parent.r AND node.bid = %d AND parent.bid = %d
-				GROUP BY node.title
-				ORDER BY node.l;", $block, $block);
+				GROUP BY node.id
+				ORDER BY node.l", $block, $block);
 		
 		echo $ssc_database->error();
 		
@@ -388,23 +405,26 @@ function nav_widget($block, $title = ''){
 		$path = $ssc_database->query("SELECT parent.id FROM #__navigation AS node,
 				#__navigation AS parent
 				WHERE node.l BETWEEN parent.l AND parent.r
-				AND node.url = '%s' AND node.bid = %d AND parent.bid = %d
-				ORDER BY parent.l;", $_GET['q'], $block, $block);
+				AND node.url = '/%s' AND parent.bid = %d AND node.bid = %d
+				ORDER BY parent.l", $_GET['q'], $block, $block);
 		
 		$tree = array();
 		
 		while ($data = $ssc_database->fetch_object($path)){
 			$tree[] = $data->id;
 		}
-			
+
 		$out .= '<li>';
-			
 		$prev_depth = 0;
 		$i = 0;
 		
+		// Parent listings
+		$parent = array(0, 0);
+		$p =& $parent[1];
+		
 		// Loop through
 		while ($data = $ssc_database->fetch_object($result)){
-	
+				
 			// Prepare tooltip
 			if (!empty($data->desc))
 				$op = array('attributes' => array('title' => $data->description));
@@ -414,12 +434,19 @@ function nav_widget($block, $title = ''){
 			// Are we a child of previous?
 			if ($data->depth > $prev_depth){
 				// New level
-				// Do we accept new level?
-				if (array_search($data->id, $tree) === false){
-					// Not in there so ignore it
+				// Do we accept new level?  Yes if root node or if parent in path
+				if ($p == 0 || array_search($p, $tree) !== false){
+					// Level accepted
+					$prev_depth++;
+					$out .= "  <ul>\n    <li>";
+					array_unshift($parent, $data->id);
+				}
+				else {
+					// Not accepted so ignore it
 					do {
 						$data = $ssc_database->fetch_object($result);
 					} while ($data && $data->depth > $prev_depth);
+					
 					// Check if there is another link
 					if ($data){
 						// Yes - prepare to show it
@@ -430,11 +457,6 @@ function nav_widget($block, $title = ''){
 						break;
 					}
 				}	
-				else {
-					// Count it
-					$prev_depth++;
-					$out .= "  <ul>\n    <li>";
-				}
 			}
 			elseif ($data->depth < $prev_depth){
 				// We're dropping levels instead
@@ -442,6 +464,7 @@ function nav_widget($block, $title = ''){
 				do {
 					$prev_depth--;
 					$out .= "</ul></li>\n";
+					array_shift($parent);
 				} while ($prev_depth > $data->depth);
 				$out .= "<li>";
 			}

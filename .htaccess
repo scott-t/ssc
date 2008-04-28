@@ -1,6 +1,9 @@
-RewriteEngine On
+Options +MultiViews
+
+RewriteEngine on
 
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f
+
 # if not, pass it to index.php
-RewriteRule ^(.*) /ssc/trunk/index.php?q=$1 [QSA]  # QSA preserves the query 
+RewriteRule ^(.*)$ index.php?q=$1 [L]  # QSA preserves the query 

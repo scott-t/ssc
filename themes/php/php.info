@@ -9,3 +9,5 @@ mini_count = 5
 css[] = style.theme.css#all
 css[] = site.theme.css#all
 css[] = print.theme.css#print
+
+js[] = site.js

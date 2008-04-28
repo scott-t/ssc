@@ -51,9 +51,12 @@ function module_handler_init(){
 	$data = $ssc_database->fetch_assoc($result);
 	// Split path arguments		
 	$_GET['path'] = $data['path'];
-	$_GET['param'] = substr($_GET['q'], strlen($data['path'])+1);
+	$_GET['param'] = substr($_GET['q'], strlen($data['path']));
+	if(!empty($_GET['param']) && $_GET['param'][0] == '/')
+		$_GET['param'] = substr($_GET['param'],1);
 	$_GET['handler'] = $data['filename'];
 	$_GET['path-id'] = $data['hid'];
+$_GET['mod-id'] = $data['id'];
 	
 }
 

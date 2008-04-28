@@ -106,8 +106,8 @@ function ssc_admin_table($title, $sql, $sql_args = null, $table_args = null){
 		// Work out page
 		$perpage = $table_args['perpage'];
 		$page = array_search('page', $_GET['param']) + 1;
-		if (isset($_GET[$page])){
-			$page = int_val($_GET[$page]);
+		if (isset($_GET['param'][$page])){
+			$page = (int)($_GET['param'][$page]);
 			if ($page < 1)
 				$page = 1;
 		}
@@ -174,13 +174,13 @@ function ssc_admin_table($title, $sql, $sql_args = null, $table_args = null){
 			$out .= '<div class="paging"><span>';
 			// Is there a previous page?
 			if ($page > 1)
-				$out .= l(t('Previous page'), $table_args['pagelink'] . $page - 1);
+				$out .= l(t('Previous page'), $table_args['pagelink'] . ($page - 1));
 
-			$out .= '</span><span>';
+			$out .= '</span> <span>';
 			
 			// Next page?
-			if ($i == $perpage)
-				$out .= l(t('Next page'), $table_args['pagelink'] . $page + 1);
+			if ($args['next'])
+				$out .= l(t('Next page'), $table_args['pagelink'] . ($page + 1));
 				
 			$out .= '</span></div>';
 		}

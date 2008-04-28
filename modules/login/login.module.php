@@ -115,6 +115,8 @@ function login_cron(){
 	global $ssc_database;
 	// Delete 3 day old unaccessed accounts
 	$ssc_database->query("DELETE FROM #__user WHERE created < %d AND accessed = 0", time() - (60 * 60 * 24 * 3));
+$ssc_database->query("DELETE FROM #__session WHERE access < FROM_UNIXTIME('%d')", time() - (60 * 60 * 2));
+$ssc_database->query("OPTIMIZE TABLE #__session");
 }
 
 /**
@@ -237,6 +239,9 @@ function login_registration(){
  * Validate registration
  */
 function login_registration_validate(){
+if (!ssc_var_get('login_user_create', true))
+return false;
+
 	if (empty($_POST['user']) || empty($_POST['email'])){
 		ssc_add_message(SSC_MSG_CRIT, t('Both username and email fields need to be filled in'));
 		return false;

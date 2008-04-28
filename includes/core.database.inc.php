@@ -166,14 +166,14 @@ abstract class sscAbstractDatabase{
 		$page = intval(array_shift($args));
 		$per_page = intval(array_shift($args));
 	
-		$args[0] .= " LIMIT " . ($page - 1) * $per_page . ", " . $page * $per_page;
+		$args[0] .= " LIMIT " . ($page - 1) * $per_page . ", " . ($per_page + 1);
 
 		$result = call_user_func_array(array($this, 'query'), $args);
 		$rows = $this->number_rows();
-		
+
 		return array(
 				"result" => $result,
-				"next" => ($rows == $per_page ? true : false),
+				"next" => ($rows == ($per_page+1) ? true : false),
 				"previous" => ($page == 1 ? false : true)
 				);
 	}

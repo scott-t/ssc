@@ -44,7 +44,7 @@ function gallery_content(){
 	$count = 20;
 	$out = '';
 	while (($data = $ssc_database->fetch_assoc($result)) && $count--){
-		$out .= "<a href=\"$ssc_site_url/images/gallery/$gid/${data['id']}\"><img src=\"$ssc_site_url/images/gallery/$gid/${data['id']}_t\" alt=\"\" /></a> \n";
+		$out .= "<a href=\"$ssc_site_url/images/gallery/$gid/${data['id']}\" class=\"" . (empty($data['caption']) ? 'gallery-nocap' : 'gallery-cap') . "\"><img src=\"$ssc_site_url/images/gallery/$gid/${data['id']}_t\" alt=\"\" /><span>$data[caption]</span></a> \n";
 	}
 	
 	return $out;
@@ -336,14 +336,14 @@ function gallery_form_submit(){
 			return;
 		}
 		
-		if (!$image->resize($path . $id . "_m.$ext", 350, -1)){
+		if (!$image->resize($path . $id . "_m$ext", 350, -1)){
 			$ssc_database->query("DELETE FROM #__gallery_content WHERE id = %d LIMIT 1", $id);
 			unlink($file);
 			unlink($path.$id.$ext);
 			return;
 		}
 			
-		if (!$image->resize($path . $id . "_t.$ext", 150, -1)){
+		if (!$image->resize($path . $id . "_t$ext", 150, -1)){
 			$ssc_database->query("DELETE FROM #__gallery_content WHERE id = %d LIMIT 1", $id);
 			unlink($file);
 			unlink($path . $id . $ext);

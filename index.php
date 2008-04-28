@@ -12,9 +12,9 @@ define("_VALID_SSC", 1);
 /**
  * Enable debug info
  */
-define("_SSC_DEBUG", 1);
+define("_SSC_DEBUG", 0);
 $ssc_execute_time = microtime(true);
-
+error_reporting(0);
 // Begin application startup
 include('./includes/core.inc.php');
 ssc_init();
@@ -24,5 +24,3 @@ theme_render($page);
 
 // Clean up
 ssc_close();
-
-ssc_debug_show();

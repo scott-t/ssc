@@ -101,6 +101,9 @@ function theme_render(&$body){
 	
 	$site_name = ssc_var_get('site_name', false);
 	$meta = _theme_get_meta() . '<title>' . ssc_set_title() . ($site_name ? " | " . $site_name : '') ."</title>\n";
+	$m = module_hook('meta');
+	foreach($m as $src)
+		$meta .= $src;
 	$lang = ssc_var_get('language', 'en');
 	$logo = ssc_var_get('theme_show_logo', false) ? ssc_var_get('theme_logo', '') : false;
 	$title = ssc_var_get('theme_show_title', false) ? "$site_name" : false;
@@ -379,7 +382,6 @@ function theme_template($file, $data){
 	if (!file_exists($f))
 		return '';
 	
-	$title = null;
 	// Populate template data
 	extract($data, EXTR_SKIP);
 

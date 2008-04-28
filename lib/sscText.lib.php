@@ -72,8 +72,16 @@ class sscText {
 		// Loop through each line
 		for ($i = 0; $i < $count; $i++){
 			// Check first character
-			if (empty($bulk[$i]))
+			if (empty($bulk[$i])){
+				if ($inpara){
+					$body .= '</p><p>';
+				}
+				else{
+					$body .= '<p>';
+					$inpara = true;
+				}
 				continue;
+			}
 				
 			switch (substr($bulk[$i], 0, 1)){
 			case ' ':	// Space - denotes pre-formatted stuff for code
@@ -97,18 +105,7 @@ class sscText {
 				}
 				$body .= sscText::_do_list($bulk, $i);
 				break;
-				
-			case "":
-				if ($inpara){
-					$body .= '</p><p>';
-				}
-				else{
-					$body .= '<p>';
-					$inpara = true;
-				}
-				
-				break;
-				
+								
 			default:
 				if (strpos($bulk[$i], '<h') !== false){
 					if ($inpara){
@@ -127,6 +124,7 @@ class sscText {
 		}
 		if ($inpara)
 			$body .= '</p>';
+
 		while(strpos($body, '<p></p>') !== false){
 			$body = str_replace('<p></p>', '', $body);
 		}
@@ -234,11 +232,11 @@ class sscText {
 			// Do some path mix/matching
 			if (strpos($path, "://") === false){
 				// Relative path
-				if (file_exists($ssc_site_path . "/images/$path")){
+				if (file_exists($ssc_site_path . "/images/$path.jpg") || file_exists($ssc_site_path . "/images/$path.png") || file_exists($ssc_site_path . "/images/$path")){
 					// Default to image directory base-dir
 					$path = $ssc_site_url . "/images/$path";
 				}
-				elseif (file_exists($ssc_site_path . '/' . $path)){
+				elseif (file_exists($ssc_site_path . "/$path") || file_exists($ssc_site_path . "/$path.jpg") || file_exists($ssc_site_path . "/$path.png")){
 					// Relative to site root instead
 					$path = $ssc_site_url . '/' . $path;
 				}
@@ -249,14 +247,15 @@ class sscText {
 				}
 				
 			}
-			
+		
 			$tag = "<img src=\"$path\"";
 			$donealt = false;
-			while ($op = array_shift($param)){
+			while (count($param)){
+				$op = array_shift($param);
 				$o = explode("=", $op);
 				if (empty($o[1]))
 					continue; 	// Bad argument
-					
+
 				// Parse possible arguments
 				switch ($o[0]){
 				case "float":
