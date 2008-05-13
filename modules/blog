@@ -1,6 +1,0 @@
-; Navigation module
-name = News pages
-description = Allows for implementation of news pages or equivalent such as journal, blog, etc
-version = 3.x
-
-package = Content
