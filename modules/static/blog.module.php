@@ -23,6 +23,48 @@ define('SSC_BLOG_SPAM', 2);
  */
 define('SSC_BLOG_CAN_SPAM', 1);
 
+function blog_meta(){
+if ($_GET['handler'] == 'blog')
+	return '<link rel="alternate" type="application/atom+xml" title="Subscribe using Atom 1.0" href="' . $_GET['path'] . '/feed" />';
+else
+return;
+}
+
+function blog_cron(){
+	global $ssc_site_path;
+	include($ssc_site_path . "/modules/blog/rss.php");
+}
+
+function blog_widget($args){
+global $ssc_database;
+	if ($_GET['handler'] != 'blog') return;
+
+	//$args = 3;
+	$block = array();
+	if ($args == 1){
+		$result = $ssc_database->query("SELECT tag, COUNT(post_id) AS cnt FROM #__blog_post p, #__blog_tag t LEFT JOIN #__blog_relation r ON tag_id = t.id WHERE post_id = p.id AND blog_id = %d GROUP BY t.id ORDER BY tag ASC", 3);
+		if($result && $ssc_database->number_rows() > 0){
+	
+			while($data = $ssc_database->fetch_assoc($result)){
+				$block[] = array('t'=>$data['tag'] . " ($data[cnt])", 'p' => $_GET['path'] . '/tag/' . $data['tag']);
+			}
+
+		return nav_widget($block, 'Tags');
+	
+		}
+	}
+	
+	$result = $ssc_database->query("SELECT YEAR( FROM_UNIXTIME(created) ) AS yr, COUNT( FROM_UNIXTIME(created) ) AS cnt FROM #__blog_post p WHERE blog_id = %d GROUP BY YEAR( FROM_UNIXTIME(created) ) ORDER BY yr DESC", 3);
+	if($result && $ssc_database->number_rows() > 0){
+
+		while($data = $ssc_database->fetch_assoc($result)){
+			$block[] = array('t'=>$data['yr'] . " ($data[cnt])", 'p' => $_GET['path'] . '/' . $data['yr']);
+		}
+				
+		return nav_widget($block, 'Archive');
+	}
+}
+
 /**
  * Implementation of module_admin()
  */
@@ -34,7 +76,15 @@ function blog_admin(){
 	case 'edit':
 	
 		if (!empty($_GET['param'][1]) && $_GET['param'][1] == 'post'){
-			$out = ssc_generate_form('blog_post');
+if ((isset($_POST['prev']) || isset($_POST['sub'])) && ssc_load_library('sscText')){
+
+
+$out = "<h2>Preview - " . (empty($_POST['title'])?"notitle" : $_POST['title']) . "</h2>\n";
+$out .= sscText::convert((empty($_POST['body']) ? "nobody" : $_POST['body']));
+}
+else{
+$out = "";}
+			$out .= ssc_generate_form('blog_post');
 			$out .= '<hr /><h3>Comments</h3><form action="" method="post"><table class="admin-table"><tr><th><input type="hidden" name="form-id" value="blog_spam_ham" />ID</th><th>Name</th><th>Email</th><th>Comment</th><th>Action</th></tr>';
 			$result = $ssc_database->query("SELECT id, author, site, email, body, status FROM #__blog_comment WHERE post_id = %d ORDER BY created ASC", $_GET['param'][2]);
 			
@@ -95,10 +145,11 @@ function blog_admin(){
 			else{
 				$out = ssc_admin_table(t('Current posts'),
 					"SELECT p.id, title, COUNT(c.body) comments FROM #__blog_post p LEFT JOIN #__blog_comment c ON p.id = post_id
-					WHERE blog_id = %d GROUP BY p.id ",
+					WHERE blog_id = %d GROUP BY p.id ORDER BY p.created DESC",
 					array($_GET['param'][0]),
 					array('perpage' => 10, 'link' => 'title', 
-						'linkpath' => "/admin/blog/edit/{$_GET['param'][0]}/post/"));
+						'linkpath' => "/admin/blog/edit/{$_GET['param'][0]}/post/",
+						'pagelink' => "/admin/blog/edit/{$_GET['param'][0]}/page/"));
 				$out .= l(t('New post'),"/admin/blog/edit/{$_GET['param'][0]}/post/0");
 			}
 			// List off paged posts for the specified blog
@@ -155,13 +206,13 @@ function blog_content(){
 			ssc_not_found();
 			return;
 		}
-	
+
 		// Get blog settings
 		ssc_set_title($data['name']);
 		$_GET['param'] = explode("/", $_GET['param']);
 		$_GET['blog_comments'] = (bool)$data['comments'];
 		$action = array_shift($_GET['param']);
-		
+
 		if ($action == '' || $action == 'page'){
 			// Show paged posts
 			array_unshift($_GET['param'], 'page');
@@ -169,12 +220,24 @@ function blog_content(){
 				ssc_not_found();
 				
 			return _blog_gen_post($data['page'], $_GET['path'] . '/page/', 
-				"SELECT p.title, p.created, p.urltext, u.displayname author, count(c.post_id) count, p.body FROM #__blog_post p LEFT JOIN
+				"SELECT p.id, p.title, p.created, p.urltext, u.displayname author, count(c.post_id) count, p.body FROM #__blog_post p LEFT JOIN
 				#__user u ON u.id = p.author_id LEFT JOIN #__blog_comment c ON (post_id = p.id AND (status & %d = 0)) WHERE blog_id = %d  
 				GROUP BY p.id ORDER BY p.created DESC", SSC_BLOG_SPAM, $_GET['path-id']);
 		}		
 		elseif ($action == 'tag'){
 			// Show posts for the tag
+
+			if (count($_GET['param']) == 2 || count($_GET['param']) > 3)
+				ssc_not_found();
+$tag = array_shift($_GET['param']);
+if (empty($tag))
+ssc_not_found();
+				
+			return _blog_gen_post($data['page'], $_GET['path'] . '/tag/'.$tag.'/page/', 
+				"SELECT p.id, p.title, p.created, p.urltext, u.displayname author, count(c.post_id) count, p.body FROM #__blog_post p LEFT JOIN
+				#__user u ON u.id = p.author_id LEFT JOIN #__blog_comment c ON (post_id = p.id AND (status & %d = 0)) LEFT JOIN 
+				#__blog_relation r ON r.post_id = p.id LEFT JOIN #__blog_tag t ON t.id = r.tag_id WHERE blog_id = %d AND t.tag = '%s'
+				GROUP BY p.id ORDER BY p.created DESC", SSC_BLOG_SPAM, $_GET['path-id'], $tag);
 			
 		}
 		elseif ($action == 'id'){
@@ -184,7 +247,7 @@ function blog_content(){
 				
 			$result = $ssc_database->query("SELECT created, urltext FROM #__blog_post WHERE id = %d LIMIT 1", (int)array_shift($_GET['param']));
 			if ($data = $ssc_database->fetch_object($result)){
-				ssc_redirect('/' . $_GET['path'] . date("/Y/m/d/", $data->created) . $data->urltext, 301);
+				ssc_redirect($_GET['path'] . date("/Y/m/d/", $data->created) . $data->urltext, 301);
 				return;
 			}
 			// Post ID doesn't exist - kill
@@ -213,18 +276,29 @@ function blog_content(){
 					ssc_not_found();
 					return;
 				}
-				
+
 				$out = "\n<h3>$data->title</h3>\n";
 				$out .= t("Posted !date at !time by !author\n", 
 					array(	'!date' => date(ssc_var_get('date_med', SSC_DATE_MED), $data->created),
 							'!time' => date(ssc_var_get('time_short', SSC_TIME_SHORT), $data->created),
 							'!author' => $data->author)) . '<br />';
-					
+
+$result = $ssc_database->query("SELECT tag FROM #__blog_relation r, #__blog_tag t WHERE r.tag_id = t.id AND r.post_id = %d ORDER BY tag ASC", $data->id);
+if ($ssc_database->number_rows()){
+$out .= "Tagged: ";
+$txt = '';
+while($dat = $ssc_database->fetch_object($result))
+$txt .= ', ' . l($dat->tag, $_GET['path'] . '/tag/' . $dat->tag);
+
+$txt = substr($txt, 2);
+$out.=$txt.'<br />';
+}
+
 				$out .= sscText::convert($data->body);
 			
 				if ($_GET['blog_comments']){
 					// Retrieve comments
-					$out .= '<h3 id="comments">Comments</h3>';
+					$out .= '<div class="clear"></div><h3 id="comments">Comments</h3>';
 					$is_admin = login_check_auth("blog");
 					if ($is_admin){
 						$result = $ssc_database->query("SELECT id, author, site, created, status, body FROM #__blog_comment 
@@ -322,7 +396,7 @@ function blog_content(){
 			}else{
 				// Yearly archive
 				return _blog_gen_post(10000, $_GET['path'] . '/page/', 
-					"SELECT p.title, p.created, p.urltext, u.displayname author, count(c.post_id) count FROM #__blog_post p LEFT JOIN
+					"SELECT p.id, p.title, p.created, p.urltext, u.displayname author, count(c.post_id) count FROM #__blog_post p LEFT JOIN
 					#__blog_comment c ON (post_id = p.id AND (c.status & %d = 0)) LEFT JOIN #__user u ON u.id = p.author_id WHERE blog_id = %d 
 					AND p.created >= %d AND p.created < %d GROUP BY p.id ORDER BY p.created DESC",
 					SSC_BLOG_SPAM, $_GET['path-id'], mktime(0, 0, 0, 1, 1, $action), mktime(0, 0, 0, 1, 0, $action + 1));
@@ -367,13 +441,23 @@ function _blog_gen_post($perpage, $pagelink, $sql, $args = null){
 	$out = '';
 	// For each blog post listed
 	while (($data = $ssc_database->fetch_object($result)) && ($perpage-- > 0)){
-		$posturl = '/' . $_GET['path'] . date("/Y/m/d/", $data->created) . $data->urltext;
+		$posturl = $_GET['path'] . date("/Y/m/d/", $data->created) . $data->urltext;
 		$out .= "\n<h3>" . l($data->title, $posturl) . "</h3>\n";
 		$out .= t("Posted !date at !time by !author\n", 
 			array(	'!date' => date(ssc_var_get('date_med', SSC_DATE_MED), $data->created),
 					'!time' => date(ssc_var_get('time_short', SSC_TIME_SHORT), $data->created),
 					'!author' => $data->author));
-			
+
+$r = $ssc_database->query("SELECT tag FROM #__blog_relation r, #__blog_tag t WHERE r.tag_id = t.id AND r.post_id = %d ORDER BY tag ASC", $data->id);
+if ($ssc_database->number_rows()){
+$out .= "<br />Tagged: ";
+$txt = '';
+while($dat = $ssc_database->fetch_object($r))
+$txt .= ', ' . l($dat->tag, $_GET['path'] . '/tag/' . $dat->tag);
+
+$txt = substr($txt, 2);
+$out.=$txt;
+}
 		// Comments if listed
 		if ($_GET['blog_comments'] == true){
 			// Either show number or "Add One!" links direct to comments
@@ -386,7 +470,7 @@ function _blog_gen_post($perpage, $pagelink, $sql, $args = null){
 		}
 		
 		if (isset($data->body))
-			$out .= '<br />' . sscText::convert($data->body) . '<hr />';
+			$out .= '<br />' . sscText::convert($data->body) . '<hr class="clear"/>';
 		else
 			$out .= '<hr />';
 		
@@ -398,7 +482,7 @@ function _blog_gen_post($perpage, $pagelink, $sql, $args = null){
 	if ($page > 1)
 		$out .= l(t('Previous page'), $pagelink . ($page - 1));
 
-	$out .= '</span><span>';
+	$out .= '</span> <span><img src="/images/rss.png" alt="Subscribe using" /> ' . l(t('ATOM 1.0'), $_GET['path'] . '/feed') . '</span> <span>';
 
 	// Next page?
 	if ($paged_result['next'])
@@ -589,7 +673,52 @@ function blog_post(){
 	$fieldset['bid'] = array('#type' => 'hidden',
 					'#value' => $data->blog_id);
 
-	$fieldset['tags'] = array('#type' => 'none', '#value' => 'tags');
+
+	$form['tags'] = array(	'#type' => 'fieldset',
+							'#title' => t('Tagging'),
+							'#parent' => true);
+	$fieldset =& $form['tags'];
+
+
+
+		$res = $ssc_database->query("SELECT id, tag FROM #__blog_tag ORDER BY tag ASC");
+		$result = $ssc_database->query("SELECT tag FROM #__blog_relation LEFT JOIN #__blog_tag t ON tag_id = t.id WHERE post_id = %d ORDER BY tag ASC", $data->id);
+		$dat = $ssc_database->fetch_assoc($result);
+		while($datb = $ssc_database->fetch_assoc($res)){
+
+$i =strcmp($datb['tag'],$dat['tag']); 
+if ($i==0){
+$fieldset["tid[$datb[id]]"] = array('#type' => 'checkbox', '#title' => $datb['tag'], '#id' => 'tid' . $datb['id'], '#value' => $datb['id'], '#checked' => true);
+$dat = $ssc_database->fetch_assoc($result);
+}
+else{
+$fieldset["tid[$datb[id]]"] = array('#type' => 'checkbox', '#title' => $datb['tag'], '#id' => 'tid' . $datb['id'], '#value' => $datb['id'], '#checked' => false);
+}
+
+while($i > 0 && $dat['tag'] != ''){
+
+$dat = $ssc_database->fetch_assoc($result);
+$i = strcmp($datb['tag'],$dat['tag']);
+}
+
+/*
+			echo '<div><label for="tid',$data['id'],'">',$data['tag'],'</label><input type="checkbox" name="tid[]" id="tid',$data['id'],'" value="',$data['id'],'" ';
+			$i = strcmp($data['tag'],$dat['tag']);
+			if($i == 0){
+				echo 'checked="checked" ';
+				$dat = $database->getAssoc();
+			}
+			while($i>0 && $dat['tag'] != ''){
+		
+				$dat = $database->getAssoc();
+				$i = strcmp($data['tag'],$dat['tag']);
+			}
+				
+			echo '/></div>';
+*/
+
+		}
+
 	
 	$form['meta'] = array(	'#type' => 'fieldset',
 							'#title' => t('Meta'),
@@ -640,7 +769,7 @@ function blog_post_validate(){
 		$tmp = $_POST['url'];
 	}
 	$tmp = str_replace(array("/", "\\", " ", '_'), '-', $tmp);
-	$tmp = str_replace(array("?", "%", "!", "@", "#", "$", '`', "~", "^", "&", "*"), "", $tmp);
+	$tmp = str_replace(array("?", "%", "!", "@", "#", "$", '`', "~", "^", "&", "*", "\"", "'", ",", "."), "", $tmp);
 	do {
 		$tmp = str_replace("--", "-", $tmp, $count);
 	} while($count > 0);
@@ -659,7 +788,12 @@ function blog_post_submit(){
 	// Someone trying to circumvent things
 	if ($blog == 0)
 		return;
-	
+
+if (isset($_POST['prev'])){
+ssc_add_message(SSC_MSG_INFO, "Below is a preview of your post.  Nothing has been saved yet.");
+return;	
+}
+
 	if ($id == 0){
 		// Insert
 
@@ -678,6 +812,35 @@ function blog_post_submit(){
 		$ssc_database->query("UPDATE #__blog_post b SET title = '%s', body = '%s', urltext = '%s', modified = %d WHERE id = %d AND blog_id = %d", 
 				$_POST['title'], $_POST['body'], $_POST['url'], time(), $id, $blog);
 	}
+
+// Tags
+$result = $ssc_database->query("SELECT tag_id FROM #__blog_relation WHERE post_id = %d", $id);
+$exist = array();
+while ($data = $ssc_database->fetch_assoc($result))
+$exist[] = $data['tag_id'];
+
+$exist = ','.implode(',',$exist).',';
+if(isset($_POST['tid'])){
+		$tID = $_POST['tid'];
+	
+		foreach($tID as $key => $value){
+			$key = (int)$key;
+			
+			if($key > 0 && strpos($exist,','.$key.',')===false){
+				$ssc_database->query("INSERT INTO #__blog_relation (post_id, tag_id) VALUES (%d,%d)",$id,$key);
+			}else
+				$exist = str_replace(','.$key,'',$exist);
+		}
+	}
+	$exist = explode(',',$exist);
+	$total = count($exist);
+	for($i = 0; $i < $total; $i++){
+		if($tID = intval($exist[$i])){
+			$ssc_database->query("DELETE FROM #__blog_relation WHERE post_id = %d AND tag_id = %d LIMIT 1",$id,$tID);
+		}
+	}
+
+
 	ssc_add_message(SSC_MSG_INFO, t('Post saved'));
 }
 
@@ -789,14 +952,12 @@ function blog_guest_comment_validate(){
 		ssc_add_message(SSC_MSG_CRIT, t('You need to fill in all the required fields'));
 		return false;
 	}
-	
-	/* // We're not validating email yet...
-	 * $email = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL);
+
+	$email = filter_var($_POST['e'], FILTER_VALIDATE_EMAIL);
 	if (empty($email) || !$email || strpos($email, "\n") !== false || strpos($email, ":") !== false){
 		ssc_add_message(SSC_MSG_CRIT, t('The email address provided was invalid'));
 		return false;
-	}*/
-
+	}
 	
 	return true;
 }
@@ -825,6 +986,8 @@ function blog_guest_comment_submit(){
 			$spam->setRemote($_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT']);
 			$spam->setBlog($_POST['perma']);
 			$is_spam = ($spam->isSpam() ? SSC_BLOG_SPAM | SSC_BLOG_CAN_SPAM : SSC_BLOG_CAN_SPAM);
+if ($is_spam & SSC_BLOG_SPAM)
+ssc_var_set('akismet_count',(int)ssc_var_get('akismet_count',1) + 1);
 		}
 	}
 	else{
