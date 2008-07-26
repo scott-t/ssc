@@ -721,7 +721,7 @@ function login_profile_validate(){
 			}
 			$data = $ssc_database->fetch_assoc($result);
 			// Check if any other superusers
-			if ($data['gid'] == SSC_USER_ROOT){
+			if ($data['gid'] == SSC_USER_ROOT && intval($_POST['grp']) != SSC_USER_ROOT){
 				$result = $ssc_database->query("SELECT id FROM #__user WHERE gid = %d LIMIT 2", SSC_USER_ROOT);
 				if ($ssc_database->number_rows() < 2){
 					ssc_add_message(SSC_MSG_CRIT, t('There needs to be at least 1 superuser at all times'));
