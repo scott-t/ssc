@@ -839,19 +839,24 @@ function blog_post_submit(){
 	$exist = ','.implode(',',$exist).',';
 	if(isset($_POST['tid'])){
 		$tID = $_POST['tid'];
-	
+		// Loop through each tag id
 		foreach($tID as $key => $value){
 			$key = (int)$key;
 			
-			if($key > 0 && strpos($exist,','.$key.',')===false){
-				$ssc_database->query("INSERT INTO #__blog_relation (post_id, tag_id) VALUES (%d,%d)",$id,$key);
-			}else
+			if($key > 0 && strpos($exist,','.$key.',') === false){
+				// If not present already, add to the relation table
+				$ssc_database->query("INSERT INTO #__blog_relation (post_id, tag_id) VALUES (%d, %d)", $id, $key);
+			}else{
+				// Else, it's already there so don't need to add. 
+				// Remove from todelete list
 				$exist = str_replace(','.$key,'',$exist);
+			}
 		}
 	}
 	$exist = explode(',',$exist);
 	$total = count($exist);
 	for($i = 0; $i < $total; $i++){
+		ssc_add_message(SSC_MSG_INFO, "tag cull list: " . $tID . ", " . intval($exist[$i]));
 		if($tID = intval($exist[$i])){
 			$ssc_database->query("DELETE FROM #__blog_relation WHERE post_id = %d AND tag_id = %d LIMIT 1",$id,$tID);
 		}
