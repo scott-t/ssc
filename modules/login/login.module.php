@@ -646,12 +646,11 @@ function login_profile_validate(){
 			ssc_add_message(SSC_MSG_CRIT, t('To set a user\'s password, you must enter your own admin password to confirm the action'));
 			return false;
 		}
-			
-		// No user confirmation
-		if (!$admin && empty($_POST['old'])){
+		//  No user confirmation
+		elseif (!$admin && empty($_POST['old'])){ 
 			ssc_add_message(SSC_MSG_CRIT, t('To set a new password, you must enter your current password'));
 			return false;
-		}
+		} 
 		
 		// No repeat confirmation
 		if (empty($_POST['n2'])){
@@ -674,7 +673,7 @@ function login_profile_validate(){
 			return false;
 		}
 		$hash = new PasswordHash(8, true);
-		if (!$hash->CheckPassword($_POST['admin'], $data['password'])){
+		if (!$hash->CheckPassword(($admin ? $_POST['admin'] : $_POST['old']), $data['password'])){
 			if ($admin)
 				ssc_add_message(SSC_MSG_CRIT, t('Admin password was not correct'));
 			else
