@@ -1,7 +1,22 @@
 <?php
+/**
+ * GD based image library.
+ *
+ * Implement image manipulation techniques using the GD image library.
+ *
+ * @package SSC
+ * @subpackage Libraries
+ * @see sscAbstractImage
+ */
 
+/**
+ * Check for legit call
+ */
+defined('_VALID_SSC') or die('Restricted access');
 
-
+/**
+ * GD image library implementation 
+ */
 class sscImageGD2 extends sscAbstractImage{
 
 	/**
