@@ -24,3 +24,4 @@ theme_render($page);
 
 // Clean up
 ssc_close();
+ssc_debug_show();

@@ -809,6 +809,7 @@ function blog_post_submit(){
 		return;	
 	}
 
+	$require_redir = false;
 	if ($id == 0){
 		// Insert
 
@@ -819,13 +820,14 @@ function blog_post_submit(){
 			ssc_add_message(SSC_MSG_CRIT, 'Error inserting into DB');
 			return;
 		}
-		ssc_add_message(SSC_MSG_INFO, t('Post saved'));
-		ssc_redirect("/admin/blog/edit/$blog/post/$id");
+		$require_redir = true;
+		module_hook('mod_blog_post_publish', null, array($id, '', t($_POST['title'])));
 	}
 	else{
 		// Update
 		$ssc_database->query("UPDATE #__blog_post b SET title = '%s', body = '%s', urltext = '%s', modified = %d WHERE id = %d AND blog_id = %d", 
 				$_POST['title'], $_POST['body'], $_POST['url'], time(), $id, $blog);
+		module_hook('mod_blog_post_update', null, array($id, '', t($_POST['title'])));
 	}
 
 	// Tags
@@ -862,7 +864,9 @@ function blog_post_submit(){
 		}
 	}
 
-
+	if ($require_redir)
+		ssc_redirect("/admin/blog/edit/$blog/post/$id");
+		
 	ssc_add_message(SSC_MSG_INFO, t('Post saved'));
 }
 
