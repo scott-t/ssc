@@ -864,10 +864,10 @@ function blog_post_submit(){
 		}
 	}
 
+	ssc_add_message(SSC_MSG_INFO, t('Post saved'));
+	
 	if ($require_redir)
 		ssc_redirect("/admin/blog/edit/$blog/post/$id");
-		
-	ssc_add_message(SSC_MSG_INFO, t('Post saved'));
 }
 
 /**
