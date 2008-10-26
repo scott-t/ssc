@@ -20,6 +20,7 @@ $SSC_SETTINGS['db-prefix']   = array(
 										'default' => 'ssc'
 									);
 
+$SSC_SETTINGS['no-www']		= false;
 $SSC_SETTINGS['lang']['tag'] = "en-au";
 
 $SSC_SETTINGS['theme']['name'] = 'php';

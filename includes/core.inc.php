@@ -135,8 +135,10 @@ function ssc_conf_file(){
 	}
 
 	$path = explode('.', $_SERVER['SERVER_NAME']);
-if ($path[0] == 'www')
-array_shift($path);
+	
+	if ($path[0] == 'www')
+		array_shift($path);
+		
 	do{
 		$filepath = implode('.', $path);
 		unset($path[count($path)-1]);
@@ -161,21 +163,9 @@ function ssc_conf_init(){
 	global $SSC_SETTINGS;
 
 	$SSC_SETTINGS = array();
-	
-	// Fill in environment information
-$ssc_site_url = $_SERVER['SERVER_NAME'];
-if (strpos($ssc_site_url,"www.")===0)
-	$ssc_site_url = "http://" . $ssc_site_url . substr($_SERVER['SCRIPT_NAME'], 0, -10);
-else
-$ssc_site_url = "http://www." . $ssc_site_url . substr($_SERVER['SCRIPT_NAME'], 0, -10);
 
 	$ssc_site_path = substr($_SERVER['SCRIPT_FILENAME'], 0, -10);
 
-	ssc_debug(array(
-			'title' => 'ssc_conf_init',
-			'body'  => "Running from $ssc_site_url in path $ssc_site_path"
-			));
-	
 	// Get our configuration path
 	$path = ssc_conf_file();
 	if (file_exists($path)){
@@ -190,7 +180,19 @@ $ssc_site_url = "http://www." . $ssc_site_url . substr($_SERVER['SCRIPT_NAME'], 
 			'title' => 'Upload Error',
 			'body'  => 'It seems SSC was not successfully uploaded as some files are missing!'
 			));
-	}
+	}	
+
+	// Fill in environment information
+	$ssc_site_url = $_SERVER['SERVER_NAME'];
+	if ($SSC_SETTINGS['no-www'] || strpos($ssc_site_url,"www.")===0)
+		$ssc_site_url = "http://" . $ssc_site_url . substr($_SERVER['SCRIPT_NAME'], 0, -10);
+	else
+		$ssc_site_url = "http://" . $ssc_site_url . substr($_SERVER['SCRIPT_NAME'], 0, -10);
+
+	ssc_debug(array(
+			'title' => 'ssc_conf_init',
+			'body'  => "Running from $ssc_site_url in path $ssc_site_path"
+			));
 	
 	// Set referer if none present
 	if (!isset($_SERVER['HTTP_REFERER']))
@@ -614,6 +616,10 @@ function t($text, $vars = array()){
 	}
 	return strtr($text, $vars);
 }
+
+function ssc_abbr($abbr, $expanded){
+	return "<abbr title=\"$expanded\">$abbr</abbr>";
+	}
 
 /**
  * Called to trigger a 404
