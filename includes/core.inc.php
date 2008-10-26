@@ -187,7 +187,7 @@ function ssc_conf_init(){
 	if ($SSC_SETTINGS['no-www'] || strpos($ssc_site_url,"www.")===0)
 		$ssc_site_url = "http://" . $ssc_site_url . substr($_SERVER['SCRIPT_NAME'], 0, -10);
 	else
-		$ssc_site_url = "http://" . $ssc_site_url . substr($_SERVER['SCRIPT_NAME'], 0, -10);
+		$ssc_site_url = "http://www." . $ssc_site_url . substr($_SERVER['SCRIPT_NAME'], 0, -10);
 
 	ssc_debug(array(
 			'title' => 'ssc_conf_init',
