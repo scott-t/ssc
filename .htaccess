@@ -1,7 +1,5 @@
 Options +MultiViews
 
-php_value memory_limit 16M
-
 RewriteEngine on
 
 RewriteCond %{REQUEST_FILENAME} !-d
