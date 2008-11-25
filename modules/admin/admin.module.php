@@ -18,7 +18,7 @@ function admin_content(){
 	
 	$out = '';
 	
-	if ($_GET['path'] != 'admin' || $ssc_user->gid == SSC_USER_GUEST){
+	if ($_GET['path'] != '/admin' || $ssc_user->gid == SSC_USER_GUEST){
 		ssc_not_found();
 		return;
 	}

@@ -51,6 +51,7 @@ function module_handler_init(){
 	$data = $ssc_database->fetch_assoc($result);
 	// Split path arguments		
 	$_GET['path'] = $data['path'];
+	if ($_GET['path'] != '') $_GET['path'] = '/' . $_GET['path'];
 	$_GET['param'] = substr($_GET['q'], strlen($data['path']));
 	if(!empty($_GET['param']) && $_GET['param'][0] == '/')
 		$_GET['param'] = substr($_GET['param'],1);

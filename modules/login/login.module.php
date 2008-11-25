@@ -127,7 +127,7 @@ function login_content(){
 	
 	$out = '';
 	
-	if ($_GET['path'] != 'user'){
+	if ($_GET['path'] != '/user'){
 		ssc_not_found();
 		return;
 	}
@@ -511,7 +511,7 @@ function login_profile(){
 	global $ssc_database;
 	
 	// Are we superprofile editing?
-	if ($_GET['path'] == 'admin'){
+	if ($_GET['path'] == '/admin'){
 		$uid = (int)array_shift($_GET['param']);
 		if ($uid == 0){
 			// New user
@@ -583,7 +583,7 @@ function login_profile(){
 	}
 	
 	// Admin only the permission
-	if ($_GET['path'] == 'admin')
+	if ($_GET['path'] == '/admin')
 		$fieldset['grp'] = array(	'#type' => 'select',
 									'#value' => $options,
 									'#selected' => $ssc_user->gid,
@@ -600,7 +600,7 @@ function login_profile(){
 						'#parent' => true);
 	
 	// Choose whether we need users password or admin password	
-	if ($_GET['path'] == 'admin')
+	if ($_GET['path'] == '/admin')
 		$fieldset['admin'] = array(	'#type' => 'password',
 									'#title' => t('Admin password'),
 									'#description' => t('Administrator password for verification'),
@@ -636,7 +636,7 @@ function login_profile_validate(){
 		return false;
 	
 	// Are we accessing via admin page?
-	$admin = (($_GET['path'] == 'admin') && login_check_auth("login"));
+	$admin = (($_GET['path'] == '/admin') && login_check_auth("login"));
 	$_POST['uid'] = intval($_POST['uid']);
 	// ********* Check required fields ************
 	//
@@ -756,7 +756,7 @@ function login_profile_validate(){
  */
 function login_profile_submit(){
 	global $ssc_database, $ssc_user;
-	$admin = (($_GET['path'] == 'admin') && login_check_auth("login"));
+	$admin = (($_GET['path'] == '/admin') && login_check_auth("login"));
 	
 	if (!empty($_POST['n2'])){
 		$hash = new PasswordHash(8, true);
