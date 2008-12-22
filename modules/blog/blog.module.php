@@ -959,7 +959,7 @@ function blog_guest_comment($pid){
 	$fieldset['i'] = array(	'#type' => 'hidden',
 							'#value' => $pid);
 	$fieldset['perma'] = array(	'#type' => 'hidden',
-								'#value' => $ssc_site_url . '/' . $_GET['path'] . "/id/$pid");
+								'#value' => $ssc_site_url . $_GET['path'] . "/id/$pid");
 	$fieldset['sub'] = array(	'#type' => 'submit',
 								'#value' => t('Submit comment'));
 	return $form;
