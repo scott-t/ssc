@@ -271,7 +271,7 @@ function blog_content(){
 			if (!empty($_GET['param'][2])){
 				// Retrieve post
 				$result = $ssc_database->query(
-					"SELECT p.id, p.title, p.created, p.urltext, u.displayname author, p.body FROM #__blog_post p 
+					"SELECT p.id, p.title, p.created, p.urltext, p.commentsdisabled, u.displayname author, p.body FROM #__blog_post p 
 					LEFT JOIN #__user u ON u.id = p.author_id WHERE blog_id = %d AND p.urltext = '%s' 
 					LIMIT 1", $_GET['path-id'], $_GET['param'][2]);
 
@@ -286,7 +286,7 @@ function blog_content(){
 					array(	'!date' => date(ssc_var_get('date_med', SSC_DATE_MED), $data->created),
 							'!time' => date(ssc_var_get('time_short', SSC_TIME_SHORT), $data->created),
 							'!author' => $data->author)) . '<br />';
-
+				$comments_disabled = $data->commentsdisabled;
 				$result = $ssc_database->query("SELECT tag FROM #__blog_relation r, #__blog_tag t WHERE r.tag_id = t.id AND r.post_id = %d ORDER BY tag ASC", $data->id);
 				
 				// Retrieve list of tags for the post
@@ -326,6 +326,12 @@ function blog_content(){
 						// Admin user - show spam/ham options
 						if ($is_admin){
 							$out .= '<form action="" method="post"><div><input type="hidden" name="form-id" value="blog_spam_ham" />';
+							if ($comments_disabled==0)
+									{$sub_disable_comments = array('#value' => 'Disable Comments', '#type' => 'submit');
+									$sub_disable_comments['#name'] = "disable_comments[$pid]";}
+							else    {$sub_disable_comments = array('#value' => 'Enable Comments', '#type' => 'submit');
+									$sub_disable_comments['#name'] = "enable_comments[$pid]";}
+							$out .= theme_render_input($sub_disable_comments);
 							while ($data = $ssc_database->fetch_object($result)){
 								$status = $data->status;	
 								$out .= '<div class="' . 
@@ -390,8 +396,17 @@ function blog_content(){
 						
 
 					}
-					
-					$out .= ssc_generate_form('blog_guest_comment', $pid);
+						$result = $ssc_database->query("SELECT commentsdisabled FROM #__blog_post WHERE id = %d LIMIT 1", $pid);
+						if ((!$result || $ssc_database->number_rows($result) != 0))
+						{
+							$data = $ssc_database->fetch_object($result);
+							$comments_disabled = $data->commentsdisabled;
+						}
+						$is_admin = login_check_auth("blog");
+						
+						if(($comments_disabled == 0) || $is_admin)
+							{$out .= ssc_generate_form('blog_guest_comment', $pid);}
+							else{$out .= "Sorry commenting has been closed on this post.";}
 				}
 				return $out;
 			}
@@ -944,7 +959,7 @@ function blog_guest_comment($pid){
 	$fieldset['i'] = array(	'#type' => 'hidden',
 							'#value' => $pid);
 	$fieldset['perma'] = array(	'#type' => 'hidden',
-								'#value' => $ssc_site_url . $_GET['path'] . "/id/$pid");
+								'#value' => $ssc_site_url . '/' . $_GET['path'] . "/id/$pid");
 	$fieldset['sub'] = array(	'#type' => 'submit',
 								'#value' => t('Submit comment'));
 	return $form;
@@ -954,9 +969,24 @@ function blog_guest_comment($pid){
  * Comment validation
  */
 function blog_guest_comment_validate(){
-	global $ssc_site_url;
+	global $ssc_site_url, $ssc_database;
 	if (strpos($_POST['perma'], $ssc_site_url) !== 0 || empty($_POST['i']))
 		return false;
+		
+		
+	$result = $ssc_database->query("SELECT commentsdisabled FROM #__blog_post WHERE id = %d LIMIT 1", $_POST['i']);
+	if ((!$result || $ssc_database->number_rows($result) != 0))
+	{
+		$data = $ssc_database->fetch_object($result);
+		$comments_disabled = $data->commentsdisabled;
+	}
+	$is_admin = login_check_auth("blog");
+	
+	if(($comments_disabled == 1) && !$is_admin)
+	{
+	ssc_add_message(SSC_MSG_WARN, t('Commenting has been disabled for this post'));
+	return false;
+	}
 
 	// Validate website
 	if (empty($_POST['s'])){
@@ -1088,6 +1118,22 @@ function blog_spam_ham_validate(){
 			return false;
 		$count++;
 	}
+	
+	if (isset($_POST['disable_comments'])){
+		$_POST['action'] = 'disable_comments';
+		$keys = array_keys($_POST['disable_comments']);
+		if (count($keys) > 1)
+			return false;
+		$count++;
+	}
+	
+	if (isset($_POST['enable_comments'])){
+		$_POST['action'] = 'enable_comments';
+		$keys = array_keys($_POST['enable_comments']);
+		if (count($keys) > 1)
+			return false;
+		$count++;
+	}
 		
 	if ($count != 1)
 		return false;
@@ -1102,50 +1148,61 @@ function blog_spam_ham_validate(){
  */
 function blog_spam_ham_submit(){
 	global $ssc_database, $ssc_site_url;
+	if (($_POST['action'] == 'enable_comments') || ($_POST['action'] == 'disable_comments')) 
+	{
 	
-	$result = $ssc_database->query("SELECT author, email, site, body, status, ip FROM #__blog_comment WHERE id = %d LIMIT 1", $_POST['i']);
-	// Bad sql or comment doesn't exist
-	if (!$result || !($data = $ssc_database->fetch_object($result)))
-		return;
-		
-	if (($_POST['action'] == 'spam') && ($data->status & SSC_BLOG_CAN_SPAM) > 0){
-		// Marking as spam + Akismet submit
-		if (ssc_load_library('sscAkismet')){
-			$spam = new sscAkismet($ssc_site_url, ssc_var_get('wordpress_api', ''));
-			if ($spam){
-				$spam->setContent($data->body, 'comment');
-				$spam->setAuthor($data->author, $data->email, $data->site);
-				$spam->setRemote($data->ip, null);
-				$spam->markIncorrect('markSpam');
+		if ($_POST['action'] == 'enable_comments'){
+		$ssc_database->query("UPDATE #__blog_post SET commentsdisabled = 0 WHERE id = %d", $_POST['i']);
+		}
+		elseif ($_POST['action'] == 'disable_comments'){
+		$ssc_database->query("UPDATE #__blog_post SET commentsdisabled = 1 WHERE id = %d", $_POST['i']);
+		} 
+	
+	}
+	else{	
+		$result = $ssc_database->query("SELECT author, email, site, body, status, ip FROM #__blog_comment WHERE id = %d LIMIT 1", $_POST['i']);
+		// Bad sql or comment doesn't exist
+		if (!$result || !($data = $ssc_database->fetch_object($result)))
+			return;
+			
+		if (($_POST['action'] == 'spam') && ($data->status & SSC_BLOG_CAN_SPAM) > 0){
+			// Marking as spam + Akismet submit
+			if (ssc_load_library('sscAkismet')){
+				$spam = new sscAkismet($ssc_site_url, ssc_var_get('wordpress_api', ''));
+				if ($spam){
+					$spam->setContent($data->body, 'comment');
+					$spam->setAuthor($data->author, $data->email, $data->site);
+					$spam->setRemote($data->ip, null);
+					$spam->markIncorrect('markSpam');
+				}
 			}
 		}
-	}
-	elseif (($_POST['action'] == 'ham') && ($data->status & SSC_BLOG_CAN_SPAM) > 0){
-		// Mark not spam + Akismet submit
-		if (ssc_load_library('sscAkismet')){
-			$spam = new sscAkismet($ssc_site_url, ssc_var_get('wordpress_api', ''));
-			if ($spam){
-				$spam->setContent($_POST['c'], 'comment');
-				$spam->setAuthor($_POST['n'], $_POST['e'], $_POST['s']);
-				$spam->setRemote($data->ip, null);
-				$spam->markIncorrect('markHam');
+		elseif (($_POST['action'] == 'ham') && ($data->status & SSC_BLOG_CAN_SPAM) > 0){
+			// Mark not spam + Akismet submit
+			if (ssc_load_library('sscAkismet')){
+				$spam = new sscAkismet($ssc_site_url, ssc_var_get('wordpress_api', ''));
+				if ($spam){
+					$spam->setContent($_POST['c'], 'comment');
+					$spam->setAuthor($_POST['n'], $_POST['e'], $_POST['s']);
+					$spam->setRemote($data->ip, null);
+					$spam->markIncorrect('markHam');
+				}
 			}
 		}
-	}
-	
-	$data->status = $data->status & ~SSC_BLOG_CAN_SPAM;
-	switch ($_POST['action']){
-	case 'spam':
-	case 'hide':
-		$data->status = $data->status | SSC_BLOG_SPAM;
-		$ssc_database->query("UPDATE #__blog_comment SET status = %d WHERE id = %d", $data->status, $_POST['i']);
-		break;
 		
-	case 'show':
-	case 'ham':
-		$data->status = $data->status & ~SSC_BLOG_SPAM;
-		$ssc_database->query("UPDATE #__blog_comment SET status = %d WHERE id = %d", $data->status, $_POST['i']);
-		break;
+		$data->status = $data->status & ~SSC_BLOG_CAN_SPAM;
+		switch ($_POST['action']){
+		case 'spam':
+		case 'hide':
+			$data->status = $data->status | SSC_BLOG_SPAM;
+			$ssc_database->query("UPDATE #__blog_comment SET status = %d WHERE id = %d", $data->status, $_POST['i']);
+			break;
+			
+		case 'show':
+		case 'ham':
+			$data->status = $data->status & ~SSC_BLOG_SPAM;
+			$ssc_database->query("UPDATE #__blog_comment SET status = %d WHERE id = %d", $data->status, $_POST['i']);
+			break;
+		}
 	}
-	
-}
+} 
