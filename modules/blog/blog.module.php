@@ -200,7 +200,7 @@ function blog_admin(){
  *     Archival retrieval of posts (no content) in the specified year
  */
 function blog_content(){
-	global $ssc_database;
+	global $ssc_database, $ssc_site_path;
 	
 	$result = $ssc_database->query("SELECT name, comments, page FROM #__blog WHERE id = %d LIMIT 1", $_GET['path-id']);
 	if ($result && $data = $ssc_database->fetch_assoc($result)){
@@ -257,6 +257,23 @@ function blog_content(){
 			// Post ID doesn't exist - kill
 			ssc_not_found();
 			
+		}
+		elseif ($action == 'feed'){
+			// Internal redirect to atom feed
+			$rss = file_get_contents($ssc_site_path . '/modules/blog/atom-' . $_GET['path-id'] . '.xml');
+echo $ssc_site_path . '/modules/blog/atom-' . $_GET['path-id'] . '.xml';
+			// See if read success?
+			if ($rss === FALSE)
+				ssc_not_found();	// Guess not - die gracefully
+				
+			// Output rss
+			header("Content-Type: application/xml", true);
+			echo $rss;
+			
+			// And now quit ...
+			ssc_close();
+			// ... fully
+			exit (0);
 		}
 		else {
 			// Not those - is int?
