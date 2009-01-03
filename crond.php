@@ -12,7 +12,7 @@ define("_VALID_SSC", 1);
 define("SSC_CRON_MIN_TIME", 60 * 60 * 2);	// Minimum 2hr time
 
 // Only load from internally
-if (isset($_SERVER['REMOTE_ADDR']))
+if (!isset($_SERVER['REMOTE_ADDR']) || $_SERVER['REMOTE_ADDR'] != '127.0.0.1')
 	die('Restricted access');
 
 // Begin application startup
