@@ -239,8 +239,8 @@ function login_registration(){
  * Validate registration
  */
 function login_registration_validate(){
-if (!ssc_var_get('login_user_create', true))
-return false;
+	if (!ssc_var_get('login_user_create', true))
+		return false;
 
 	if (empty($_POST['user']) || empty($_POST['email'])){
 		ssc_add_message(SSC_MSG_CRIT, t('Both username and email fields need to be filled in'));
@@ -295,7 +295,7 @@ function login_registration_submit(){
 						"any further messages from us.",
 				array(	"#user" => $_POST['user'],
 						"#server" => $ssc_site_url,
-						"#url" => $ssc_site_url . "user/login",
+						"#url" => $ssc_site_url . "/user/login",
 						"#pass" => $pass));	
 	
 	$pass = $hash->HashPassword($pass);

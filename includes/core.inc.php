@@ -73,7 +73,7 @@ define("SSC_MSG_WARN", 2);
 define("SSC_MSG_CRIT", 3);
 
 /**
- * URL domain information.
+ * URL domain information.  Will never contain a terminating '/'.
  * @global string $ssc_site_url
  */
 $ssc_site_url;
