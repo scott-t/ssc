@@ -413,21 +413,24 @@ echo $ssc_site_path . '/modules/blog/atom-' . $_GET['path-id'] . '.xml';
 						
 
 					}
-						$result = $ssc_database->query("SELECT commentsdisabled FROM #__blog_post WHERE id = %d LIMIT 1", $pid);
-						if ((!$result || $ssc_database->number_rows($result) != 0))
-						{
-							$data = $ssc_database->fetch_object($result);
-							$comments_disabled = $data->commentsdisabled;
-						}
-						$is_admin = login_check_auth("blog");
-						
-						if(($comments_disabled == 0) || $is_admin)
-							{$out .= ssc_generate_form('blog_guest_comment', $pid);}
-							else{$out .= "Sorry commenting has been closed on this post.";}
+					$result = $ssc_database->query("SELECT commentsdisabled FROM #__blog_post WHERE id = %d LIMIT 1", $pid);
+					if ((!$result || $ssc_database->number_rows($result) != 0)) {
+						$data = $ssc_database->fetch_object($result);
+						$comments_disabled = $data->commentsdisabled;
+					}
+					
+					$is_admin = login_check_auth("blog");
+					
+					if (($comments_disabled == 0) || $is_admin) {
+						$out .= ssc_generate_form('blog_guest_comment', $pid);
+					}
+					else {
+						$out .= t("Sorry, commenting has been closed on this post.");
+					}
 				}
 				return $out;
 			}
-			elseif(isset($_GET['param'][0])){
+			elseif (isset($_GET['param'][0])) {
 				// First param set not expecting anything - kill page
 				ssc_not_found();
 				return;
