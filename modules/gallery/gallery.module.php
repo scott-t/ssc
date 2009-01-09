@@ -253,6 +253,8 @@ function gallery_form_validate(){
 		switch ($_FILES['single']['error']){
 		case UPLOAD_ERR_OK:
 			// Upload good
+		case UPLOAD_ERR_NO_FILE:
+			// Or no file to upload			
 			
 			break;
 		case UPLOAD_ERR_INI_SIZE:
