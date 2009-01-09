@@ -260,8 +260,15 @@ function blog_content(){
 		}
 		elseif ($action == 'feed'){
 			// Internal redirect to atom feed
-			$rss = file_get_contents($ssc_site_path . '/modules/blog/atom-' . $_GET['path-id'] . '.xml');
-echo $ssc_site_path . '/modules/blog/atom-' . $_GET['path-id'] . '.xml';
+			$feedPath = $ssc_site_path . '/modules/blog/atom-' . $_GET['path-id'] . '.xml';
+			
+			// Check if feed exists yet
+			if (!file_exists($feedPath))
+				ssc_not_found();
+
+			// Try and read it			
+			$rss = file_get_contents($feedPath);
+
 			// See if read success?
 			if ($rss === FALSE)
 				ssc_not_found();	// Guess not - die gracefully
