@@ -92,6 +92,9 @@ class sscImageGD2 extends sscAbstractImage{
 		
 		imageinterlace($new_img, 1);
 				
+		// Drop case in extension
+		$target = substr_replace($target, $ext, 0 - strlen($ext));
+				
 		// Save			
 		 switch ($ext){
 			case 'jpeg':
