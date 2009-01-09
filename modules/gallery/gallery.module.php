@@ -313,6 +313,12 @@ function gallery_form_submit(){
 				visible = %d, path = '%s' WHERE g.id = %d AND g.id = h.id ",
 				$_POST['name'], $_POST['desc'], $_POST['vis'], $_POST['url'], $_POST['gid']);
 				
+		if (!$result){
+			ssc_add_message(SSC_MSG_CRIT, 'Gallery details were not saved');
+		}
+		else {
+			ssc_add_message(SSC_MSG_INFO, 'Gallery details updated');
+		}
 	}
 
 	if (isset($_FILES['single'])){
@@ -327,14 +333,17 @@ function gallery_form_submit(){
 		// Possibly messy, but insert before resizing
 		$result = $ssc_database->query("INSERT INTO #__gallery_content (gallery_id, caption, mid) VALUES (%d, '', 0)", $_POST['gid']);
 
-		if (!$result)
+		if (!$result){
+			ssc_add_message(SSC_MSG_CRIT, 'Unable to insert new image');
 			return;
+		}
 			
 		$id = $ssc_database->last_id();
 		$path = $ssc_site_path . '/images/gallery/' . $_POST['gid'] . '/';
 		if (!$image->resize($path . $id . $ext, 1024, -1)){
 			$ssc_database->query("DELETE FROM #__gallery_content WHERE id = %d LIMIT 1", $id);
 			unlink($file);
+			ssc_add_message(SSC_MSG_CRIT, 'Unable to insert new image');
 			return;
 		}
 		
@@ -342,6 +351,7 @@ function gallery_form_submit(){
 			$ssc_database->query("DELETE FROM #__gallery_content WHERE id = %d LIMIT 1", $id);
 			unlink($file);
 			unlink($path.$id.$ext);
+			ssc_add_message(SSC_MSG_CRIT, 'Unable to insert new image');
 			return;
 		}
 			
@@ -350,6 +360,7 @@ function gallery_form_submit(){
 			unlink($file);
 			unlink($path . $id . $ext);
 			unlink($path . $id . "_m.$ext");
+			ssc_add_message(SSC_MSG_CRIT, 'Unable to insert new image');
 			return;
 		}
 		ssc_add_message(SSC_MSG_INFO, t('Image uploaded'));
