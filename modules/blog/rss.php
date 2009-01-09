@@ -13,72 +13,100 @@ global $ssc_database, $ssc_site_url, $ssc_site_path;
 
 
 if (!ssc_load_library('sscText')){
-echo "Unable to load library";
-return;
+	echo "Unable to load library";
+	return;
 }
 
+// Get a list of available "blogs"
+$result = $ssc_database->query("SELECT id, name, description FROM #__blog");
+if (!$result)
+	return;
+	
+// Loop through each
+while ($data = $ssc_database->fetch_assoc($result)){
+	
+	$res_posts = $ssc_database->query("SELECT p.id, p.created, p.modified, urltext, title, body, displayname FROM #__blog_post p LEFT JOIN #__user u ON u.id = author_id WHERE blog_id = 3 ORDER BY created DESC LIMIT 0,5");
 
-$result = $ssc_database->query("SELECT p.id, p.created, p.modified, urltext, title, body, displayname FROM #__blog_post p LEFT JOIN #__user u ON u.id = author_id WHERE blog_id = 3 ORDER BY created DESC LIMIT 0,5");
+	// Ignore empty blogs
+	if(!$res_posts || ($ssc_database->number_rows() == 0))
+		return;
 
-
-	if(!$result || $ssc_database->number_rows() == 0)
-return;
-		
-	$fp = fopen($ssc_site_path . '/modules/blog/rss-1.xml','w');
-	$ap = fopen($ssc_site_path . '/modules/blog/atom-1.xml','w');
+	// Open file handles
+	$bID = $data['id'];
+	$fp = fopen($ssc_site_path . "/modules/blog/rss-$bID.xml",'w');
+	$ap = fopen($ssc_site_path . "/modules/blog/atom-$bID.xml",'w');
+	
+	// Retrieve first lot of posts (for updated date, etc)
+	$dat = $ssc_database->fetch_assoc($res_posts);
+	
+	// Write file headers
+	// RSS
 	fwrite($fp, <<< FEED
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Scott T: The Blog</title>
+    <title>$data[name]</title>
     <link>$ssc_site_url</link>
-    <atom:link href="$ssc_site_url/modules/blog/rss-1.xml" rel="self" type="application/rss+xml" />
-    <description>One post at a time...</description>
+    <atom:link href="$ssc_site_url/modules/blog/rss-$bID.xml" rel="self" type="application/rss+xml" />
+    <description>$data[description]</description>
 	<language>en</language>
 	<ttl>720</ttl>
 	<pubDate>
 FEED
-); // <?php
-	$dat = $ssc_database->fetch_assoc($result);
-	fwrite($fp,date("r",$dat['modified']).'</pubDate>
-    <lastBuildDate>'.date("r",$dat['modified']).'</lastBuildDate>
+); // <?php		// <-- Fix GUI highlighting 
+
+	// Add some dates
+	fwrite($fp, date("r", $dat['modified']) . '</pubDate>
+    <lastBuildDate>' . date("r", $dat['modified']) . '</lastBuildDate>
 ');
+
+	// Atom
     fwrite($ap, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
-<feed xmlns=\"http://www.w3.org/2005/Atom\" xml:lang=\"en\" xml:base=\"$ssc_site_url/modules/blog/atom-1.xml\">
-  <title type=\"text\">Scott T: The Blog</title>
-  <subtitle type=\"text\">One post at a time...</subtitle>
-  <link rel=\"self\" type=\"application/atom+xml\" href=\"$ssc_site_url/modules/blog/atom-1.xml\" />
+<feed xmlns=\"http://www.w3.org/2005/Atom\" xml:lang=\"en\" xml:base=\"$ssc_site_url/modules/blog/atom-$bID.xml\">
+  <title type=\"text\">$data[name]</title>
+  <subtitle type=\"text\">$data[description]</subtitle>
+  <link rel=\"self\" type=\"application/atom+xml\" href=\"$ssc_site_url/modules/blog/atom-$bID.xml\" />
   <link rel=\"alternate\" type=\"text/html\" href=\"$ssc_site_url\" />
-  <updated>".date("c",$dat['modified'])."</updated>
+  <updated>" . date("c", $dat['modified']) . "</updated>
   <author>
     <name>Scott</name>
   </author>
   <id>$ssc_site_url/modules/dynamic/atom-1.xml</id>
 ");
    
-	do{
-
-	$date =	date("Y/m/d",$dat['created']);
-	fwrite($fp, <<< ITEM
+	// Loop through all posts
+	// Do loop due to the first read earlier on
+	do {
+		// Get date
+		$date =	date("Y/m/d", $dat['created']);
+		// Echo post
+		fwrite($fp, <<< ITEM
     <item>
       <title>$dat[title]</title>
       <link>$ssc_site_url/$date/$dat[urltext]</link>
       <guid>$ssc_site_url/id/$dat[id]</guid>
       <description>
 ITEM
-); //<?php
+); //<?php  // <-- Ensure GUI happy again
 
-	$dat['body'] = sscText::convert($dat['body']);
-	$stripped = preg_replace('/<[^<|>]+>?/','',$dat['body']);
-	$stripped = substr($stripped,0,350).(strlen($stripped)>350?"[...]":"");
-	fwrite($fp,$stripped);
-	fwrite($fp,"</description>
+		// Get markup version for Atom
+		$dat['body'] = sscText::convert($dat['body']);
+		// Strip tags for a text-only preview
+		$stripped = preg_replace('/<[^<|>]+>?/', '', $dat['body']);
+		// In shortened version, cut it off a bit too
+		$stripped = substr($stripped, 0, 350) . (strlen($stripped) > 350 ? "[...]" : "");
+		// Write post to RSS
+		fwrite($fp, $stripped);
+		fwrite($fp, "</description>
       <pubDate>".date("r",$dat['created'])."</pubDate>
     </item>
 ");
-    $iso = date("c",$dat['created']);
-$isou = date("c",$dat['modified']);
-	fwrite($ap,"  <entry>
+
+		// Prepare date for Atom
+	    $iso = date("c", $dat['created']);
+		$isou = date("c", $dat['modified']);
+		// Write to Atom
+		fwrite($ap,"  <entry>
     <id>$ssc_site_url/id/$dat[id]</id>
     <title type=\"text\">$dat[title]</title>
     <updated>$isou</updated>
@@ -91,11 +119,12 @@ $isou = date("c",$dat['modified']);
     <content type=\"xhtml\"><div xmlns=\"http://www.w3.org/1999/xhtml\">$dat[body]</div></content>
   </entry>
 ");
-	}while($dat = $ssc_database->fetch_assoc($result));
+	} while ($dat = $ssc_database->fetch_assoc($result));
+	
+	// Finish each file markup, and close the handles
 	fwrite($fp,"  </channel>
 </rss>");
 	fclose($fp);
 	fwrite($ap,"</feed>");
 	fclose($ap);
-
-
+}
