@@ -48,7 +48,7 @@ function blog_widget($args){
 	// 1 - Tag listing
 	if ($args == 1){
 		$result = $ssc_database->query("SELECT tag, COUNT(post_id) AS cnt FROM #__blog_post p, #__blog_tag t LEFT JOIN 
-			#__blog_relation r ON tag_id = t.id WHERE post_id = p.id AND blog_id = %d GROUP BY t.id ORDER BY tag ASC", $_GET['path_id']);
+			#__blog_relation r ON tag_id = t.id WHERE post_id = p.id AND blog_id = %d GROUP BY t.id ORDER BY tag ASC", $_GET['path-id']);
 		if($result && $ssc_database->number_rows() > 0){
 	
 			while($data = $ssc_database->fetch_assoc($result)){
@@ -62,7 +62,7 @@ function blog_widget($args){
 	// 2 - Year archives
 	elseif ($args == 2){
 		$result = $ssc_database->query("SELECT YEAR( FROM_UNIXTIME(created) ) AS yr, COUNT( FROM_UNIXTIME(created) )
-			 AS cnt FROM #__blog_post p WHERE blog_id = %d GROUP BY YEAR( FROM_UNIXTIME(created) ) ORDER BY yr DESC", $_GET['path_id']);
+			 AS cnt FROM #__blog_post p WHERE blog_id = %d GROUP BY YEAR( FROM_UNIXTIME(created) ) ORDER BY yr DESC", $_GET['path-id']);
 		if($result && $ssc_database->number_rows() > 0){
 	
 			while($data = $ssc_database->fetch_assoc($result)){
@@ -72,7 +72,23 @@ function blog_widget($args){
 			return nav_widget($block, 'Archive');
 		}
 	}
-
+	// 3 - Admin only, unread comments
+	elseif ($args == 3){
+		if (!login_check_auth("blog"))
+			return;
+			
+		$result = $ssc_database->query("SELECT p.title, p.urltext, COUNT(c.post_id) cnt, p.created FROM #__blog_post p
+						LEFT JOIN #__blog_comment c ON (post_id = p.id AND (c.status & %d = 0)) WHERE blog_id = %d
+						GROUP BY p.id HAVING cnt > 0 ORDER BY p.created DESC", SSC_BLOG_READ, $_GET['path-id']); // AND p.author_id = %d
+						
+		if ($result && $ssc_database->number_rows() > 0){
+			while ($data = $ssc_database->fetch_assoc($result)){
+				$block[] = array('t' => $data['title'] . " ($data[cnt])", 'p' => $_GET['path'] . date("/Y/m/d/", $data['created']) . $data['urltext'] . '/mark');
+			}
+			
+			return nav_widget($block, 'Unread comments');
+		}
+	}
 }
 
 /**
@@ -313,6 +329,19 @@ function blog_content(){
 					// No post with name - kill output
 					ssc_not_found();
 					return;
+				}
+
+				// Don't allow any further params
+				if (!empty($_GET['param'][3])){
+					// Unless admin, and the param is 'mark'
+					if (login_check_auth("blog") && $_GET['param'][3] == 'mark'){
+						if ($ssc_database->query("UPDATE #__blog_comment SET status = status | %d WHERE post_id = %d", SSC_BLOG_READ, $data->id))
+							ssc_add_message(SSC_MSG_INFO, t('Marked the comments as read'));
+					}
+					else {
+						ssc_not_found();
+						return;
+					}
 				}
 
 				// Comments disabled flag
