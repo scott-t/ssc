@@ -223,9 +223,9 @@ function blog_content(){
 				ssc_not_found();
 				
 			return _blog_gen_post($data['page'], $_GET['path'] . '/page/', 
-				"SELECT p.id, p.title, p.created, p.urltext, u.displayname author, count(c.post_id) count, p.body FROM #__blog_post p LEFT JOIN
-				#__user u ON u.id = p.author_id LEFT JOIN #__blog_comment c ON (post_id = p.id AND (status & %d = 0)) WHERE blog_id = %d  
-				GROUP BY p.id ORDER BY p.created DESC", SSC_BLOG_SPAM, $_GET['path-id']);
+				"SELECT p.id, p.title, p.created, p.urltext, u.displayname author, count(c.post_id) count, p.body, p.commentsdisabled FROM
+				#__blog_post p LEFT JOIN #__user u ON u.id = p.author_id LEFT JOIN #__blog_comment c ON (post_id = p.id AND (status & %d = 0))
+				WHERE blog_id = %d GROUP BY p.id ORDER BY p.created DESC", SSC_BLOG_SPAM, $_GET['path-id']);
 		}		
 		elseif ($action == 'tag'){
 			// Show posts for the tag
@@ -238,9 +238,9 @@ function blog_content(){
 				ssc_not_found();	// If to parameter for the tag, die gracefully
 				
 			return _blog_gen_post($data['page'], $_GET['path'] . '/tag/'.$tag.'/page/', 
-				"SELECT p.id, p.title, p.created, p.urltext, u.displayname author, count(c.post_id) count, p.body FROM #__blog_post p LEFT JOIN
-				#__user u ON u.id = p.author_id LEFT JOIN #__blog_comment c ON (post_id = p.id AND (status & %d = 0)) LEFT JOIN 
-				#__blog_relation r ON r.post_id = p.id LEFT JOIN #__blog_tag t ON t.id = r.tag_id WHERE blog_id = %d AND t.tag = '%s'
+				"SELECT p.id, p.title, p.created, p.urltext, u.displayname author, count(c.post_id) count, p.body, p.commentsdisabled FROM 
+				#__blog_post p LEFT JOIN #__user u ON u.id = p.author_id LEFT JOIN #__blog_comment c ON (post_id = p.id AND (status & %d = 0))
+				LEFT JOIN #__blog_relation r ON r.post_id = p.id LEFT JOIN #__blog_tag t ON t.id = r.tag_id WHERE blog_id = %d AND t.tag = '%s'
 				GROUP BY p.id ORDER BY p.created DESC", SSC_BLOG_SPAM, $_GET['path-id'], $tag);
 			
 		}
@@ -305,12 +305,17 @@ function blog_content(){
 					return;
 				}
 
+				// Comments disabled flag
+				$comments_disabled = $data->commentsdisabled;
+				// Post id number
+				$pid = $data->id;
+
 				$out = "\n<h3>$data->title</h3>\n";
 				$out .= t("Posted !date at !time by !author\n", 
 					array(	'!date' => date(ssc_var_get('date_med', SSC_DATE_MED), $data->created),
 							'!time' => date(ssc_var_get('time_short', SSC_TIME_SHORT), $data->created),
 							'!author' => $data->author)) . '<br />';
-				$comments_disabled = $data->commentsdisabled;
+				
 				$result = $ssc_database->query("SELECT tag FROM #__blog_relation r, #__blog_tag t WHERE r.tag_id = t.id AND r.post_id = %d ORDER BY tag ASC", $data->id);
 				
 				// Retrieve list of tags for the post
@@ -329,33 +334,41 @@ function blog_content(){
 				if ($_GET['blog_comments']){
 					// Retrieve comments
 					$out .= '<div class="clear"></div><h3 id="comments">Comments</h3>';
+					
+					// Are we admin?
 					$is_admin = login_check_auth("blog");
+					
 					if ($is_admin){
 						$result = $ssc_database->query("SELECT id, author, site, created, status, body FROM #__blog_comment 
 						WHERE post_id = %d ORDER BY created ASC", $data->id, SSC_BLOG_SPAM, SSC_BLOG_SPAM);
+						// Start spam/ham/commentstate form
+						$out .= '<form action="" method="post"><div><input type="hidden" name="form-id" value="blog_spam_ham" />';
+						
+						// Show (dis-)enable comments button on posts with or without comments
+						if ($comments_disabled == 0){
+							$sub_disable_comments = array(	'#value' => 'Disable Comments', '#type' => 'submit',
+															'#name' => "disable_comments[$pid]");
+						}
+						else {
+							$sub_disable_comments = array(	'#value' => 'Enable Comments', '#type' => 'submit', 
+															'#name' => "enable_comments[$pid]");
+						}
+						// Render button
+						$out .= theme_render_input($sub_disable_comments);
 					}
-					else{
+					else {
 						$result = $ssc_database->query("SELECT author, site, created, body FROM #__blog_comment 
 						WHERE post_id = %d AND status & %d = 0 ORDER BY created ASC", $data->id, SSC_BLOG_SPAM);
 					}
-					$pid = $data->id;
 					
 					if (!$result || $ssc_database->number_rows($result) == 0){
 						// Bad SQL
-						$out .= 'There are no comments posted yet.';
+						$out .= t('There are no comments posted yet.');
 					}
-					else{
-						// Print comments
-						
-						// Admin user - show spam/ham options
+					else {
+						// Admin user - show spam/ham/commentstate options
 						if ($is_admin){
-							$out .= '<form action="" method="post"><div><input type="hidden" name="form-id" value="blog_spam_ham" />';
-							if ($comments_disabled==0)
-									{$sub_disable_comments = array('#value' => 'Disable Comments', '#type' => 'submit');
-									$sub_disable_comments['#name'] = "disable_comments[$pid]";}
-							else    {$sub_disable_comments = array('#value' => 'Enable Comments', '#type' => 'submit');
-									$sub_disable_comments['#name'] = "enable_comments[$pid]";}
-							$out .= theme_render_input($sub_disable_comments);
+							// For each comment, show it, it's visible state, and possible options
 							while ($data = $ssc_database->fetch_object($result)){
 								$status = $data->status;	
 								$out .= '<div class="' . 
@@ -371,6 +384,7 @@ function blog_content(){
 								$sub_show = array('#value' => 'Show comment', '#type' => 'submit');
 								$sub_spam = array('#value' => 'Mark spam', '#type' => 'submit');
 								$sub_ham = array('#value' => 'Unmark spam', '#type' => 'submit');
+								
 								// If tree for actions
 								if ($status & SSC_BLOG_CAN_SPAM){
 									// Hasn't been re-submitted yet
@@ -389,14 +403,14 @@ function blog_content(){
 										$out .= theme_render_input($sub_hide);
 									}
 								}
-								else{
+								else  {
 									// Has already been resubmitted
 									if ($status & SSC_BLOG_SPAM){
 										// Currently spam/hidden
 										$sub_show['#name'] = "show[$data->id]";
 										$out .= theme_render_input($sub_show);
 									}
-									else{
+									else {
 										// Marked as normal currently
 										$sub_hide['#name'] = "hide[$data->id]";
 										$out .= theme_render_input($sub_hide);
@@ -404,7 +418,7 @@ function blog_content(){
 								}
 								$out .= '</div><hr />';
 							}
-							$out .= '</div></form>';
+							
 						}
 						else{
 							// Just show comments
@@ -420,19 +434,15 @@ function blog_content(){
 						
 
 					}
-					$result = $ssc_database->query("SELECT commentsdisabled FROM #__blog_post WHERE id = %d LIMIT 1", $pid);
-					if ((!$result || $ssc_database->number_rows($result) != 0)) {
-						$data = $ssc_database->fetch_object($result);
-						$comments_disabled = $data->commentsdisabled;
-					}
-					
-					$is_admin = login_check_auth("blog");
+					// End admin form
+					if ($is_admin)
+						$out .= '</div></form>';
 					
 					if (($comments_disabled == 0) || $is_admin) {
 						$out .= ssc_generate_form('blog_guest_comment', $pid);
 					}
 					else {
-						$out .= t("Sorry, commenting has been closed on this post.");
+						$out .= '<br />' . t("Sorry, commenting has been closed on this post.");
 					}
 				}
 				return $out;
@@ -441,12 +451,13 @@ function blog_content(){
 				// First param set not expecting anything - kill page
 				ssc_not_found();
 				return;
-			} else {
+			}
+			else {
 				// Yearly archive
 				return _blog_gen_post(10000, $_GET['path'] . '/page/', 
-					"SELECT p.id, p.title, p.created, p.urltext, u.displayname author, count(c.post_id) count FROM #__blog_post p LEFT JOIN
-					#__blog_comment c ON (post_id = p.id AND (c.status & %d = 0)) LEFT JOIN #__user u ON u.id = p.author_id WHERE blog_id = %d 
-					AND p.created >= %d AND p.created < %d GROUP BY p.id ORDER BY p.created DESC",
+					"SELECT p.id, p.title, p.created, p.urltext, u.displayname author, count(c.post_id) count, p.commentsdisabled FROM 
+					#__blog_post p LEFT JOIN #__blog_comment c ON (post_id = p.id AND (c.status & %d = 0)) LEFT JOIN #__user u ON u.id = p.author_id 
+					WHERE blog_id = %d AND p.created >= %d AND p.created < %d GROUP BY p.id ORDER BY p.created DESC",
 					SSC_BLOG_SPAM, $_GET['path-id'], mktime(0, 0, 0, 1, 1, $action), mktime(0, 0, 0, 1, 0, $action + 1));
 			}
 		}
@@ -512,7 +523,10 @@ function _blog_gen_post($perpage, $pagelink, $sql, $args = null){
 		if ($_GET['blog_comments'] == true){
 			// Either show number or "Add One!" links direct to comments
 			if ($data->count == 0){
-				$out .= '<br />' . t("No comments - !action\n", array('!action' => l(t('Add one!'), $posturl . "#comments")));
+				if ($data->commentsdisabled == 0)
+					$out .= '<br />' . t("No comments - !action\n", array('!action' => l(t('Add one!'), $posturl . "#comments")));
+				else
+					$out .= '<br />' . t("No comments\n");
 			}
 			else{
 				$out .= '<br />' . l($data->count . ' comments', $posturl . "#comments");
@@ -1000,7 +1014,7 @@ function blog_guest_comment_validate(){
 	if (strpos($_POST['perma'], $ssc_site_url) !== 0 || empty($_POST['i']))
 		return false;
 		
-		
+	// Check if comments are allowed
 	$result = $ssc_database->query("SELECT commentsdisabled FROM #__blog_post WHERE id = %d LIMIT 1", $_POST['i']);
 	if ((!$result || $ssc_database->number_rows($result) != 0))
 	{
