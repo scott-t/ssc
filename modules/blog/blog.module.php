@@ -37,32 +37,42 @@ function blog_cron(){
 
 function blog_widget($args){
 	global $ssc_database;
-	if ($_GET['handler'] != 'blog') return;
+	
+	// Only show widgets on the blog module
+	if ($_GET['handler'] != 'blog')
+		return;
 
-	//$args = 3;
+	// Return details
 	$block = array();
+	
+	// 1 - Tag listing
 	if ($args == 1){
-		$result = $ssc_database->query("SELECT tag, COUNT(post_id) AS cnt FROM #__blog_post p, #__blog_tag t LEFT JOIN #__blog_relation r ON tag_id = t.id WHERE post_id = p.id AND blog_id = %d GROUP BY t.id ORDER BY tag ASC", 3);
+		$result = $ssc_database->query("SELECT tag, COUNT(post_id) AS cnt FROM #__blog_post p, #__blog_tag t LEFT JOIN 
+			#__blog_relation r ON tag_id = t.id WHERE post_id = p.id AND blog_id = %d GROUP BY t.id ORDER BY tag ASC", $_GET['path_id']);
 		if($result && $ssc_database->number_rows() > 0){
 	
 			while($data = $ssc_database->fetch_assoc($result)){
-				$block[] = array('t'=>$data['tag'] . " ($data[cnt])", 'p' => $_GET['path'] . '/tag/' . $data['tag']);
+				$block[] = array('t' => $data['tag'] . " ($data[cnt])", 'p' => $_GET['path'] . '/tag/' . $data['tag']);
 			}
 
 		return nav_widget($block, 'Tags');
 	
 		}
 	}
+	// 2 - Year archives
+	elseif ($args == 2){
+		$result = $ssc_database->query("SELECT YEAR( FROM_UNIXTIME(created) ) AS yr, COUNT( FROM_UNIXTIME(created) )
+			 AS cnt FROM #__blog_post p WHERE blog_id = %d GROUP BY YEAR( FROM_UNIXTIME(created) ) ORDER BY yr DESC", $_GET['path_id']);
+		if($result && $ssc_database->number_rows() > 0){
 	
-	$result = $ssc_database->query("SELECT YEAR( FROM_UNIXTIME(created) ) AS yr, COUNT( FROM_UNIXTIME(created) ) AS cnt FROM #__blog_post p WHERE blog_id = %d GROUP BY YEAR( FROM_UNIXTIME(created) ) ORDER BY yr DESC", 3);
-	if($result && $ssc_database->number_rows() > 0){
-
-		while($data = $ssc_database->fetch_assoc($result)){
-			$block[] = array('t'=>$data['yr'] . " ($data[cnt])", 'p' => $_GET['path'] . '/' . $data['yr']);
+			while($data = $ssc_database->fetch_assoc($result)){
+				$block[] = array('t' => $data['yr'] . " ($data[cnt])", 'p' => $_GET['path'] . '/' . $data['yr']);
+			}
+					
+			return nav_widget($block, 'Archive');
 		}
-				
-		return nav_widget($block, 'Archive');
 	}
+
 }
 
 /**
@@ -1016,17 +1026,15 @@ function blog_guest_comment_validate(){
 		
 	// Check if comments are allowed
 	$result = $ssc_database->query("SELECT commentsdisabled FROM #__blog_post WHERE id = %d LIMIT 1", $_POST['i']);
-	if ((!$result || $ssc_database->number_rows($result) != 0))
-	{
+	if ((!$result || $ssc_database->number_rows($result) != 0)){
 		$data = $ssc_database->fetch_object($result);
 		$comments_disabled = $data->commentsdisabled;
 	}
-	$is_admin = login_check_auth("blog");
 	
-	if(($comments_disabled == 1) && !$is_admin)
-	{
-	ssc_add_message(SSC_MSG_WARN, t('Commenting has been disabled for this post'));
-	return false;
+	$is_admin = login_check_auth("blog");
+	if(($comments_disabled == 1) && !$is_admin){
+		ssc_add_message(SSC_MSG_WARN, t('Commenting has been disabled for this post'));
+		return false;
 	}
 
 	// Validate website
@@ -1085,7 +1093,7 @@ function blog_guest_comment_submit(){
 			$is_spam = ($spam->isSpam() ? SSC_BLOG_SPAM | SSC_BLOG_CAN_SPAM : SSC_BLOG_CAN_SPAM);
 			// Increment caught count
 			if ($is_spam & SSC_BLOG_SPAM)
-				ssc_var_set('akismet_count',(int)ssc_var_get('akismet_count',1) + 1);
+				ssc_var_set('akismet_count',(int)ssc_var_get('akismet_count', 1) + 1);
 		}
 	}
 	else{
