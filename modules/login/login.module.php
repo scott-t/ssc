@@ -963,7 +963,7 @@ function _login_sess_write($id, $data){
 	global $ssc_database, $SSC_SETTINGS, $ssc_user;
 		
 	// Don't store cookieless browsers
-	if (empty($_COOKIE[session_name()]) || empty($data))
+	if (empty($_COOKIE[session_name()]) || empty($data) || !isset($ssc_user->id))
 		return true;
 					
 	$ret = false;
