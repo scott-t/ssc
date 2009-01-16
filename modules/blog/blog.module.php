@@ -972,7 +972,7 @@ function blog_guest_comment($pid){
 	global $ssc_user, $ssc_site_url;
 	
 	// Retrieve visitor details
-	if (isset($_POST['form-id']) && $_POST['form-id'] == 'blog_guest_comment'){
+	if (isset($_POST['form-id']) && (!isset($_POST['spammed']) || $_POST['spammed'] == true) && ($_POST['form-id'] == 'blog_guest_comment')){
 		// Get from POST
 		$details =& $_POST;
 		// Check for missing fields
@@ -1130,6 +1130,14 @@ function blog_guest_comment_submit(){
 		$is_spam = SSC_BLOG_SPAM;
 	}
 	
+	if (($is_spam & SSC_BLOG_SPAM) && ssc_var_get('blog.discard_spam', false)) {
+		ssc_add_message(SSC_MSG_WARN, t('Your post was marked as spam and permanently discarded - please try to reduce it\'s "spammyness" and try again'));
+		$_POST['spammed'] = true;
+	}
+	else {
+		$_POST['spammed'] = false;
+	}
+		
 	$result = $ssc_database->query("INSERT INTO #__blog_comment (post_id, author, email, site, created, status, body, ip)
 		VALUES (%d, '%s', '%s', '%s', %d, %d, '%s', '%s')", 
 		$_POST['i'], $_POST['n'], $_POST['e'], $_POST['s'], time(), $is_spam, $_POST['c'], $_SERVER['REMOTE_ADDR']);
