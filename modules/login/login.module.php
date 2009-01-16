@@ -141,7 +141,7 @@ function login_content(){
 	
 	case 'logout':
 		// Log the user out
-		$ssc_user = _login_anonymous;
+		$ssc_user = _login_anonymous();
 		ssc_add_message(SSC_MSG_INFO, t('Do Logout'));
 		ssc_redirect('/');
 		break;
