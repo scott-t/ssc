@@ -89,6 +89,9 @@ function blog_widget($args){
 			return nav_widget($block, 'Unread comments');
 		}
 	}
+	elseif ($args == 4){
+		return array('title' => 'Spam Count', 'body' => '<ul><li> ' . ssc_var_get('akismet_count', 0) . ' spam comments</li></ul>');
+	}
 }
 
 /**
