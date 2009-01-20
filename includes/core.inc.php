@@ -795,9 +795,9 @@ function ssc_add_js_event($event, $func = null){
 	
 	if (isset($func)){
 		if (substr($func, -1, 1) != ";")
-			$js_events[$event] .= $func() . "; ";
+			$js_events[$event] .= $func . "; ";
 		else
-			$js_events[$event] .= $func();
+			$js_events[$event] .= $func;
 	}
 	
 }
