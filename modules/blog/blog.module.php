@@ -1139,32 +1139,32 @@ function blog_guest_comment_submit(){
 	}
 	else {
 		$_POST['spammed'] = false;
-	}
 		
-	$result = $ssc_database->query("INSERT INTO #__blog_comment (post_id, author, email, site, created, status, body, ip)
-		VALUES (%d, '%s', '%s', '%s', %d, %d, '%s', '%s')", 
-		$_POST['i'], $_POST['n'], $_POST['e'], $_POST['s'], time(), $is_spam, $_POST['c'], $_SERVER['REMOTE_ADDR']);
-		
-	// Result tree
-	if ($result){
-		// Submission successful
-		if ($is_spam & SSC_BLOG_SPAM){
-			// Comment was marked as spam
-			if ($is_spam & SSC_BLOG_CAN_SPAM){
-				// ... by Akismet
-				ssc_add_message(SSC_MSG_WARN, t('Your comment has been submitted but marked as spam and queued for moderation.  Do not resubmit your comment.'));
+		$result = $ssc_database->query("INSERT INTO #__blog_comment (post_id, author, email, site, created, status, body, ip)
+			VALUES (%d, '%s', '%s', '%s', %d, %d, '%s', '%s')", 
+			$_POST['i'], $_POST['n'], $_POST['e'], $_POST['s'], time(), $is_spam, $_POST['c'], $_SERVER['REMOTE_ADDR']);
+			
+		// Result tree
+		if ($result){
+			// Submission successful
+			if ($is_spam & SSC_BLOG_SPAM){
+				// Comment was marked as spam
+				if ($is_spam & SSC_BLOG_CAN_SPAM){
+					// ... by Akismet
+					ssc_add_message(SSC_MSG_WARN, t('Your comment has been submitted but marked as spam and queued for moderation.  Do not resubmit your comment.'));
+				}
+				else{
+					// Akisment unavailable - manual moderation
+					ssc_add_message(SSC_MSG_INFO, t('Your comment has been submitted and queued for moderation.  Do not resubmit as it should be checked soon.'));
+				}
 			}
 			else{
-				// Akisment unavailable - manual moderation
-				ssc_add_message(SSC_MSG_INFO, t('Your comment has been submitted and queued for moderation.  Do not resubmit as it should be checked soon.'));
+				ssc_add_message(SSC_MSG_INFO, t('Your comment was successfully added'));
 			}
 		}
 		else{
-			ssc_add_message(SSC_MSG_INFO, t('Your comment was successfully added'));
+			ssc_add_message(SSC_MSG_CRIT, t('There was a server error encountered while submitting your comment'));
 		}
-	}
-	else{
-		ssc_add_message(SSC_MSG_CRIT, t('There was a server error encountered while submitting your comment'));
 	}
 }
 
