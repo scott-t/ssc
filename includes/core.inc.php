@@ -382,8 +382,7 @@ function ssc_frontend_init(){
 	// Check inputs
 	ssc_magic_check();
 	ssc_form_check();
-	
-	ssc_add_js("/includes/core.js");
+
 }
 
 /**
