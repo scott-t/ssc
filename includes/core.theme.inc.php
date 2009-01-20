@@ -45,7 +45,7 @@ function _theme_get_meta($ver = '1'){
 	
 	$js = ssc_add_js();
 	foreach ($js as $path){
-		$out .= '<script type="javascript" src="' . $path . '?' . $ver . "\"> </script>\n";
+		$out .= '<script type="text/javascript" src="' . $path . '?' . $ver . "\"> </script>\n";
 	}
 	
 	return $out;

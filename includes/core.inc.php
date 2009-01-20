@@ -382,6 +382,8 @@ function ssc_frontend_init(){
 	// Check inputs
 	ssc_magic_check();
 	ssc_form_check();
+	
+	ssc_add_js("/includes/core.js");
 }
 
 /**
@@ -771,19 +773,41 @@ function ssc_execute(){
  * @return array Array containing JS paths
  */
 function ssc_add_js($path = null){
+	global $ssc_site_url;
 	static $js = array();
 	
 	if (isset($path)){
-		$js[md5($path)] = $path;
+		$js[md5($path)] = $ssc_site_url . $path;
 	}
 	return $js;
 }
 
 /**
+ * Get/set a javascript handler event
+ * @param string $event JS event
+ * @param string $func JS function to call
+ * @return string Concatenated JS function calls for that event
+ */
+function ssc_add_js_event($event, $func = null){
+	static $js_events = array();
+	
+	if (!isset($js_events[$event]))
+		$js_events[$event] = "javascript: ";
+	
+	if (isset($func)){
+		if (substr($func, -1, 1) != ";")
+			$js_events[$event] .= $func() . "; ";
+		else
+			$js_events[$event] .= $func();
+	}
+	
+}
+
+/**
  * Get/set a CSS file to be loaded
- * @param string $path Path to the JS file relative to the base
- * @param string $media Target media for the css file
- * @return array Array containing JS paths
+ * @param string $path Path to the CSS file relative to the base
+ * @param string $media Target media for the CSS file
+ * @return array Array containing CSS paths
  */
 function ssc_add_css($path = null, $media = 'all'){
 	global $ssc_site_url, $ssc_site_path;
