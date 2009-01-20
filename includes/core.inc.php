@@ -800,6 +800,8 @@ function ssc_add_js_event($event, $func = null){
 			$js_events[$event] .= $func;
 	}
 	
+	return $js_events[$event];
+	
 }
 
 /**
