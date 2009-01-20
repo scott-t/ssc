@@ -199,6 +199,7 @@ function theme_body(){
 
 /**
  * Used to generate message boxes at the header of each page
+ * May only be called ONCE (due to the ID)
  */
 function theme_messages(){
 	static $classes = array(
@@ -212,13 +213,13 @@ function theme_messages(){
 	if (empty($messages))
 		return '';
 
-	$out = '';
+	$out = '<div id="messages">';
 		
 	foreach ($messages as $message){
 		$out .= '<div class="message ' . $classes[$message[0]] . '"><span>';
 		$out .= $message[1] . '</span></div>';
 	}
-	return $out;
+	return $out . "</div>";
 }
 
 /**
