@@ -140,6 +140,18 @@ h6 {
 	border: #0066CC 2px dashed;
 }
 
+.message-jsbox{
+		border: 2px dashed #999999;
+		padding: 1em 1em 0 1em;
+		background-color: #CCCCCC;
+}
+
+.message-jsbox button{
+	float:right;
+	border: #0066CC 1px solid;
+	background-color: #99CCFF;
+}
+
 div.blog-notspam-icon{
 	background-image: url("$base_url$/images/blog-notspam.png");
 }
