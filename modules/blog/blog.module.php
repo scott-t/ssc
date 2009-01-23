@@ -399,7 +399,7 @@ function blog_content(){
 						$out .= theme_render_input($sub_disable_comments);
 					}
 					else {
-						$result = $ssc_database->query("SELECT author, site, created, body FROM #__blog_comment 
+						$result = $ssc_database->query("SELECT author, email, site, created, body FROM #__blog_comment 
 						WHERE post_id = %d AND status & %d = 0 ORDER BY created ASC", $data->id, SSC_BLOG_SPAM);
 					}
 					
@@ -465,12 +465,13 @@ function blog_content(){
 						else{
 							// Just show comments
 							while ($data = $ssc_database->fetch_object($result)){
+								$out .= '<div class="gravatar" style="background-image: url("'.getgravatarurl($data->email).'");">';
 								$out .= '<p>' . nl2br(check_plain($data->body)) . '</p><p>';
 								$out .= t("Posted !date at !time by !author\n", 
 										array(	'!date' => date(ssc_var_get('date_med', SSC_DATE_MED), $data->created),
 												'!time' => date(ssc_var_get('time_short', SSC_TIME_SHORT), $data->created),
 												'!author' => 
-											(empty($data->site) ? $data->author : l($data->author, $data->site)))) . '</p><hr />';
+											(empty($data->site) ? $data->author : l($data->author, $data->site)))) . '</p></div><hr />';
 							}
 						}
 						
@@ -1147,6 +1148,7 @@ function blog_guest_comment_submit(){
 		// Result tree
 		if ($result){
 			// Submission successful
+			
 			if ($is_spam & SSC_BLOG_SPAM){
 				// Comment was marked as spam
 				if ($is_spam & SSC_BLOG_CAN_SPAM){
@@ -1295,3 +1297,16 @@ function blog_spam_ham_submit(){
 		}
 	}
 } 
+
+/**
+ * gravatar generation and caching function
+ */
+
+ function getgravatarurl($email){
+ $hash = md5(strtolower($email));
+ $size = "80";
+ $rating = "pg";
+ $default = "wavatar";
+ $url = "http://www.gravatar.com/avatar/".$hash."?s=".$size."&r=".$rating."&d=".$default;
+ return $url;
+  }

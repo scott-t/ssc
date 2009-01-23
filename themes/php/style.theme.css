@@ -169,6 +169,12 @@ div.blog-notspam-icon, div.blog-spam-icon{
 	background-repeat: no-repeat;
 }
 
+div.gravatar{
+	padding-left:91px;
+	background-repeat: no-repeat;
+}
+
+
 /*********** ADMIN *****************************/
 
 a.admin-block {
