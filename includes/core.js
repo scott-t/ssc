@@ -1,26 +1,28 @@
 /**
- * @author Scott
+ * Core JS file for SSC
  */
 
+/**
+ * SSC Message object manipulation.  Show messages in their own dialog in a fixed position rather than inline
+ */
+$(document).ready(function(){
+	var msgs = $("div#messages");
 
-// Move messages to middle of screen
-function bodyLoad(){
-	var msgs = document.getElementById("messages");
 	if (msgs != null){
-		msgs.style.width = "50%";
-		var w = document.getElementsByTagName("body")[0].clientWidth - msgs.clientWidth;
+		msgs.width("50%");
+		var w = $("body").width() - msgs.width();
 		w = w / 2;
-		msgs.style.position = "fixed";
-		msgs.style.left = w + "px";
-		msgs.style.right = w + "px";
-		msgs.className = "message-jsbox";
-		msgs.innerHTML += "<button type=\"button\" onclick=\"javascript: hideMessages()\">Close</button>";
-	}
-}
+		msgs.css("position", "fixed");
+		msgs.css("display", "none");
+		msgs.css("left" , w);
+		msgs.css("right" , w);
+		msgs.addClass("message-jsbox");
+		msgs.append("<button type=\"button\" onclick=\"javascript: hideMessages()\">Close</button>");
+		msgs.fadeIn("fast");
 
-function hideMessages(){
-	var msgs = document.getElementById("messages");
-	if (msgs != null) {
-		msgs.style.display = "none";
 	}
-}
+	
+	$("div#messages button").click(function(){$("div#messages").fadeOut();});
+
+});
+

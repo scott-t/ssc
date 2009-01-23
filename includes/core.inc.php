@@ -384,7 +384,6 @@ function ssc_frontend_init(){
 	ssc_form_check();
 	
 	ssc_add_js("/includes/core.js");
-	ssc_add_js_event("onload", "bodyLoad();");
 }
 
 /**
@@ -723,8 +722,8 @@ function ssc_generate_html(&$structure){
 				continue;
 			
 			$value['#name'] = $tag;
-if (empty($value['#id']))
-			$value['#id'] = $structure['#formname'] . "-$tag";
+			if (empty($value['#id']))
+				$value['#id'] = $structure['#formname'] . "-$tag";
 			$value['#formname'] = $structure['#formname'];
 			$out .= ssc_generate_html($value);
 			unset($structure[$tag]);
@@ -769,41 +768,20 @@ function ssc_execute(){
 }
 
 /**
- * Get/set a javascript file to be loaded
+ * Get/set a javascript file to be loaded.
+ * Seed with the jQuery library to begin with (included as default)
  * @param string $path Path to the JS file relative to the base
  * @return array Array containing JS paths
  */
 function ssc_add_js($path = null){
 	global $ssc_site_url;
-	static $js = array();
+	static $js = array(
+		'3f22f5a3c5558c07f40887ba34a5f282' => 'http://ajax.googleapis.com/ajax/libs/jquery/1.3.1/jquery.min.js');
 	
 	if (isset($path)){
 		$js[md5($path)] = $ssc_site_url . $path;
 	}
 	return $js;
-}
-
-/**
- * Get/set a javascript handler event
- * @param string $event JS event
- * @param string $func JS function to call
- * @return string Concatenated JS function calls for that event
- */
-function ssc_add_js_event($event, $func = null){
-	static $js_events = array();
-	
-	if (!isset($js_events[$event]))
-		$js_events[$event] = "javascript: ";
-	
-	if (isset($func)){
-		if (substr($func, -1, 1) != ";")
-			$js_events[$event] .= $func . "; ";
-		else
-			$js_events[$event] .= $func;
-	}
-	
-	return $js_events[$event];
-	
 }
 
 /**
