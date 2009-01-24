@@ -15,13 +15,21 @@ define("_VALID_SSC", 1);
 define("_SSC_DEBUG", 0);
 $ssc_execute_time = microtime(true);
 error_reporting(0);
-// Begin application startup
-include('./includes/core.inc.php');
-ssc_init();
 
-$page = ssc_execute();
-theme_render($page);
+// App startup
+include('./includes/core.inc.php');
+
+// We don't need the front-end initialized for ajax requests
+if (isset($_GET['ajax']) && ($_GET['ajax'] == 'y')) {
+	ssc_init(SSC_INIT_EXTENSION);
+	$page = ssc_execute();
+	echo $page;
+}
+else {
+	ssc_init(SSC_INIT_FULL);
+	$page = ssc_execute();
+	theme_render($page);
+}
 
 // Clean up
 ssc_close();
-ssc_debug_show();

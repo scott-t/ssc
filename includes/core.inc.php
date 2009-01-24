@@ -345,6 +345,13 @@ function ssc_extension_init(){
 	// Load up all enabled modules
 	require_once "$ssc_site_path/includes/core.module.inc.php";
 	module_load();
+	
+	// Prepare environment
+	module_handler_init();	
+	
+	// Check inputs
+	ssc_magic_check();
+	ssc_form_check();
 }
 
 /**
@@ -375,13 +382,6 @@ function ssc_frontend_init(){
 				));
 				
 	theme_get_info($theme);
-	
-	// Prepare environment
-	module_handler_init();	
-	
-	// Check inputs
-	ssc_magic_check();
-	ssc_form_check();
 	
 	ssc_add_js("/includes/core.js");
 }
