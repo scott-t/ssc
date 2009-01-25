@@ -172,6 +172,7 @@ div.blog-notspam-icon, div.blog-spam-icon{
 div.gravatar{
 	padding-left:91px;
 	background-repeat: no-repeat;
+	min-height:91px;
 }
 
 

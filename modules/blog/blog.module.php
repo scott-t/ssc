@@ -198,7 +198,7 @@ function blog_admin(){
 			null,
 			array('perpage' => 10, 'link' => 'title', 'linkpath' => '/admin/blog/edit/'));
 		$out .= l(t('New page'),'/admin/blog/edit/0');
-		
+		//where ryan thinks gravatar form should go with gravatar caching options and gravatar options. should there be a function or just add it straight in here
 		break;
 	default:
 		ssc_not_found();
@@ -465,7 +465,7 @@ function blog_content(){
 						else{
 							// Just show comments
 							while ($data = $ssc_database->fetch_object($result)){
-								$out .= '<div class="gravatar" style="background-image: url("'.getgravatarurl($data->email).'");">';
+								$out .= "<div class='gravatar' style='background-image: url(\""._blog_gravatar_get_url($data->email)."\");'>";
 								$out .= '<p>' . nl2br(check_plain($data->body)) . '</p><p>';
 								$out .= t("Posted !date at !time by !author\n", 
 										array(	'!date' => date(ssc_var_get('date_med', SSC_DATE_MED), $data->created),
@@ -1302,11 +1302,8 @@ function blog_spam_ham_submit(){
  * gravatar generation and caching function
  */
 
- function getgravatarurl($email){
- $hash = md5(strtolower($email));
- $size = "80";
- $rating = "pg";
- $default = "wavatar";
- $url = 'http://www.gravatar.com/avatar/'.$hash.'?s='.$size.'&r='.$rating.'&d='.$default;
- return $url;
-  }
+function _blog_gravatar_get_url($email){
+	return "http://www.gravatar.com/avatar/".md5(strtolower($email))."?s=".ssc_var_get("blog.gravatar.size","80")."&r=".ssc_var_get("blog.gravatar.rating","pg")."&d=".ssc_var_get("blog.gravatar.default","wavatar");
+}
+
+
