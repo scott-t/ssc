@@ -2,6 +2,7 @@
 /**
  * File for executing cron jobs
  * @package SSC
+ * @subpackage Core
  */
 
 /**

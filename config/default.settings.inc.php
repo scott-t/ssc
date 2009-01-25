@@ -3,6 +3,7 @@
  * Default program settings.
  * This file should be copied for use as a template for other domains as required.
  * @package SSC
+ * @subpackage Core
  */
  
 /**

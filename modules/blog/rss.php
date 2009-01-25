@@ -4,6 +4,7 @@
  *
  * Generate an RSS feed for each of the dynamic pages.
  * @package SSC
+ * @subpackage Module
  * @copyright Copyright (c) Scott Thomas
  */
 
