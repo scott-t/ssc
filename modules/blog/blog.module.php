@@ -381,7 +381,7 @@ function blog_content(){
 					$is_admin = login_check_auth("blog");
 					
 					if ($is_admin){
-						$result = $ssc_database->query("SELECT id, author, site, created, status, body FROM #__blog_comment 
+						$result = $ssc_database->query("SELECT id, author, email, site, created, status, body FROM #__blog_comment 
 						WHERE post_id = %d ORDER BY created ASC", $data->id, SSC_BLOG_SPAM, SSC_BLOG_SPAM);
 						// Start spam/ham/commentstate form
 						$out .= '<form action="" method="post"><div><input type="hidden" name="form-id" value="blog_spam_ham" />';
@@ -413,9 +413,7 @@ function blog_content(){
 							// For each comment, show it, it's visible state, and possible options
 							while ($data = $ssc_database->fetch_object($result)){
 								$status = $data->status;	
-								$out .= '<div class="' . 
-								($status & SSC_BLOG_SPAM ? 'blog-spam-icon' : 'blog-notspam-icon') .
-								'"><p>' . nl2br(check_plain($data->body)) . '</p><p>';
+								$out .= "<div class='" . ($status & SSC_BLOG_SPAM ? "blog-spam-icon" : "gravatar") . "'" . ($status & SSC_BLOG_SPAM ? "" : "style='background-image: url(\""._blog_gravatar_get_url($data->email)."\");' ") . "><p>" . nl2br(check_plain($data->body)) . "</p><p>";
 								$out .= t("Posted !date at !time by !author\n", 
 										array(	'!date' => date(ssc_var_get('date_med', SSC_DATE_MED), $data->created),
 												'!time' => date(ssc_var_get('time_short', SSC_TIME_SHORT), $data->created),
