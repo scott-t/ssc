@@ -342,6 +342,7 @@ function theme_render_input($structure){
 	$out .= (isset($structure['#size']) ? ' size="' . $structure['#size'] . '"' : ''); 
 	$out .= (isset($structure['#maxlength']) ? ' maxlength="' . $structure['#maxlength'] . '"' : ''); 
 	$out .= (isset($structure['#checked']) && $structure['#checked'] == true ? ' checked="checked"' : '');
+	$out .= (isset($structure['#required']) && $structure['#required'] == true ? ' class="inp-req"': '');
 	$out .= ' />';
 	return $out;
 }
