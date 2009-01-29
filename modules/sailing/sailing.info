@@ -1,0 +1,6 @@
+; Sailing results module
+name = Sailing results
+description = Present regatta and heat results
+version = 3.x
+
+package = Content
