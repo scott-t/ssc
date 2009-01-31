@@ -24,11 +24,10 @@
 
 			if ($kids[i].innerHTML == "Skipper") {
 				// Skipper column - ensure there is at least one crew member before showing switch button
-				if ($(".sail-table * tr td:nth-child(" + (i + 1) + ")").filter(function(){
-					return $(this).attr("title").length > 0;
-				}).length > 0) {
+				if ($(".sail-table * tr td:nth-child(" + (i + 1) + ") span").length > 0) {
 					// Crew present - show button and fix column width to a certain percentage
 					$(".sail-table * tr th:nth-child(" + (i + 1) + ")").wrapInner("<span />");
+					$(".sail-table * tr td:nth-child(" + (i + 1) + ")").filter(function(){return $(this).children().length == 0;}).wrapInner("<span style=\"border-bottom:none\" title=\"\" />");
 					$($kids[i]).width(($($kids[i]).width() / w * 100) + "%");
 					$($kids[i]).html($($kids[i]).html() + " <img src=\"" + siteURI + "/images/switch.png\" title=\"Show crew\" \>");
 					$($kids[i]).children("img").click(swapSailor);
@@ -37,7 +36,7 @@
 			}
 			else {
 				// Look for heat column
-				if ($kids[i].innerHTML.charAt(0) == "R" && $(".sail-table tbody tr td:nth-child(" + (i + 1) + ")").attr("title").length > 0) {
+				if ($kids[i].innerHTML.charAt(0) == "R" && $(".sail-table tbody tr td:nth-child(" + (i + 1) + ") span").attr("title").length > 0) {
 					// Fix width and add switching button
 					$($kids[i]).parent().width(($($kids[i]).parent().width() / w * 100) + "%").append(" <img src=\"" + siteURI + "/images/sail-time.png\" title=\"Show times\" \>");
 					$($kids[i]).parent().children("img").data("idx", i + 1).click(swapPlaces);
@@ -57,12 +56,12 @@
 		// Fade out
 		$(".sail-table * tr td:nth-child(" + col + ")").animate({"opacity":"toggle"}, 500, "swing", function(){
 			// and swap names
-			$me = $(this);
+			$me = $(this).children("span");
 			var old = $me.text();
 			$me.text($me.attr("title"));//($me.attr("title")).css("opacity",0);
 			
 			$me.attr("title", old);
-			$me.animate({"opacity":"toggle"}, 500);
+			$me.parent().animate({"opacity":"toggle"}, 500);
 		});
 		
 		// Change title of button
@@ -94,12 +93,12 @@
 		// Fade out old value
 		$(".sail-table * tr td:nth-child(" + col + ")").animate({"opacity":"toggle"}, 500, "swing", function(){
 			// Swap content of cell
-			$me = $(this);
+			$me = $(this).children("span");
 			var old = $me.text();
 			$me.text($me.attr("title"));//($me.attr("title")).css("opacity",0);
 			
 			$me.attr("title", old);
-			$me.animate({"opacity":"toggle"}, 500);
+			$me.parent().animate({"opacity":"toggle"}, 500);
 		});
 		
 		// Change image title and source

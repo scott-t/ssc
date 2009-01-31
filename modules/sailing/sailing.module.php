@@ -124,7 +124,7 @@ function sailing_content(){
 			// Row contents
 			$out .= "<tr><td>$data[number]</td>" . ($show_class ? "<td>$data[class]</td>" : '') . "<td>$data[boatname]</td>";
 			if ($data['crew'] != '')
-				$out .= "<td title=\"$data[crew]\">$data[skipper]</td>";
+				$out .= "<td><span title=\"$data[crew]\">$data[skipper]</span></td>";
 			else
 				$out .= "<td>$data[skipper]</td>";
 				
@@ -138,9 +138,9 @@ function sailing_content(){
 			for ($i = 0; $i < $col_count['heats']; $i++){
 				if ($times[$i] != ''){
 					if ((float)($times[$i]) > 0)
-						$out .= '<td title="' . sprintf("%1.1f", (float)($times[$i])) . " min\">$heats[$i]</td>";
+						$out .= '<td><span title="' . sprintf("%1.1f", (float)($times[$i])) . " min\">$heats[$i]</span></td>";
 					else
-						$out .= "<td title=\"$times[$i]\">$heats[$i]</td>";
+						$out .= "<td><span title=\"$times[$i]\">$heats[$i]</span></td>";
 				}
 				else
 					$out .= "<td>$heats[$i]</td>";
