@@ -187,16 +187,25 @@ function _ssc_sailing_table_header($flags, $heats, &$col_header){
 
 function sailing_series(){
 	global $ssc_site_url, $ssc_database;
-	
+
 	if (isset($_POST['form-id']) && $_POST['form-id'] == 'sailing_series'){
 		// populate from post
 		$data = new stdClass();
-		$data->id = 0;
-		$data->name = '';
-		$data->description = '';
+		$data->id = isset($_GET['param'][0]) ? $_GET['param'][0] : 0;
+		$data->name = isset($_POST['name']) ? $_POST['name'] : '';
+		$data->description = isset($_POST['desc']) ? $_POST['desc'] : '';
+		// Bitflags
 		$data->flags = 0;
-		$data->heats = 0;
-		$data->path = 'results';
+		if (isset($_POST['class']) && (int)$_POST['class'] == 1)
+			$data->flags |= SSC_SAILING_CLASS;
+	
+		if (isset($_POST['club']) && (int)$_POST['club'] == 1)
+			$data->flags |= SSC_SAILING_CLUB;
+			
+		if (isset($_POST['div']) && (int)$_POST['div'] == 1)
+			$data->flags |= SSC_SAILING_PREFIX;
+			
+		$data->path = isset($_POST['url']) ? $_POST['url'] : 'results';
 	}
 	else
 	{
@@ -207,7 +216,6 @@ function sailing_series(){
 			$data->name = '';
 			$data->description = '';
 			$data->flags = 0;
-			$data->heats = 0;
 			$data->path = 'results';
 		}
 
@@ -310,6 +318,7 @@ function sailing_series_submit(){
 	else
 	{
 		// Update existing
+		$ssc_database->query("UPDATE #__handler SET path = '%s' WHERE id = %d LIMIT 1", $_POST['url'], $id);
 		$ssc_database->query("UPDATE #__sailing_series SET name = '%s', description = '%s', flags = %d WHERE id = %d LIMIT 1", $_POST['name'], $_POST['desc'], $flags, $id);
 	}
 
@@ -321,13 +330,14 @@ function sailing_series_submit(){
 				}
 				else
 				{
-					ssc_add_message(SSC_MSG_INFO, t('Race results updated successfully'));
+					ssc_add_message(SSC_MSG_INFO, t('Regatta details and heats updated successfully'));
 				}
 				unlink($_FILES['update']['tmp_name']);
 				break;
 				
 			case UPLOAD_ERR_NO_FILE:
-				ssc_add_message(SSC_MSG_WARN, "There was no file uploaded, however this message still shouldn't be tripped...");
+				// No file, but other details should be saved
+				ssc_add_message(SSC_MSG_INFO, t("Regatta details updated successfully"));
 				break;
 				
 			default:
