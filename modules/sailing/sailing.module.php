@@ -62,6 +62,8 @@ function sailing_admin(){
 function sailing_content(){
 	global $ssc_database;
 	
+	ssc_add_js('/modules/sailing/sailing.js');
+	
 	// See if results exist
 	$result = $ssc_database->query("SELECT name, description, updated, flags, heats FROM #__sailing_series WHERE id = %d LIMIT 1", $_GET['path-id']);
 	if (!($result && $data = $ssc_database->fetch_assoc($result))){
@@ -98,9 +100,8 @@ function sailing_content(){
 	else
 	{
 		// Start outputting
-		$out .= '<table summary="Race results">';
-		$col_header = _ssc_sailing_table_header($flags, $heats);
-		$heat_count = count($heats);
+		$out .= '<table class="sail-table" summary="Race results">';
+		$col_header = _ssc_sailing_table_header($flags, $heats, $col_count);
 		
 		// Loop through results
 		$div = '-1';
@@ -108,9 +109,16 @@ function sailing_content(){
 
 			// Re-echo headers for each division
 			if ($div != $data['division']){
+				if ($div == '-1'){
+					$out .= "<thead><tr><th class=\"div-heading\" colspan=\"$col_count[total]\">$prefix$data[division]</th></tr>";
+					$out .= "$col_header</thead><tbody>";
+				}
+				else {
+					$out .= '<tr><th class="div-heading" colspan="' . $col_count['total'] . '">' . $prefix . $data['division'] . '</th></tr>';
+					$out .= $col_header;
+				}
+					
 				$div = $data['division'];
-				$out .= '<tr><th colspan="' . $heat_count . '">' . $prefix . $div . '</th></tr>';
-				$out .= $col_header;
 			}
 			
 			// Row contents
@@ -127,10 +135,13 @@ function sailing_content(){
 			// Parse results
 			$heats = explode(",", $data['results']);
 			$times = explode(",", $data['times']);
-			
-			for ($i = 0; $i < $heat_count; $i++){
-				if ($times[$i] != '')
-					$out .= "<td title=\"$times[$i] min\">$heats[$i]</td>";
+			for ($i = 0; $i < $col_count['heats']; $i++){
+				if ($times[$i] != ''){
+					if ((float)($times[$i]) > 0)
+						$out .= '<td title="' . sprintf("%1.1f", (float)($times[$i])) . " min\">$heats[$i]</td>";
+					else
+						$out .= "<td title=\"$times[$i]\">$heats[$i]</td>";
+				}
 				else
 					$out .= "<td>$heats[$i]</td>";
 			}
@@ -139,7 +150,7 @@ function sailing_content(){
 		}
 		
 		// Tidy up
-		$out .= '</table>';
+		$out .= '</tbody></table>';
 	}
 		
 	return $out;
@@ -151,19 +162,26 @@ function sailing_content(){
  * @param int $flags Object
  * @param array $heats Object
  */
-function _ssc_sailing_table_header($flags, $heats){
+function _ssc_sailing_table_header($flags, $heats, &$col_header){
 	$out = "<tr><th>" . ssc_abbr("Sail No", "Sail Number") . "</th>";
-	if ($flags & SSC_SAILING_CLASS)
+	$col_header = array('id' => 1, 'details' => 2, 'heats' => 0);
+	if ($flags & SSC_SAILING_CLASS) {
 		$out .= "<th>Class</th>";
+		$col_header['details']++;
+	}
 	$out .= "<th>Boat Name</th>";
-	$out .= "<th>Skipper</th>";
-	if ($flags & SSC_SAILING_CLUB)
+	$out .= "<th>Skipper</th>"; 
+
+	if ($flags & SSC_SAILING_CLUB) {
 		$out .= "<th>Club</th>";
-		
+		$col_header['details']++;
+	}
+	
+	$col_header['heats'] = count($heats);	
 	while ($heat = array_shift($heats)){
 		$out .= "<th>" . ssc_abbr("R" . $heat, "Race " . $heat) . "</th>";
 	}
-
+	$col_header['total'] = array_sum($col_header);
 	return $out . '</tr>';
 }
 
@@ -507,7 +525,7 @@ function _ssc_sailing_parse_csv($id){
 			$line[$fields['class']] = '';
 			
 		// Find a boat to match the result
-		$sail = $ssc_database->query("SELECT id FROM #__sailing_entries WHERE number = '%s' AND class = '%s' AND name = '%s' AND skipper = '%s' AND crew = '%s' AND club = '%s' LIMIT 1", $line[$fields['sail']], $line[$fields['class']], $line[$fields['skipper']], $line[$fields['boat']], $line[$fields['crew']], $line[$fields['club']]);
+		$sail = $ssc_database->query("SELECT id FROM #__sailing_entries WHERE number = '%s' AND class = '%s' AND name = '%s' AND skipper = '%s' AND crew = '%s' AND club = '%s' LIMIT 1", $line[$fields['sail']], $line[$fields['class']], $line[$fields['boat']], $line[$fields['skipper']], $line[$fields['crew']], $line[$fields['club']]);
 		if ($ssc_database->number_rows() == 1){
 			$data = $ssc_database->fetch_assoc($sail);
 			$sailid = $data['id'];
@@ -515,7 +533,7 @@ function _ssc_sailing_parse_csv($id){
 		else
 		{
 			// Insert if non-existant
-			$sail = $ssc_database->query("INSERT INTO #__sailing_entries (number, class, name, skipper, crew, club) VALUES ('%s', '%s', '%s', '%s', '%s', '%s')", $line[$fields['sail']], $line[$fields['class']], $line[$fields['skipper']], $line[$fields['boat']], $line[$fields['crew']], $line[$fields['club']]);
+			$sail = $ssc_database->query("INSERT INTO #__sailing_entries (number, class, name, skipper, crew, club) VALUES ('%s', '%s', '%s', '%s', '%s', '%s')", $line[$fields['sail']], $line[$fields['class']], $line[$fields['boat']], $line[$fields['skipper']], $line[$fields['crew']], $line[$fields['club']]);
 			$sailid = $ssc_database->last_id();
 		}
 

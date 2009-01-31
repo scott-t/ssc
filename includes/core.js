@@ -20,7 +20,7 @@ $(document).ready(function(){
 			msgs.css("display", "none");
 			msgs.css("left" , w);
 			msgs.css("right" , w);
-			msgs.css("top", "20%");
+			msgs.css("top", "25%");
 			msgs.addClass("message-jsbox");
 			if (msgs.children("button").length == 0)
 				msgs.append("<button type=\"button\">Close</button>");

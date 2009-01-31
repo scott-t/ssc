@@ -37,12 +37,13 @@ define('SSC_THEME_NAV_HORIZONTAL', 1);
  * @return string HTML tags representing the CSS/JS
  */
 function _theme_get_meta($ver = '1'){
+	global $ssc_site_url;
 	$out = '';
 	$css = ssc_add_css();
 	foreach ($css as $path){
 		$out .= '<link type="text/css" rel="stylesheet" media="' . $path[1] . '" href="' . $path[0] . '?' . $ver . "\" />\n";
 	}
-	
+	$out .= '<script type="text/javascript">var siteURI = "' . $ssc_site_url . "\";</script>\n";
 	$js = ssc_add_js();
 	foreach ($js as $path){
 		$out .= '<script type="text/javascript" src="' . $path . '?' . $ver . "\"> </script>\n";
