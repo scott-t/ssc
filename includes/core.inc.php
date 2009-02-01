@@ -42,7 +42,7 @@ define('SSC_VER_MINOR', 0);
 /**
  * Version numbers - Bugfix/stability update
  */
-define('SSC_VER_REV', '0a');
+define('SSC_VER_REV', '1');
 /**
  * Version numbers - Major trunk change
  */
@@ -850,6 +850,16 @@ function ssc_load_library($lib){
 		include $path;
 		$loaded[] = $lib;
 	}
-	
+
 	return true;
+}
+
+/**
+ * Parse ambiguous dates to a format that strtotime will agree with
+ * @param string $date Date formatted in dd/mm/yy[yy] format to convert into the illogical PHP friendly mm/dd/yy[yy] format
+ * @return string Rearranged date string
+ */
+function ssc_parse_date($date){
+	//see: http://www.php.net/manual/fi/function.strtotime.php#59748
+	return preg_replace("/^\s*([0-9]{1,2})[\/\. -]+([0-9]{1,2})[\/\. -]+([0-9]{2,4})/", "\\2/\\1/\\3", $date);
 }

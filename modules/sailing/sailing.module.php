@@ -274,6 +274,9 @@ function sailing_series(){
 function sailing_series_validate(){
 	if (!isset($_POST['id'], $_POST['name'], $_POST['submit'], $_POST['url']))
 		return false;		// missing compulsory fields - drop quietly
+		
+	if (!login_check_auth('sailing'))
+		return false;
 	
 	if (strlen($_POST['name']) == 0){
 		ssc_add_message(SSC_MSG_CRIT, t('Series must have a name'));
@@ -665,7 +668,7 @@ function _ssc_sailing_parse_csv($id){
 	foreach ($series_results as $boat => $results) {
 		if (isset($results['id'])){
 			$ret = $ssc_database->query(
-				"UPDATE #__sailing_results (uid, series_id, results, times, points, division) VALUES (%d, %d, '%s', '%s', %d, '%s') WHERE id = %d",
+				"UPDATE #__sailing_results SET uid = %d, series_id = %d, results = '%s', times = '%s', points = %d, division = '%s' WHERE id = %d",
 				 		$boat, $id, implode(",", $results['results']), implode(",", $results['times']),
 						$results['final'], $results['div'], $results['id']);
 		}

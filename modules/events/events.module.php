@@ -34,7 +34,7 @@ function events_admin(){
 			
 		case '':
 			$out = ssc_admin_table(t('Event list'), 
-				"SELECT id, title, description, uri, date, flags FROM #__events ORDER BY date DESC",
+				"SELECT id, title, date, description, uri FROM #__events ORDER BY date DESC",
 				null, array('perpage' => 20, 'link' => 'title', 'linkpath' => '/admin/events/edit/'));
 			$out .= l(t('New event'), '/admin/events/edit/0');
 			break;

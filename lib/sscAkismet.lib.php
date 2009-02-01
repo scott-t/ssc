@@ -51,7 +51,7 @@ class sscAkismet{
 	
 		$this->apiKey = $api;
 		$this->blog = urlencode($blog);
-		$this->userAgent = SSC_VER_UA . " | SSC Akismet Library/0.4a";
+		$this->userAgent = SSC_VER_UA . " | SSC Akismet Library/0.5a";
 			
 		define("AKISMET_VERIFY",'/1.1/verify-key');
 		define("AKISMET_CHECK",'/1.1/comment-check');

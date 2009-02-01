@@ -132,7 +132,7 @@ function module_load(){
 	// Set up modules "superglobal"
 	$SSC_MODULES = array();
 	
-		
+	
 	// Retrieve all enabled modules
 	$result = $ssc_database->query("SELECT id, filename, weight FROM #__module WHERE status >= %d ORDER BY weight ASC", SSC_MODULE_ENABLED);
 
