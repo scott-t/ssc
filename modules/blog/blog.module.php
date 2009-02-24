@@ -13,15 +13,15 @@ defined('_VALID_SSC') or die('Restricted access');
 /**
  * Comment submission flag: Comment has been read by post owner
  */
-define('SSC_BLOG_READ', 4);
+define('SSC_BLOG_COMMENT_READ', 4);
 /**
  * Comment submission flag: Comment has been toggled before
  */
-define('SSC_BLOG_SPAM', 2);
+define('SSC_BLOG_COMMENT_SPAM', 2);
 /**
  * Comment submission flag: Comment is a spam post
  */
-define('SSC_BLOG_CAN_SPAM', 1);
+define('SSC_BLOG_COMMENT_CAN_SPAM', 1);
 
 function blog_meta(){
 	if ($_GET['handler'] == 'blog')
@@ -79,7 +79,7 @@ function blog_widget($args){
 			
 		$result = $ssc_database->query("SELECT p.title, p.urltext, COUNT(c.post_id) cnt, p.created FROM #__blog_post p
 						LEFT JOIN #__blog_comment c ON (post_id = p.id AND (c.status & %d = 0)) WHERE blog_id = %d
-						GROUP BY p.id HAVING cnt > 0 ORDER BY p.created DESC", SSC_BLOG_READ, $_GET['path-id']); // AND p.author_id = %d
+						GROUP BY p.id HAVING cnt > 0 ORDER BY p.created DESC", SSC_BLOG_COMMENT_READ, $_GET['path-id']); // AND p.author_id = %d
 						
 		if ($result && $ssc_database->number_rows() > 0){
 			while ($data = $ssc_database->fetch_assoc($result)){
@@ -129,7 +129,7 @@ function blog_admin(){
 				$out .= "<tr class=\"row".$row++."\"><td>$data->id</td><td>" . l($data->author, $data->site) . "</td><td>" . check_plain($data->email) . "</td><td";
 				$status = $data->status;
 
-				if ($status & SSC_BLOG_SPAM){
+				if ($status & SSC_BLOG_COMMENT_SPAM){
 					$out .= " class=\"blog-spam-icon\"";
 				}
 				else {
@@ -137,9 +137,9 @@ function blog_admin(){
 				}
 				$out .=">" . check_plain($data->body) . "</td><td>";
 				// If tree for actions
-				if ($status & SSC_BLOG_CAN_SPAM){
+				if ($status & SSC_BLOG_COMMENT_CAN_SPAM){
 					// Hasn't been re-submitted yet
-					if ($status & SSC_BLOG_SPAM){
+					if ($status & SSC_BLOG_COMMENT_SPAM){
 						// Was marked as spam
 						$sub_ham['#name'] = "ham[$data->id]";
 						$out .= theme_render_input($sub_ham);
@@ -156,7 +156,7 @@ function blog_admin(){
 				}
 				else{
 					// Has already been resubmitted
-					if ($status & SSC_BLOG_SPAM){
+					if ($status & SSC_BLOG_COMMENT_SPAM){
 						// Currently spam/hidden
 						$sub_show['#name'] = "show[$data->id]";
 						$out .= theme_render_input($sub_show);
@@ -254,7 +254,7 @@ function blog_content(){
 			return _blog_gen_post($data['page'], $_GET['path'] . '/page/', 
 				"SELECT p.id, p.title, p.created, p.urltext, u.displayname author, count(c.post_id) count, p.body, p.commentsdisabled FROM
 				#__blog_post p LEFT JOIN #__user u ON u.id = p.author_id LEFT JOIN #__blog_comment c ON (post_id = p.id AND (status & %d = 0))
-				WHERE blog_id = %d GROUP BY p.id ORDER BY p.created DESC", SSC_BLOG_SPAM, $_GET['path-id']);
+				WHERE blog_id = %d GROUP BY p.id ORDER BY p.created DESC", SSC_BLOG_COMMENT_SPAM, $_GET['path-id']);
 		}		
 		elseif ($action == 'tag'){
 			// Show posts for the tag
@@ -270,7 +270,7 @@ function blog_content(){
 				"SELECT p.id, p.title, p.created, p.urltext, u.displayname author, count(c.post_id) count, p.body, p.commentsdisabled FROM 
 				#__blog_post p LEFT JOIN #__user u ON u.id = p.author_id LEFT JOIN #__blog_comment c ON (post_id = p.id AND (status & %d = 0))
 				LEFT JOIN #__blog_relation r ON r.post_id = p.id LEFT JOIN #__blog_tag t ON t.id = r.tag_id WHERE blog_id = %d AND t.tag = '%s'
-				GROUP BY p.id ORDER BY p.created DESC", SSC_BLOG_SPAM, $_GET['path-id'], $tag);
+				GROUP BY p.id ORDER BY p.created DESC", SSC_BLOG_COMMENT_SPAM, $_GET['path-id'], $tag);
 			
 		}
 		elseif ($action == 'id'){
@@ -338,7 +338,7 @@ function blog_content(){
 				if (!empty($_GET['param'][3])){
 					// Unless admin, and the param is 'mark'
 					if (login_check_auth("blog") && $_GET['param'][3] == 'mark'){
-						if ($ssc_database->query("UPDATE #__blog_comment SET status = status | %d WHERE post_id = %d", SSC_BLOG_READ, $data->id))
+						if ($ssc_database->query("UPDATE #__blog_comment SET status = status | %d WHERE post_id = %d", SSC_BLOG_COMMENT_READ, $data->id))
 							ssc_add_message(SSC_MSG_INFO, t('Marked the comments as read'));
 					}
 					else {
@@ -382,7 +382,7 @@ function blog_content(){
 					
 					if ($is_admin){
 						$result = $ssc_database->query("SELECT id, author, email, site, created, status, body FROM #__blog_comment 
-						WHERE post_id = %d ORDER BY created ASC", $data->id, SSC_BLOG_SPAM, SSC_BLOG_SPAM);
+						WHERE post_id = %d ORDER BY created ASC", $data->id, SSC_BLOG_COMMENT_SPAM, SSC_BLOG_COMMENT_SPAM);
 						// Start spam/ham/commentstate form
 						$out .= '<form action="" method="post"><div><input type="hidden" name="form-id" value="blog_spam_ham" />';
 						
@@ -400,7 +400,7 @@ function blog_content(){
 					}
 					else {
 						$result = $ssc_database->query("SELECT author, email, site, created, body FROM #__blog_comment 
-						WHERE post_id = %d AND status & %d = 0 ORDER BY created ASC", $data->id, SSC_BLOG_SPAM);
+						WHERE post_id = %d AND status & %d = 0 ORDER BY created ASC", $data->id, SSC_BLOG_COMMENT_SPAM);
 					}
 					
 					if (!$result || $ssc_database->number_rows($result) == 0){
@@ -413,7 +413,7 @@ function blog_content(){
 							// For each comment, show it, it's visible state, and possible options
 							while ($data = $ssc_database->fetch_object($result)){
 								$status = $data->status;	
-								$out .= "<div class='" . ($status & SSC_BLOG_SPAM ? "blog-spam-icon" : "gravatar") . "'" . ($status & SSC_BLOG_SPAM ? "" : "style='background-image: url(\""._blog_gravatar_get_url($data->email)."\");' ") . "><p>" . nl2br(check_plain($data->body)) . "</p><p>";
+								$out .= "<div class='" . ($status & SSC_BLOG_COMMENT_SPAM ? "blog-spam-icon" : "gravatar") . "'" . ($status & SSC_BLOG_COMMENT_SPAM ? "" : "style='background-image: url(\""._blog_gravatar_get_url($data->email)."\");' ") . "><p>" . nl2br(check_plain($data->body)) . "</p><p>";
 								$out .= t("Posted !date at !time by !author\n", 
 										array(	'!date' => date(ssc_var_get('date_med', SSC_DATE_MED), $data->created),
 												'!time' => date(ssc_var_get('time_short', SSC_TIME_SHORT), $data->created),
@@ -426,9 +426,9 @@ function blog_content(){
 								$sub_ham = array('#value' => 'Unmark spam', '#type' => 'submit');
 								
 								// If tree for actions
-								if ($status & SSC_BLOG_CAN_SPAM){
+								if ($status & SSC_BLOG_COMMENT_CAN_SPAM){
 									// Hasn't been re-submitted yet
-									if ($status & SSC_BLOG_SPAM){
+									if ($status & SSC_BLOG_COMMENT_SPAM){
 										// Was marked as spam
 										$sub_ham['#name'] = "ham[$data->id]";
 										$out .= theme_render_input($sub_ham);
@@ -445,7 +445,7 @@ function blog_content(){
 								}
 								else  {
 									// Has already been resubmitted
-									if ($status & SSC_BLOG_SPAM){
+									if ($status & SSC_BLOG_COMMENT_SPAM){
 										// Currently spam/hidden
 										$sub_show['#name'] = "show[$data->id]";
 										$out .= theme_render_input($sub_show);
@@ -499,7 +499,7 @@ function blog_content(){
 					"SELECT p.id, p.title, p.created, p.urltext, u.displayname author, count(c.post_id) count, p.commentsdisabled FROM 
 					#__blog_post p LEFT JOIN #__blog_comment c ON (post_id = p.id AND (c.status & %d = 0)) LEFT JOIN #__user u ON u.id = p.author_id 
 					WHERE blog_id = %d AND p.created >= %d AND p.created < %d GROUP BY p.id ORDER BY p.created DESC",
-					SSC_BLOG_SPAM, $_GET['path-id'], mktime(0, 0, 0, 1, 1, $action), mktime(0, 0, 0, 1, 0, $action + 1));
+					SSC_BLOG_COMMENT_SPAM, $_GET['path-id'], mktime(0, 0, 0, 1, 1, $action), mktime(0, 0, 0, 1, 0, $action + 1));
 			}
 		}
 	}
@@ -1114,25 +1114,25 @@ function blog_guest_comment_submit(){
 		$spam = new sscAkismet($ssc_site_url, ssc_var_get('wordpress_api', ''));
 		if (!$spam){
 			// No API key - submit but mark for moderation
-			$is_spam = SSC_BLOG_SPAM;
+			$is_spam = SSC_BLOG_COMMENT_SPAM;
 		}
 		else{
 			$spam->setContent($_POST['c'], 'comment');
 			$spam->setAuthor($_POST['n'], $_POST['e'], $_POST['s']);
 			$spam->setRemote($_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT']);
 			$spam->setBlog($_POST['perma']);
-			$is_spam = ($spam->isSpam() ? SSC_BLOG_SPAM | SSC_BLOG_CAN_SPAM : SSC_BLOG_CAN_SPAM);
+			$is_spam = ($spam->isSpam() ? SSC_BLOG_COMMENT_SPAM | SSC_BLOG_COMMENT_CAN_SPAM : SSC_BLOG_COMMENT_CAN_SPAM);
 			// Increment caught count
-			if ($is_spam & SSC_BLOG_SPAM)
+			if ($is_spam & SSC_BLOG_COMMENT_SPAM)
 				ssc_var_set('akismet_count',(int)ssc_var_get('akismet_count', 1) + 1);
 		}
 	}
 	else{
 		// No Akismet library - submit but mark for moderation
-		$is_spam = SSC_BLOG_SPAM;
+		$is_spam = SSC_BLOG_COMMENT_SPAM;
 	}
 	
-	if (($is_spam & SSC_BLOG_SPAM) && ssc_var_get('blog.discard_spam', false)) {
+	if (($is_spam & SSC_BLOG_COMMENT_SPAM) && ssc_var_get('blog.discard_spam', false)) {
 		ssc_add_message(SSC_MSG_WARN, t('Your post was marked as spam and permanently discarded - please try to reduce it\'s "spammyness" and try again'));
 		$_POST['spammed'] = true;
 	}
@@ -1147,9 +1147,9 @@ function blog_guest_comment_submit(){
 		if ($result){
 			// Submission successful
 			
-			if ($is_spam & SSC_BLOG_SPAM){
+			if ($is_spam & SSC_BLOG_COMMENT_SPAM){
 				// Comment was marked as spam
-				if ($is_spam & SSC_BLOG_CAN_SPAM){
+				if ($is_spam & SSC_BLOG_COMMENT_CAN_SPAM){
 					// ... by Akismet
 					ssc_add_message(SSC_MSG_WARN, t('Your comment has been submitted but marked as spam and queued for moderation.  Do not resubmit your comment.'));
 				}
@@ -1254,7 +1254,7 @@ function blog_spam_ham_submit(){
 		if (!$result || !($data = $ssc_database->fetch_object($result)))
 			return;
 			
-		if (($_POST['action'] == 'spam') && ($data->status & SSC_BLOG_CAN_SPAM) > 0){
+		if (($_POST['action'] == 'spam') && ($data->status & SSC_BLOG_COMMENT_CAN_SPAM) > 0){
 			// Marking as spam + Akismet submit
 			if (ssc_load_library('sscAkismet')){
 				$spam = new sscAkismet($ssc_site_url, ssc_var_get('wordpress_api', ''));
@@ -1266,7 +1266,7 @@ function blog_spam_ham_submit(){
 				}
 			}
 		}
-		elseif (($_POST['action'] == 'ham') && ($data->status & SSC_BLOG_CAN_SPAM) > 0){
+		elseif (($_POST['action'] == 'ham') && ($data->status & SSC_BLOG_COMMENT_CAN_SPAM) > 0){
 			// Mark not spam + Akismet submit
 			if (ssc_load_library('sscAkismet')){
 				$spam = new sscAkismet($ssc_site_url, ssc_var_get('wordpress_api', ''));
@@ -1279,17 +1279,17 @@ function blog_spam_ham_submit(){
 			}
 		}
 		
-		$data->status = $data->status & ~SSC_BLOG_CAN_SPAM;
+		$data->status = $data->status & ~SSC_BLOG_COMMENT_CAN_SPAM;
 		switch ($_POST['action']){
 		case 'spam':
 		case 'hide':
-			$data->status = $data->status | SSC_BLOG_SPAM;
+			$data->status = $data->status | SSC_BLOG_COMMENT_SPAM;
 			$ssc_database->query("UPDATE #__blog_comment SET status = %d WHERE id = %d", $data->status, $_POST['i']);
 			break;
 			
 		case 'show':
 		case 'ham':
-			$data->status = $data->status & ~SSC_BLOG_SPAM;
+			$data->status = $data->status & ~SSC_BLOG_COMMENT_SPAM;
 			$ssc_database->query("UPDATE #__blog_comment SET status = %d WHERE id = %d", $data->status, $_POST['i']);
 			break;
 		}
