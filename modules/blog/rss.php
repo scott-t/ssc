@@ -4,7 +4,6 @@
  *
  * Generate an RSS feed for each of the dynamic pages.
  * @package SSC
- * @subpackage Module
  * @copyright Copyright (c) Scott Thomas
  */
 
@@ -22,11 +21,11 @@ if (!ssc_load_library('sscText')){
 $result = $ssc_database->query("SELECT id, name, description FROM #__blog");
 if (!$result)
 	return;
-	
+
 // Loop through each
 while ($data = $ssc_database->fetch_assoc($result)){
-	
-	$res_posts = $ssc_database->query("SELECT p.id, p.created, p.modified, urltext, title, body, displayname FROM #__blog_post p LEFT JOIN #__user u ON u.id = author_id WHERE blog_id = 3 ORDER BY created DESC LIMIT 0,5");
+
+	$res_posts = $ssc_database->query("SELECT p.id, p.created, p.modified, urltext, title, body, displayname FROM #__blog_post p LEFT JOIN #__user u ON u.id = author_id WHERE blog_id = %d ORDER BY created DESC LIMIT 0,5", $data['id']);
 
 	// Ignore empty blogs
 	if(!$res_posts || ($ssc_database->number_rows() == 0))
@@ -36,7 +35,7 @@ while ($data = $ssc_database->fetch_assoc($result)){
 	$bID = $data['id'];
 	$fp = fopen($ssc_site_path . "/modules/blog/rss-$bID.xml",'w');
 	$ap = fopen($ssc_site_path . "/modules/blog/atom-$bID.xml",'w');
-	
+
 	// Retrieve first lot of posts (for updated date, etc)
 	$dat = $ssc_database->fetch_assoc($res_posts);
 	
@@ -72,7 +71,7 @@ FEED
   <author>
     <name>Scott</name>
   </author>
-  <id>$ssc_site_url/modules/dynamic/atom-1.xml</id>
+  <id>$ssc_site_url/modules/dynamic/atom-$bID.xml</id>
 ");
    
 	// Loop through all posts
@@ -120,7 +119,7 @@ ITEM
     <content type=\"xhtml\"><div xmlns=\"http://www.w3.org/1999/xhtml\">$dat[body]</div></content>
   </entry>
 ");
-	} while ($dat = $ssc_database->fetch_assoc($result));
+	} while ($dat = $ssc_database->fetch_assoc($res_posts));
 	
 	// Finish each file markup, and close the handles
 	fwrite($fp,"  </channel>
