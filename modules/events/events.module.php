@@ -48,6 +48,38 @@ function events_admin(){
 	return $out;
 }
 
+function events_widget($title, $lowerStr, $upperStr){
+	global $ssc_database;
+	// Use static array to avoid odd cases with items either skipped or in both sides when borderline
+	static $dates = array();
+		
+	if (isset($dates[$lowerStr]))
+		$lower = $dates[$lowerStr];
+	else{
+		$lower = date("Y-m-d", strtotime($lowerStr));
+		$dates[$lowerStr] = $lower;
+	}
+	
+	if (isset($dates[$upperStr]))
+		$upper = $dates[$upperStr];
+	else{
+		$upper = date("Y-m-d", strtotime($upperStr));
+		$dates[$upperStr] = $upper;
+	}
+	
+	$result = $ssc_database->query("SELECT title, description, uri, date, flags FROM #__events WHERE date > '%s' AND date < '%s' ORDER BY date ASC", $lower, $upper);
+	if (!$result)
+		return NULL;
+		
+	$ret = '<ul class="events-list">';
+	while ($data = $ssc_database->fetch_assoc($result))
+		$ret .= _events_print_db_event($data);
+		
+	$ret .= '</ul>';
+	
+	return array('body' => $ret, 'title' => $title);
+}
+
 /**
  * Display the list of events - implementation of module_content
  * 
