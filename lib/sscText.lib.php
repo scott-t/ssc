@@ -93,7 +93,7 @@ class sscText {
 				do {
 					$body .= $bulk[$i] . '\n';
 					$i++;
-				} while(isset($bulk[$i]) && $bulk[$i][0] == ' ');
+				} while(isset($bulk[$i][0]) && $bulk[$i][0] == ' ');
 				$body .= '</pre>';
 				$i--;
 				break;

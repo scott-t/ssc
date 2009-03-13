@@ -103,7 +103,8 @@ class sscImageGD2 extends sscAbstractImage{
 				break;			
 
 			case 'png':
-				$saved = imagepng($new_img, $target, $comp);
+				if ($comp < 10) $comp = 10;
+				$saved = imagepng($new_img, $target, 10 - (int)($comp / 10));
 				break;
 		} 
 				
