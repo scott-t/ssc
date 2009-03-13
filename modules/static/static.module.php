@@ -50,24 +50,24 @@ function static_admin(){
 }
 
 function static_widget($title, $body){
-$args = func_get_args();
-$title = array_shift($args);
-$body = array_shift($args);
-
-if (empty($body))
-return;
-
-while(!empty($args[0]) && !is_int($args[0]))
-$body .= array_shift($args);
-
-if (!empty($args[0]) && !in_array($args)){
-// Not in the allowed list... jump n run
-return;
-}
-if (!ssc_load_library('sscText')){
-return;
-}
-return array('title'=>$title, 'body'=>sscText::convert($body));
+	$args = func_get_args();
+	$title = array_shift($args);
+	$body = array_shift($args);
+	
+	if (empty($body))
+		return;
+	
+	while(!empty($args[0]) && !is_int($args[0]))
+		$body .= array_shift($args);
+	
+	if (!empty($args[0]) && !in_array($args)){
+	// Not in the allowed list... jump n run
+		return;
+	}
+	if (!ssc_load_library('sscText')){
+		return;
+	}
+	return array('title'=>$title, 'body'=>sscText::convert($body));
 }
 
 /**
