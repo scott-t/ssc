@@ -170,7 +170,7 @@ function ssc_admin_table($title, $sql, $sql_args = null, $table_args = null){
 		$out .= '</table>';
 		
 		// Page navigation
-		if (isset($table_args['perpage'])){
+		if (isset($table_args['perpage'], $table_args['pagelink'])){
 			$out .= '<div class="paging"><span>';
 			// Is there a previous page?
 			if ($page > 1)

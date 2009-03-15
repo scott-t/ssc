@@ -36,7 +36,7 @@ function sailing_admin(){
 			"SELECT s.id, name, description, path FROM #__sailing_series s 
 			LEFT JOIN #__handler h ON h.id = s.id ORDER BY path ASC",
 			null,
-			array('perpage' => 10, 'link' => 'name', 'linkpath' => '/admin/sailing/edit/'));
+			array('perpage' => 10, 'pagelink' => '/admin/sailing/page/', 'link' => 'name', 'linkpath' => '/admin/sailing/edit/'));
 		$out .= l(t('New series'),'/admin/sailing/edit/0');
 		
 		break;
