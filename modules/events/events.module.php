@@ -93,8 +93,8 @@ function events_content(){
 	// Set up the event time borders
 	$borders['past'] = date("Y-m-d", strtotime(ssc_var_get('events.recent', '-2 weeks')));
 	$borders['current-past'] = date("Y-m-d", strtotime(ssc_var_get('events.current.old', '-1 week')));
-	$borders['current-future'] = date("Y-m-d", strtotime(ssc_var_get('events.current.old', '+1 week')));
-	$borders['future'] = date("Y-m-d", strtotime(ssc_var_get('events.current.old', '+2 months')));
+	$borders['current-future'] = date("Y-m-d", strtotime(ssc_var_get('events.current.new', '+1 week')));
+	$borders['future'] = date("Y-m-d", strtotime(ssc_var_get('events.future', '+2 months')));
 	
 	// Get all events within the range
 	$result = $ssc_database->query("SELECT title, description, uri, date, flags FROM #__events WHERE date >= '%s' AND date <= '%s' ORDER BY date ASC", $borders['past'], $borders['future']);
