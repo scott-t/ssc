@@ -67,7 +67,7 @@ function events_widget($title, $lowerStr, $upperStr){
 		$dates[$upperStr] = $upper;
 	}
 	
-	$result = $ssc_database->query("SELECT title, description, uri, date, flags FROM #__events WHERE date > '%s' AND date < '%s' ORDER BY date ASC", $lower, $upper);
+	$result = $ssc_database->query("SELECT title, description, uri, date, flags FROM #__events WHERE date > '%s' AND date <= '%s' ORDER BY date ASC", $lower, $upper);
 	if (!$result)
 		return NULL;
 		
