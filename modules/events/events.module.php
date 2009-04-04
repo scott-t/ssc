@@ -97,7 +97,7 @@ function events_content(){
 	$borders['future'] = date("Y-m-d", strtotime(ssc_var_get('events.current.old', '+2 months')));
 	
 	// Get all events within the range
-	$result = $ssc_database->query("SELECT title, description, uri, date, flags FROM #__events WHERE date > '%s' AND date < '%s' ORDER BY date ASC", $borders['past'], $borders['future']);
+	$result = $ssc_database->query("SELECT title, description, uri, date, flags FROM #__events WHERE date >= '%s' AND date <= '%s' ORDER BY date ASC", $borders['past'], $borders['future']);
 	if (!$result){
 		ssc_not_found();
 		return;
@@ -114,7 +114,7 @@ function events_content(){
 	// And start displaying the results
 	$out = '<h3>' . t('Recent events') . '</h3>';
 	$in = false;
-	while ($data && $data['date'] < $borders['current-past']){
+	while ($data && $data['date'] <= $borders['current-past']){
 		if (!$in){
 			$out .= '<ul class="events-list">';
 			$in = true;
@@ -130,7 +130,7 @@ function events_content(){
 		$out .= t('There are no recent events');
 		
 	$out .= '<h3>' . t('Current events') . '</h3>';
-	while ($data && $data['date'] < $borders['current-future']){
+	while ($data && $data['date'] <= $borders['current-future']){
 		if (!$in){
 			$out .= '<ul class="events-list">';
 			$in = true;
