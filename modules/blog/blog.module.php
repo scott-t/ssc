@@ -23,6 +23,23 @@ define('SSC_BLOG_COMMENT_SPAM', 2);
  */
 define('SSC_BLOG_COMMENT_CAN_SPAM', 1);
 
+/**
+ * Post state flag: Post has been published and is visible
+ */
+define('SSC_BLOG_POST_PUBLISHED', 1);
+/**
+ * Post state flag: Post has been posted but on an auto-publish for a future date
+ */
+define('SSC_BLOG_POST_DELAYED', 2);
+/**
+ * Post state flag: Post has been hidden, perhaps because it is not yet ready
+ */
+define('SSC_BLOG_POST_HIDDEN', 4);
+/**
+ * Post state flag: Comments have been disabled for this post
+ */
+define('SSC_BLOG_POST_NOCOMMENTS', 8);
+
 function blog_meta(){
 	if ($_GET['handler'] == 'blog')
 		return '<link rel="alternate" type="application/atom+xml" title="Subscribe using Atom 1.0" href="' . $_GET['path'] . '/feed" />';
@@ -918,13 +935,13 @@ function blog_post_submit(){
 			return;
 		}
 		$require_redir = true;
-		module_hook('mod_blog_post_publish', null, array($id, '', t($_POST['title'])));
+		module_hook('mod_blog_post_publish', null, array($blog, $id, t($_POST['title'])));
 	}
 	else{
 		// Update
 		$ssc_database->query("UPDATE #__blog_post b SET title = '%s', body = '%s', urltext = '%s', modified = %d WHERE id = %d AND blog_id = %d", 
 				$_POST['title'], $_POST['body'], $_POST['url'], time(), $id, $blog);
-		module_hook('mod_blog_post_update', null, array($id, '', t($_POST['title'])));
+		module_hook('mod_blog_post_update', null, array($blog, $id, t($_POST['title'])));
 	}
 
 	// Tags
@@ -955,7 +972,6 @@ function blog_post_submit(){
 	$exist = explode(',',$exist);
 	$total = count($exist);
 	for($i = 0; $i < $total; $i++){
-		ssc_add_message(SSC_MSG_INFO, "tag cull list: " . $tID . ", " . intval($exist[$i]));
 		if($tID = intval($exist[$i])){
 			$ssc_database->query("DELETE FROM #__blog_relation WHERE post_id = %d AND tag_id = %d LIMIT 1",$id,$tID);
 		}
