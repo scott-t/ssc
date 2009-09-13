@@ -38,6 +38,10 @@ textarea {
 	margin-bottom: 1em;
 }
 
+.form-error {
+	background-color: #FFCCCC;
+}
+
 #body * legend {
 	font-size: 1.2em;
 }
