@@ -244,6 +244,9 @@ function blog_admin(){
  * 
  *   - /yyyy
  *     Archival retrieval of posts (no content) in the specified year
+ *     
+ *   - /atom
+ *     Atom style feed for the current blog
  */
 function blog_content(){
 	global $ssc_database, $ssc_site_path;
@@ -326,6 +329,16 @@ function blog_content(){
 			// And now quit ...
 			ssc_close();
 			// ... fully
+			exit (0);
+		}
+		elseif ($action == 'atom') {
+			if (count($_GET['param']) > 1)
+				ssc_not_found();
+				
+			header("Content-Type: application/atom+xml", true);
+			include $ssc_site_path . '/modules/blog/rss.inline.php';
+			
+			ssc_close();
 			exit (0);
 		}
 		else {
@@ -430,7 +443,7 @@ function blog_content(){
 							// For each comment, show it, it's visible state, and possible options
 							while ($data = $ssc_database->fetch_object($result)){
 								$status = $data->status;	
-								$out .= "<div class='" . ($status & SSC_BLOG_COMMENT_SPAM ? "blog-spam-icon" : "gravatar") . "'" . ($status & SSC_BLOG_COMMENT_SPAM ? "" : "style='background-image: url(\""._blog_gravatar_get_url($data->email)."\");' ") . "><p>" . nl2br(check_plain($data->body)) . "</p><p>";
+								$out .= "<div class='" . ($status & SSC_BLOG_COMMENT_SPAM ? "blog-spam-icon" : "blog-notspam-icon") . "'><p>" . nl2br(check_plain($data->body)) . "</p><p>";
 								$out .= t("Posted !date at !time by !author\n", 
 										array(	'!date' => date(ssc_var_get('date_med', SSC_DATE_MED), $data->created),
 												'!time' => date(ssc_var_get('time_short', SSC_TIME_SHORT), $data->created),
@@ -480,13 +493,13 @@ function blog_content(){
 						else{
 							// Just show comments
 							while ($data = $ssc_database->fetch_object($result)){
-								$out .= "<div class='gravatar' style='background-image: url(\""._blog_gravatar_get_url($data->email)."\");'>";
+								//$out .= "<div class='gravatar' style='background-image: url(\""._blog_gravatar_get_url($data->email)."\");'>";
 								$out .= '<p>' . nl2br(check_plain($data->body)) . '</p><p>';
 								$out .= t("Posted !date at !time by !author\n", 
 										array(	'!date' => date(ssc_var_get('date_med', SSC_DATE_MED), $data->created),
 												'!time' => date(ssc_var_get('time_short', SSC_TIME_SHORT), $data->created),
 												'!author' => 
-											(empty($data->site) ? $data->author : l($data->author, $data->site)))) . '</p></div><hr />';
+											(empty($data->site) ? $data->author : l($data->author, $data->site)))) . '</p><hr />'; //'</p></div><hr />';
 							}
 						}
 						
