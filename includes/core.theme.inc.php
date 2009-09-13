@@ -251,9 +251,10 @@ function theme_footer($count){
 function theme_render_form($structure){
 	$structure += array('#action' => '',
 						'#method' => 'post');
-	
+
 	$out = '<form action="' . $structure['#action'] . '" method="' . $structure['#method'] . 
 		   '" ' . (isset($structure['#attributes']) ? ssc_attributes($structure['#attributes']) : '') . 
+		   (isset($structure['#formname']) ? ' name="' . $structure['#formname'] . '"' : '') .
 		   '><div>';
 	
 	$out .= $structure['#value'] . '</div></form>';

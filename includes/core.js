@@ -2,11 +2,12 @@
  * Core JS file for SSC
  */
 
-/**
- * SSC Message object manipulation.  Show messages in their own dialog in a fixed position rather than inline
- */
-
 $(document).ready(function(){
+	
+	/*
+	 * SSC Message object manipulation.  Show messages in their own dialog in a fixed position rather than inline
+	 */
+	
 	moveMessages();
 
 	function moveMessages(){
@@ -34,42 +35,89 @@ $(document).ready(function(){
 		$("div#messages").remove();
 	}
 
+	/*
+	 * Form manipulation.  Retrieve form hierarchy when the particular form obtains focus
+	 */
+	var formVal = {};
 	
-	var didValidate;
+	$("input").focus(function (e) {
+		// Check if any trees exist yet
+		if (typeof formVal.forms == 'undefined') {
+			formVal.forms = {};
+		}
+	
+		// Find what form we're after
+		var target = $(e.target).closest("form").attr("name");
+		if (!formVal.forms[target]) {
+			formVal.forms[target] = 1;
+			$.getJSON(siteURI + "/?core=val-form&ajax=y&form=" + target, 
+				function(data) {
+					formVal.forms[target] = data;
+				});
+		}
+	});
+	
+	
+
+	formVal.err;
+	formVal.didVal;
+	formVal.form;
 	$("input[type=submit]").click(function(e){
 		//
-		didValidate = true;
-		
-		var $target = $(e.target);
-		while (!$target.is("form")){
-			$target = $($target.parent().get(0));
-			if ($target == null)
-				return true;		// Can't find parent - try server side validation instead
+		formVal.didVal = true;
+		formVal.err = "";
+		formVal.$form = $(e.target).closest("form");
+		var target = formVal.$form.attr("name");
+		if (!formVal.forms[target]) {
+			// Validation hasn't loaded yet...
+			return true;
 		}
+
+		$.each(formVal.forms[target], tryValidate);
 		
-		$target.children().each(tryValidate);
-		
-		if (!didValidate && $("div#messages").length == 0) {
-			$("body").append("<div id=\"messages\"><div class=\"message message-crit\"><span>Not all required fields were filled in</span></div></div>");
+		if (!formVal.didVal && $("div#messages").length == 0) {
+			$("body").append("<div id=\"messages\"><div class=\"message message-crit\"><span>Not all required fields were filled in: " + formVal.err + "</span></div></div>");
 			moveMessages();
 		}
 			
-		return didValidate;
+		return formVal.didVal;
 	});
 	
-	function tryValidate(){
-		if (!didValidate)
-			return;
-			
-		var $target = $(this);
-		var $kids = $target.children();
+	function tryValidate(index, element){
+		
+		// If #type exists, probably a form element
+		if (element["#type"]) {
 
-		if ($kids.length > 0)
-			$kids.each(tryValidate);
-		else if ($target.is("input.inp-req") && $target.val().length == 0){
-			didValidate = false;
+			// Dive into fieldsets
+			if (element["#type"] == "fieldset") {
+				tryValidate(element, $.each(element, tryValidate));
+			}
+			else {
+				// Form element
+				$e = formVal.$form.find("*[name='" + index + "']:input");
+				if (element["#required"] && $e.val().length == 0) {
+					formVal.didVal = false;
+					if (formVal.err.length == 0)
+						formVal.err += element["#title"];
+					else
+						formVal.err += ", " + element["#title"];
+						
+					if (!$e.hasClass("form-error"))
+						$e.addClass("form-error");
+				}
+				else {
+					$e.removeClass("form-error");
+				}
+			}
 		}
 	}
+
 });
+
+
+
+
+
+
 
 
