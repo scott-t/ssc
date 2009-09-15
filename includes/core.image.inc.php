@@ -85,7 +85,6 @@ class sscImage{
 				return;
 				
 			$ratio = $max_y / $y;
-			echo $ratio;
 			$y = $max_y;
 			$x = (int)floor($x * $ratio);
 			return;				
@@ -97,7 +96,6 @@ class sscImage{
 				return;
 				
 			$ratio = $max_x / $x;
-			echo $ratio;
 			$x = $max_x;
 			$y = (int)floor($y * $ratio);
 			return;
