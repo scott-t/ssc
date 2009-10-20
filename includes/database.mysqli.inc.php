@@ -364,7 +364,7 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 		$param_count = count($param);
 		for ($i = 1; $i < $param_count; $i++){
 			// Escape string's as needed
-			if (is_string($param[$i]))
+			if (is_string($param[$i]) || is_object($param[$i]))
 				$param[$i] = $this->escape_string($param[$i]);
 			
 		}
