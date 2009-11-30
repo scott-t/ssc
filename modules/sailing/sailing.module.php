@@ -30,13 +30,24 @@ function sailing_admin(){
 	case 'page':
 		// Allow for paging
 		array_unshift($_GET['param'], 'page');
-		
+
+	case 'download':
+		$id = array_shift($_GET['param']);
+		$csv = _ssc_sailing_get_csv($id);
+		if ($csv)
+			ssc_custom_data("text/csv", $csv, "series-$id.csv");		
+		else
+			ssc_not_found();
+		break;
+	
+
 	case '':
 		$out = ssc_admin_table(t('Regattas/Series'), 
 			"SELECT s.id, name, description, path FROM #__sailing_series s 
 			LEFT JOIN #__handler h ON h.id = s.id ORDER BY path ASC",
 			null,
-			array('perpage' => 10, 'pagelink' => '/admin/sailing/page/', 'link' => 'name', 'linkpath' => '/admin/sailing/edit/'));
+			array('perpage' => 10, 'pagelink' => '/admin/sailing/page/', 'link' => 'name', 'linkpath' => '/admin/sailing/edit/',
+				'customheads' => array('Download CSV'),'customcols' => array('Download' => '/admin/sailing/download/')));
 		$out .= l(t('New series'),'/admin/sailing/edit/0');
 		
 		break;
@@ -700,7 +711,55 @@ function _ssc_sailing_parse_csv($id){
 	return true;
 }
 
-function _ssc_sailing_get_csv($series_id){
+/**
+ * Read the data from the tables to recreate a CSV file for download
+ * @param int $id ID number of the sailing series/regatta in the DB
+ * @return string CSV collection when successful, NULL otherwise
+ */
+function _ssc_sailing_get_csv($id){
+	global $ssc_database;
 	
+	// Find heat numbers
+	$result = $ssc_database->query("SELECT heats FROM #__sailing_series WHERE id = %d", $id);
+	if (!$result || $ssc_database->number_rows() != 1) {
+		ssc_add_message(SSC_MSG_CRIT, t('Unable to find specified series within database'));
+		return NULL;
+	}
 	
+	$data = $ssc_database->fetch_assoc($result);
+	if (!$data) {
+		ssc_add_message(SSC_MSG_CRIT, t('Unable to find specified series database details'));
+		return NULL;
+	}
+	// Heat numbers!
+	$heats = explode(',', $data['heats']);
+
+	// Organise results
+	$result = $ssc_database->query("SELECT r.uid, number, skipper, crew, class, name, club, r.results, r.times, points, division FROM #__sailing_results r LEFT JOIN #__sailing_entries e ON e.id = r.uid WHERE series_id = %d ORDER BY division ASC, number ASC", $id);
+
+	$csv = 'Sail No., Division, Skipper, Crew, Class, Boat Name, Club, ' . $data['heats'] . ", Position\r\n";
+
+	while ($data = $ssc_database->fetch_assoc($result)) {
+		if (count($heats) < strlen($data['times'])) {
+			// Interleave times and results
+			$res = '';
+			$pos = explode(',', $data['results']);
+			$times = explode(',', $data['times']);
+			for ($i = 0; $i < count($pos); $i++) {
+				if ($times[$i] == '')
+					$res .= "$pos[$i],";
+				else
+					$res .= "$times[$i],";
+			}
+			$res = substr($res, 0, -1);
+		}
+		else {
+			// Final result only
+			$res = $data['results'];
+		}
+		$csv .= "$data[number], $data[division], $data[skipper], $data[crew], $data[class], $data[name], $data[club], $res, $data[points]\r\n";
+	}
+
+	return $csv;
 }
+
