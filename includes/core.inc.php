@@ -646,6 +646,20 @@ function ssc_not_allowed(){
 }
 
 /**
+ * Called to output raw data
+ * Similar to an AJAX call without and theme data, etc
+ */
+function ssc_custom_data($mime, &$body, $dlname = false){
+	header("Content-type: $mime");
+	if ($dlname)
+		header("Content-Disposition: attachment; filename=\"$dlname\"");
+	echo $body;
+	ssc_close();
+	exit;
+}
+
+
+/**
  * Called to redirect the current page
  */
 function ssc_redirect($path = '', $response_code = 302){
