@@ -144,7 +144,15 @@ function ssc_admin_table($title, $sql, $sql_args = null, $table_args = null){
 		// Print headings
 		foreach ($data as $head => $val)
 			$out .= '<th>' . ucwords(str_replace('_', ' ', $head)) . '</th>';
-			
+
+		// Custom columns
+		$customCols = false;
+		if (isset($table_args['customheads']) && isset($table_args['customcols'])) {
+			foreach ($data as $head => $val)
+				$out .= '<th>' . $head . '</th>';
+			$customCols = true;
+		}
+
 		$out .= '</tr>';
 		$row = 0;
 		$i = 1;
@@ -163,7 +171,14 @@ function ssc_admin_table($title, $sql, $sql_args = null, $table_args = null){
 					$out .= "<td>$val</td>";
 				}
 			}
-				
+
+			// Custom columns
+			if ($customCols) {
+				foreach($table_args['customcols'] as $head => $val) {
+					$out .= '<td>' . l($head, $val) . '</td>';
+				}
+			}
+
 			$out .= '</tr>';
 		} while (($data = $ssc_database->fetch_assoc($result)) && ($i++ < $perpage));
 
