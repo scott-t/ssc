@@ -131,7 +131,7 @@ function ssc_conf_file(){
 			'title' => 'ssc_conf_file',
 			'body'  => "Path exists from static variable - shortcutting..."
 			));
-		return $path;						// So we don't go through this every timne
+		return $path;						// So we don't go through this every time
 	}
 
 	$path = explode('.', $_SERVER['SERVER_NAME']);
@@ -148,7 +148,7 @@ function ssc_conf_file(){
 			break;
 		}
 	} while (!file_exists("$ssc_site_path/config/$filepath.settings.inc.php"));
-	
+
 	return "$ssc_site_path/config/$filepath.settings.inc.php";
 }
 
