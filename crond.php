@@ -14,19 +14,34 @@ define("SSC_CRON_MIN_TIME", 60 * 59);	// Minimum 1hr time
 
 // Only load from internally
 if (isset($_SERVER['REMOTE_ADDR']) || !isset($_SERVER['argv']))
-	;die('Restricted access');
+	die('Restricted access');
 
-// Begin application startup
+$sites = glob('./config/*.settings.inc.php');
+
+if ($sites === false)
+	die('Restricted access');
+
 include('./includes/core.inc.php');
-ssc_init(SSC_INIT_EXTENSION);
+	
+foreach($sites as $site) {
+	$site = str_replace(".settings.inc.php", "", $site);
+	$site = substr($site, 9);
+	$_SERVER['SERVER_NAME'] = $site;
 
-$lastrun = ssc_var_get("cron_last_run", 0);
-$now = time();
+	if ($site == 'default')
+		continue;
 
-// Run only if not up to hardcoded minimum per-run time
-if ($lastrun < ($now - SSC_CRON_MIN_TIME))
-	module_hook('cron');
+	// Begin application startup
+	ssc_init(SSC_INIT_EXTENSION);
 
-ssc_var_set("cron_last_run", $now);
+	$lastrun = ssc_var_get("cron_last_run", 0);
+	$now = time();
 
-ssc_close();
+	// Run only if not up to hardcoded minimum per-run time
+	if ($lastrun < ($now - SSC_CRON_MIN_TIME))
+		module_hook('cron');
+
+	ssc_var_set("cron_last_run", $now);
+
+	ssc_close();
+}
