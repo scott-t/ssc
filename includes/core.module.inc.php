@@ -78,13 +78,13 @@ function module_handler_init(){
  * @param string|array $modules Module(s) to execute the hook on
  * @param array $args Optional arguments to send to the hook
  */
-function module_hook($hook, $modules = NULL, $args = NULL){
+function module_hook($hook, $modules = NULL, $args = array()){
 	global $SSC_MODULES;
-	
+
 	$ret = array();
-	
+
 	ssc_debug(array('title'=>'module_hook', 'body'=>"Calling '$hook' hook on modules"));
-	
+
 	if (!isset($modules)){
 		foreach ($SSC_MODULES as $value){
 			$h = "$value[filename]_$hook";
@@ -107,7 +107,7 @@ function module_hook($hook, $modules = NULL, $args = NULL){
 				$ret = call_user_func_array($h, $args);
 		}
 	}
-	
+
 	// Flatten the results
 	if (is_array($ret)){
 		return array_merge_recursive($ret, array());
