@@ -40,11 +40,6 @@ function login_init(){
  * Implements module_close
  */
 function login_close(){
-	if (isset($_SESSION['login_redir'])){
-		$path = $_GET['path'];
-		if ($path != $_SESSION['login_redir'] && $path != '/user') 
-			unset($_SESSION['login_redir']);
-	}
 	session_write_close();
 }
 
@@ -71,6 +66,16 @@ function login_check_auth($module){
 	
 	return in_array($module, $perm);
 	
+}
+
+/**
+ * Allow a module to redirect to login page, with optional return path
+ */
+function login_redirect_auth($return_path = NULL){
+	if ($return_path != NULL)
+		$_SESSION['login_redir'] = $return_path;
+
+	ssc_redirect('/user/login');
 }
 
 /**
@@ -324,6 +329,8 @@ function login_registration_submit(){
  * Generate login form's
  */
 function login_form($type = 'mini'){
+	global $ssc_site_url;
+	
 	$form = array();
 	
 	// Build base form
@@ -353,6 +360,10 @@ function login_form($type = 'mini'){
 	case 'main':
 		$form['user']['#description'] = t('Your username');
 		$form['pass']['#description'] = t('Your password associated with your username');
+		if (!empty($_SESSION['login_redir']) && $_SESSION['login_redir'][0] == '/') {
+			$form['#action'] = $ssc_site_url . $_SESSION['login_redir'];
+			unset($_SESSION['login_redir']);
+		}
 		break;
 	}
 	return $form;
@@ -419,7 +430,7 @@ function login_form_submit(){
 	$ssc_database->query("UPDATE #__user SET accessed = %d, ip = '%s', useragent = '%s' WHERE id = %d LIMIT 1", time(), $_SERVER['REMOTE_ADDR'], $ssc_user->useragent, $ssc_user->id);
 	
 	if ($_GET['q'] == 'user/login')
-		ssc_redirect('');
+		ssc_redirect('/');
 }
 
 /**
@@ -920,6 +931,7 @@ function _login_sess_read($id){
 	if (empty($_COOKIE[session_name()])){
 		$ssc_user = _login_anonymous();
 		// "Empty" session data to avoid saving at other end of script
+
 		return '';
 	}
 	
@@ -933,8 +945,9 @@ function _login_sess_read($id){
 	
 		$data = $ssc_user->data;
 		unset($ssc_user->data);
+
 		// Check if logged in user
-		if (!$ssc_user->id){
+		if ($ssc_user->id < 0){
 			// Not logged in?
 			$ssc_user = _login_anonymous();
 			return $data;
@@ -945,6 +958,7 @@ function _login_sess_read($id){
 			// Session hijack?
 			ssc_debug(array('title'=>'Session Management', 'body' => 'Session hijacking? <br />Wanted ' . $ssc_user->useragent . ' but got ' . md5($_SERVER['HTTP_USER_AGENT'])));
 			$ssc_user = _login_anonymous();
+
 			return '';
 		}	
 			
@@ -968,7 +982,7 @@ function _login_sess_write($id, $data){
 	// Don't store cookieless browsers
 	if (empty($_COOKIE[session_name()]) || empty($data) || !isset($ssc_user->id))
 		return true;
-					
+
 	$ret = false;
 	switch ($SSC_SETTINGS['db-engine']){
 	case 'mysqli':
