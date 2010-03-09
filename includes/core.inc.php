@@ -664,6 +664,7 @@ function ssc_custom_data($mime, &$body, $dlname = false){
  */
 function ssc_redirect($path = '', $response_code = 302){
 	global $ssc_site_url;
+
 	ssc_close();
 	header("Location: $ssc_site_url$path", true, $response_code);
 	exit;

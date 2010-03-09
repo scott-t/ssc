@@ -29,19 +29,22 @@ function login_init(){
 	// Include password encryption library
 	if (ssc_load_library('phpass')){
 		session_set_save_handler('_login_sess_open', '_login_sess_close', '_login_sess_read', '_login_sess_write', '_login_sess_destroy', '_login_sess_clean');
-	
 		session_start();
 	}
 	else{
 		die ("module bad");
 	}
-	
 }
 
 /**
  * Implements module_close
  */
 function login_close(){
+	if (isset($_SESSION['login_redir'])){
+		$path = $_GET['path'];
+		if ($path != $_SESSION['login_redir'] && $path != '/user') 
+			unset($_SESSION['login_redir']);
+	}
 	session_write_close();
 }
 
