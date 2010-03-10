@@ -28,6 +28,17 @@ input, textarea {
 .form-checkbox input{
 	display: inline;
 	margin-right: 1em;
+	margin-left: 1em;
+}
+
+.form-radio label{
+	display: block;
+}
+
+.form-radio input{
+	display: inline;
+	margin-right: 1em;
+	margin-left: 1em;
 }
 
 textarea {

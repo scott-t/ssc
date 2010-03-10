@@ -328,7 +328,28 @@ function theme_render_checkbox($structure){
 		$out .= '<div class="form-desc">' . $structure['#description'] . '</div>';
 		
 	$out .= '</div>';
-	
+	return $out;
+}
+
+/**
+ * Render a radio button 'list'
+ * @param array $structure Element structure
+ * @return string XHTML construction
+ */
+function theme_render_radio($structure){
+	$out = '<div class="form-item form-radio"><label>' . $structure['#title'] . '</label>';
+	foreach($structure['#items'] as $item) {
+		$out .= "<input type=\"radio\" name=\"" . $structure['#name'] . "\" value=\"$item[value]\" ";
+		$out .= (isset($item['#checked']) && $item['#checked'] == true ? ' checked="checked"' : '');
+		$out .= (isset($structure['#disabled']) && $structure['#disabled'] == true ? ' disabled="disabled"' : '');
+		$out .= "/><span>$item[name]</span>" . (isset($structure['#break']) ? '<br />' : '');
+	}
+	//$out .= theme_render_input($structure) ;
+
+	if (!empty($structure['#description']))
+		$out .= '<div class="form-desc">' . $structure['#description'] . '</div>';
+		
+	$out .= '</div>';
 	return $out;
 }
 
@@ -344,6 +365,7 @@ function theme_render_input($structure){
 	$out .= (isset($structure['#size']) ? ' size="' . $structure['#size'] . '"' : ''); 
 	$out .= (isset($structure['#maxlength']) ? ' maxlength="' . $structure['#maxlength'] . '"' : ''); 
 	$out .= (isset($structure['#checked']) && $structure['#checked'] == true ? ' checked="checked"' : '');
+	$out .= (isset($structure['#disabled']) && $structure['#disabled'] == true ? ' disabled="disabled"' : '');
 	$out .= (isset($structure['#required']) && $structure['#required'] == true ? ' class="inp-req"': '');
 	$out .= ' />';
 	return $out;
