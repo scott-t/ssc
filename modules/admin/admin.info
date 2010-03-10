@@ -1,6 +1,6 @@
 ; Admin module
 name = Administration
-description = Overviews the administration of the application
+description = "Overviews the administration of the application"
 version = 3.x
 
 package = Administration

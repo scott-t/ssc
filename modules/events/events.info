@@ -1,6 +1,6 @@
 ; Events module
 name = Events
-description = Create a rolling list of events to be displayed around the website
+description = "Create a rolling list of events to be displayed around the website"
 version = 3.x
 
 package = Content

@@ -1,6 +1,6 @@
 ; Navigation module
 name = Navigation
-description = Provides navigation abilities
+description = "Provides navigation abilities"
 version = 3.x
 
 package = Content
