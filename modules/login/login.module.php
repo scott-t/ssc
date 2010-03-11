@@ -211,7 +211,7 @@ function login_widget($type){
 		$menu[] = array('t' => t('Edit profile'), 'p' => '/user/profile');
 		$menu[] = array('t' => t('Log out'), 'p' => '/user/logout');
 		$links = nav_widget($menu);
-		return array('body' => t('Welcome, !name', array('!name' => $ssc_user->fullname)) . $links['body']);
+		return array('title' => 'Profile', 'body' => t('Welcome, !name', array('!name' => $ssc_user->fullname)) . $links['body']);
 	}
 	
 }
@@ -936,15 +936,15 @@ function _login_sess_read($id){
 	}
 	
 	// Proper user
-	if ($result = $ssc_database->query("SELECT s.data, s.uid id, u.useragent, u.username, u.fullname, u.displayname, u.gid, u.email FROM #__session s LEFT JOIN #__user u ON s.uid = u.id WHERE s.id = '%s' LIMIT 1", $id)){
+	if ($result = $ssc_database->query("SELECT s.data sdata, s.uid id, u.useragent, u.username, u.fullname, u.displayname, u.gid, u.email, u.data FROM #__session s LEFT JOIN #__user u ON s.uid = u.id WHERE s.id = '%s' LIMIT 1", $id)){
 		// Invalid session id
 		if (!($ssc_user = $ssc_database->fetch_object($result))){
 			$ssc_user = _login_anonymous();
 			return '';
 		}
 	
-		$data = $ssc_user->data;
-		unset($ssc_user->data);
+		$data = $ssc_user->sdata;
+		unset($ssc_user->sdata);
 
 		// Check if logged in user
 		if ($ssc_user->id < 0){
@@ -960,8 +960,11 @@ function _login_sess_read($id){
 			$ssc_user = _login_anonymous();
 
 			return '';
-		}	
+		}
 			
+		$ssc_user->orig = $ssc_user->data;
+		$ssc_user->data = unserialize($ssc_user->data);
+		
 		// Seems to be valid
 		return $data;
 
@@ -987,6 +990,12 @@ function _login_sess_write($id, $data){
 	switch ($SSC_SETTINGS['db-engine']){
 	case 'mysqli':
 	case 'mysql':
+		if ($ssc_user->id > 0 && isset($ssc_user->data)) {
+			$ssc_user->data = serialize($ssc_user->data);
+			if ($ssc_user->data != $ssc_user->orig)
+				$ret = $ssc_database->query("REPLACE INTO #__user (id, data) VALUES (%d, '%s')", $ssc_user->id, $ssc_user->data);
+		}
+		
 		$ret = $ssc_database->query("REPLACE INTO #__session (id, data, uid) VALUES ('%s', '%s', %d)", $id, $data, $ssc_user->id);
 		break;
 	default:
