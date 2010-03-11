@@ -993,7 +993,7 @@ function _login_sess_write($id, $data){
 		if ($ssc_user->id > 0 && isset($ssc_user->data)) {
 			$ssc_user->data = serialize($ssc_user->data);
 			if ($ssc_user->data != $ssc_user->orig)
-				$ret = $ssc_database->query("REPLACE INTO #__user (id, data) VALUES (%d, '%s')", $ssc_user->id, $ssc_user->data);
+				$ret = $ssc_database->query("UPDATE #__user SET data = '%s' WHERE id = %d)", $ssc_user->data, $ssc_user->id);
 		}
 		
 		$ret = $ssc_database->query("REPLACE INTO #__session (id, data, uid) VALUES ('%s', '%s', %d)", $id, $data, $ssc_user->id);
