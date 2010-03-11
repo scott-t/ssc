@@ -268,6 +268,9 @@ function ssc_debug($information){
 		if(!isset($ssc_debug['count']))
 			$ssc_debug['count'] = 0;
 			
+		if (!isset($information['title']))
+			$information['title'] = '';
+			
 		$ssc_debug['message'][$ssc_debug['count']] = $information;
 		$ssc_debug['message'][$ssc_debug['count']]['time'] = round(microtime(true) - $ssc_execute_time, 4); 
 		$ssc_debug['count']++;
@@ -414,9 +417,10 @@ function ssc_generate_form($name, $args = null){
 				   'form-id' => array('#type' => 'hidden',
 				   		 			  '#value' => $name),
 				   '#formname' => str_replace('_', '-', $name));
-	
+
 	// Grab output
 	$out = ssc_generate_html($form);
+
 	return $out;
 
 }
