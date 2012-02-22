@@ -26,7 +26,7 @@ if (!$result)
 // Loop through each
 while ($data = $ssc_database->fetch_assoc($result)){
 
-	$res_posts = $ssc_database->query("SELECT p.id, p.created, p.modified, urltext, title, body, displayname FROM #__blog_post p LEFT JOIN #__user u ON u.id = author_id WHERE blog_id = %d ORDER BY created DESC LIMIT 0,5", $data['id']);
+	$res_posts = $ssc_database->query("SELECT p.id, p.created, p.modified, urltext, title, body, displayname FROM #__blog_post p LEFT JOIN #__user u ON u.id = author_id WHERE blog_id = %d AND p.is_draft = 0 ORDER BY created DESC LIMIT 0,5", $data['id']);
 
 	// Ignore empty blogs
 	if(!$res_posts || ($ssc_database->number_rows() == 0))

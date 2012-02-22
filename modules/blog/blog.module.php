@@ -42,7 +42,7 @@ define('SSC_BLOG_POST_NOCOMMENTS', 8);
 
 function blog_meta(){
 	if ($_GET['handler'] == 'blog')
-		return '<link rel="alternate" type="application/atom+xml" title="Subscribe using Atom 1.0" href="' . $_GET['path'] . '/feed" />';
+		return '<link rel="alternate" type="application/atom+xml" title="Subscribe using Atom 1.0" href="' . $_GET['path'] . '/atom" />';
 	else
 		return;
 }
@@ -65,7 +65,7 @@ function blog_widget($args){
 	// 1 - Tag listing
 	if ($args == 1){
 		$result = $ssc_database->query("SELECT tag, COUNT(post_id) AS cnt FROM #__blog_post p, #__blog_tag t LEFT JOIN 
-			#__blog_relation r ON tag_id = t.id WHERE post_id = p.id AND blog_id = %d GROUP BY t.id ORDER BY tag ASC", $_GET['path-id']);
+			#__blog_relation r ON tag_id = t.id WHERE post_id = p.id AND p.is_draft = 0 AND blog_id = %d GROUP BY t.id ORDER BY tag ASC", $_GET['path-id']);
 		if($result && $ssc_database->number_rows() > 0){
 	
 			while($data = $ssc_database->fetch_assoc($result)){
@@ -79,7 +79,7 @@ function blog_widget($args){
 	// 2 - Year archives
 	elseif ($args == 2){
 		$result = $ssc_database->query("SELECT YEAR( FROM_UNIXTIME(created) ) AS yr, COUNT( FROM_UNIXTIME(created) )
-			 AS cnt FROM #__blog_post p WHERE blog_id = %d GROUP BY YEAR( FROM_UNIXTIME(created) ) ORDER BY yr DESC", $_GET['path-id']);
+			 AS cnt FROM #__blog_post p WHERE blog_id = %d AND p.is_draft = 0 GROUP BY YEAR( FROM_UNIXTIME(created) ) ORDER BY yr DESC", $_GET['path-id']);
 		if($result && $ssc_database->number_rows() > 0){
 	
 			while($data = $ssc_database->fetch_assoc($result)){
@@ -95,7 +95,7 @@ function blog_widget($args){
 			return;
 			
 		$result = $ssc_database->query("SELECT p.title, p.urltext, COUNT(c.post_id) cnt, p.created FROM #__blog_post p
-						LEFT JOIN #__blog_comment c ON (post_id = p.id AND (c.status & %d = 0)) WHERE blog_id = %d
+						LEFT JOIN #__blog_comment c ON (post_id = p.id AND (c.status & %d = 0)) WHERE blog_id = %d AND p.is_draft = 0
 						GROUP BY p.id HAVING cnt > 0 ORDER BY p.created DESC", SSC_BLOG_COMMENT_READ, $_GET['path-id']); // AND p.author_id = %d
 						
 		if ($result && $ssc_database->number_rows() > 0){
@@ -193,7 +193,7 @@ function blog_admin(){
 				$out = '';
 			else{
 				$out = ssc_admin_table(t('Current posts'),
-					"SELECT p.id, title, COUNT(c.body) comments FROM #__blog_post p LEFT JOIN #__blog_comment c ON p.id = post_id
+					"SELECT p.id, title, is_draft, COUNT(c.body) comments FROM #__blog_post p LEFT JOIN #__blog_comment c ON p.id = post_id
 					WHERE blog_id = %d GROUP BY p.id ORDER BY p.created DESC",
 					array($_GET['param'][0]),
 					array('perpage' => 10, 'link' => 'title', 
@@ -274,7 +274,7 @@ function blog_content(){
 			return _blog_gen_post($data['page'], $_GET['path'] . '/page/', 
 				"SELECT p.id, p.title, p.created, p.urltext, u.displayname author, count(c.post_id) count, p.body, p.commentsdisabled FROM
 				#__blog_post p LEFT JOIN #__user u ON u.id = p.author_id LEFT JOIN #__blog_comment c ON (post_id = p.id AND (status & %d = 0))
-				WHERE blog_id = %d GROUP BY p.id ORDER BY p.created DESC", SSC_BLOG_COMMENT_SPAM, $_GET['path-id']);
+				WHERE blog_id = %d AND p.is_draft = 0 GROUP BY p.id ORDER BY p.created DESC", SSC_BLOG_COMMENT_SPAM, $_GET['path-id']);
 		}		
 		elseif ($action == 'tag'){
 			// Show posts for the tag
@@ -289,7 +289,7 @@ function blog_content(){
 			return _blog_gen_post($data['page'], $_GET['path'] . '/tag/'.$tag.'/page/', 
 				"SELECT p.id, p.title, p.created, p.urltext, u.displayname author, count(c.post_id) count, p.body, p.commentsdisabled FROM 
 				#__blog_post p LEFT JOIN #__user u ON u.id = p.author_id LEFT JOIN #__blog_comment c ON (post_id = p.id AND (status & %d = 0))
-				LEFT JOIN #__blog_relation r ON r.post_id = p.id LEFT JOIN #__blog_tag t ON t.id = r.tag_id WHERE blog_id = %d AND t.tag = '%s'
+				LEFT JOIN #__blog_relation r ON r.post_id = p.id LEFT JOIN #__blog_tag t ON t.id = r.tag_id WHERE blog_id = %d AND p.is_draft = 0 AND t.tag = '%s'
 				GROUP BY p.id ORDER BY p.created DESC", SSC_BLOG_COMMENT_SPAM, $_GET['path-id'], $tag);
 			
 		}
@@ -298,7 +298,7 @@ function blog_content(){
 			if (count($_GET['param']) != 1)
 				ssc_not_found();	// Extra parameters
 				
-			$result = $ssc_database->query("SELECT created, urltext FROM #__blog_post WHERE id = %d LIMIT 1", (int)array_shift($_GET['param']));
+			$result = $ssc_database->query("SELECT created, urltext FROM #__blog_post WHERE id = %d AND p.is_draft = 0 LIMIT 1", (int)array_shift($_GET['param']));
 			if ($data = $ssc_database->fetch_object($result)){
 				ssc_redirect($_GET['path'] . date("/Y/m/d/", $data->created) . $data->urltext, 301);
 				return;
@@ -355,7 +355,7 @@ function blog_content(){
 				// Retrieve post
 				$result = $ssc_database->query(
 					"SELECT p.id, p.title, p.created, p.urltext, p.commentsdisabled, u.displayname author, p.body FROM #__blog_post p 
-					LEFT JOIN #__user u ON u.id = p.author_id WHERE blog_id = %d AND p.urltext = '%s' 
+					LEFT JOIN #__user u ON u.id = p.author_id WHERE blog_id = %d AND p.is_draft = 0 AND p.urltext = '%s' 
 					LIMIT 1", $_GET['path-id'], $_GET['param'][2]);
 
 				if (!($data = $ssc_database->fetch_object($result))){
@@ -528,7 +528,7 @@ function blog_content(){
 				return _blog_gen_post(10000, $_GET['path'] . '/page/', 
 					"SELECT p.id, p.title, p.created, p.urltext, u.displayname author, count(c.post_id) count, p.commentsdisabled FROM 
 					#__blog_post p LEFT JOIN #__blog_comment c ON (post_id = p.id AND (c.status & %d = 0)) LEFT JOIN #__user u ON u.id = p.author_id 
-					WHERE blog_id = %d AND p.created >= %d AND p.created < %d GROUP BY p.id ORDER BY p.created DESC",
+					WHERE blog_id = %d AND p.created >= %d AND p.created < %d AND p.is_draft = 0 GROUP BY p.id ORDER BY p.created DESC",
 					SSC_BLOG_COMMENT_SPAM, $_GET['path-id'], mktime(0, 0, 0, 1, 1, $action), mktime(0, 0, 0, 1, 0, $action + 1));
 			}
 		}
@@ -765,10 +765,11 @@ function blog_post(){
 		$data->body = (empty($_POST['body']) ? '' : $_POST['body']);
 		$data->keywords = (empty($_POST['keywords']) ? '' : $_POST['keywords']);
 		$data->desc = (empty($_POST['desc']) ? '' : $_POST['desc']);
+		$data->is_draft = !empty($_POST['is_draft']);
 	}
 	else{
 		// Retrieve from DB
-		$result = $ssc_database->query("SELECT title, urltext url, id, blog_id, body FROM #__blog_post b WHERE id = %d AND blog_id = %d LIMIT 1", intval($_GET['param'][2]), (int)$_GET['param'][0]);
+		$result = $ssc_database->query("SELECT title, urltext url, id, blog_id, body, is_draft FROM #__blog_post b WHERE id = %d AND blog_id = %d LIMIT 1", intval($_GET['param'][2]), (int)$_GET['param'][0]);
 		if (!($data = $ssc_database->fetch_object($result))){	
 			$data = new stdClass();
 			$data->title = '';
@@ -779,6 +780,7 @@ function blog_post(){
 			$data->keywords = '';
 			$data->desc = '';
 			$data->url = '';
+			$data->is_draft = false;
 		}
 		else{
 			$data->keywords = '';
@@ -866,6 +868,12 @@ function blog_post(){
 							'#parent' => true);
 	$fieldset =& $form['meta'];
 	
+	$fieldset['is_draft'] = array(	'#type' => 'checkbox',
+									'#title' => t('Hidden post?'),
+									'#description' => t('If checked, the post will be hidden from viewing'),
+									'#value' => 1,
+									'#checked' => $data->is_draft);
+	
 	$fieldset['url'] = array(	'#type' => 'text',
 								'#value' => $data->url,
 								'#title' => t('Link-safe url'),
@@ -916,6 +924,8 @@ function blog_post_validate(){
 	} while($count > 0);
 	$_POST['url'] = $tmp;
 
+	$_POST['is_draft'] = (isset($_POST['is_draft']) ? 1 : 0);
+	
 	return true;
 }
 
@@ -940,8 +950,8 @@ function blog_post_submit(){
 	if ($id == 0){
 		// Insert
 
-		$result = $ssc_database->query("INSERT INTO #__blog_post (blog_id, title, created, modified, body, urltext, author_id) VALUES (%d, '%s', %d, %d, '%s', '%s', %d)",
-			 $blog, $_POST['title'], time(), time(), $_POST['body'], $_POST['url'], $ssc_user->id);
+		$result = $ssc_database->query("INSERT INTO #__blog_post (blog_id, title, created, modified, body, urltext, author_id, is_draft, publish_time) VALUES (%d, '%s', %d, %d, '%s', '%s', %d, %d, 0)",
+			 $blog, $_POST['title'], time(), time(), $_POST['body'], $_POST['url'], $ssc_user->id, $_POST['is_draft']);
 		$_POST['id'] = $id = $ssc_database->last_id();
 		if (!$result){
 			ssc_add_message(SSC_MSG_CRIT, 'Error inserting into DB');
@@ -952,8 +962,8 @@ function blog_post_submit(){
 	}
 	else{
 		// Update
-		$ssc_database->query("UPDATE #__blog_post b SET title = '%s', body = '%s', urltext = '%s', modified = %d WHERE id = %d AND blog_id = %d", 
-				$_POST['title'], $_POST['body'], $_POST['url'], time(), $id, $blog);
+		$ssc_database->query("UPDATE #__blog_post b SET title = '%s', body = '%s', urltext = '%s', modified = %d, is_draft = %d WHERE id = %d AND blog_id = %d", 
+				$_POST['title'], $_POST['body'], $_POST['url'], time(), $_POST['is_draft'], $id, $blog);
 		module_hook('mod_blog_post_update', null, array($blog, $id, t($_POST['title'])));
 	}
 

@@ -26,7 +26,6 @@ $result = $ssc_database->query("SELECT id, name, description FROM #__blog WHERE 
 $data = $ssc_database->fetch_assoc($result);
 
 if (isset($_GET['param'][0])) {
-print_r($_GET['param']);
 	$tag = array_shift($_GET['param']);
 	$result = $ssc_database->query("SELECT id FROM #__blog_tag WHERE tag = '%s' LIMIT 1", $tag);
 	if (!$result || ($ssc_database->number_rows() == 0)) {
@@ -38,10 +37,10 @@ print_r($_GET['param']);
 	$tagName = "/$tag";
 	$tag = $dat['id'];
 	
-	$res_posts = $ssc_database->query("SELECT p.id, p.created, p.modified, urltext, title, body, displayname FROM #__blog_post p LEFT JOIN #__user u ON u.id = author_id LEFT JOIN #__blog_relation t ON t.post_id = p.id WHERE blog_id = %d AND t.tag_id = %d ORDER BY created DESC LIMIT 0,5", $bID, $tag);
+	$res_posts = $ssc_database->query("SELECT p.id, p.created, p.modified, urltext, title, body, displayname FROM #__blog_post p LEFT JOIN #__user u ON u.id = author_id LEFT JOIN #__blog_relation t ON t.post_id = p.id WHERE blog_id = %d AND p.is_draft = 0 AND t.tag_id = %d ORDER BY created DESC LIMIT 0,5", $bID, $tag);
 }
 else {
-	$res_posts = $ssc_database->query("SELECT p.id, p.created, p.modified, urltext, title, body, displayname FROM #__blog_post p LEFT JOIN #__user u ON u.id = author_id WHERE blog_id = %d ORDER BY created DESC LIMIT 0,5", $bID);
+	$res_posts = $ssc_database->query("SELECT p.id, p.created, p.modified, urltext, title, body, displayname FROM #__blog_post p LEFT JOIN #__user u ON u.id = author_id WHERE blog_id = %d AND p.is_draft = 0 ORDER BY created DESC LIMIT 0,5", $bID);
 	$tagName = '';
 }
 
