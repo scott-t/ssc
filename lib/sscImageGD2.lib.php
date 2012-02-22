@@ -40,10 +40,16 @@ class sscImageGD2 extends sscAbstractImage{
 		case 'jpeg':
 		case 'jpg':
 			// JPG support?
-			if ($gdinfo['JPG Support'] == false)
+			$status = false;
+			if (isset($gdinfo['JPG Support']) && $gdinfo['JPG Support'] == true)
+				$status = true;
+			if (isset($gdinfo['JPEG Support']) && $gdinfo['JPEG Support'] == true)
+				$status = true;
+			
+			if ($status)	
+				$img = imagecreatefromjpeg($this->file);
+			else
 				return false;
-				
-			$img = imagecreatefromjpeg($this->file);
 			break;			
 					
 		case 'png':
