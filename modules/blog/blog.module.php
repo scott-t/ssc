@@ -766,6 +766,7 @@ function blog_post(){
 		$data->keywords = (empty($_POST['keywords']) ? '' : $_POST['keywords']);
 		$data->desc = (empty($_POST['desc']) ? '' : $_POST['desc']);
 		$data->is_draft = !empty($_POST['is_draft']);
+		$data->repub = !empty($_POST['repub']);
 	}
 	else{
 		// Retrieve from DB
@@ -781,8 +782,11 @@ function blog_post(){
 			$data->desc = '';
 			$data->url = '';
 			$data->is_draft = false;
+			$data->repub = true;
 		}
 		else{
+			$data->repub = (($data->is_draft & 2) == 2);
+			$data->is_draft = (($data->is_draft & 1) == 1);
 			$data->keywords = '';
 			$data->desc = '';
 		}
@@ -873,6 +877,12 @@ function blog_post(){
 									'#description' => t('If checked, the post will be hidden from viewing'),
 									'#value' => 1,
 									'#checked' => $data->is_draft);
+									
+	$fieldset['repub'] = array(	'#type' => 'checkbox',
+									'#title' => t('(Re-)Publish post'),
+									'#description' => t('If checked, the post will be updated to emulate having just been published.  If post is hidden, it will be (re-)published on unhide.'),
+									'#value' => 1,
+									'#checked' => $data->repub);
 	
 	$fieldset['url'] = array(	'#type' => 'text',
 								'#value' => $data->url,
@@ -925,6 +935,7 @@ function blog_post_validate(){
 	$_POST['url'] = $tmp;
 
 	$_POST['is_draft'] = (isset($_POST['is_draft']) ? 1 : 0);
+	$_POST['repub'] = (isset($_POST['repub']) ? 1 : 0);
 	
 	return true;
 }
@@ -951,20 +962,59 @@ function blog_post_submit(){
 		// Insert
 
 		$result = $ssc_database->query("INSERT INTO #__blog_post (blog_id, title, created, modified, body, urltext, author_id, is_draft, publish_time) VALUES (%d, '%s', %d, %d, '%s', '%s', %d, %d, 0)",
-			 $blog, $_POST['title'], time(), time(), $_POST['body'], $_POST['url'], $ssc_user->id, $_POST['is_draft']);
+			 $blog, $_POST['title'], time(), time(), $_POST['body'], $_POST['url'], $ssc_user->id, $_POST['is_draft'] + ($_POST['is_draft'] ? $_POST['repub'] << 1 : 0));
 		$_POST['id'] = $id = $ssc_database->last_id();
 		if (!$result){
 			ssc_add_message(SSC_MSG_CRIT, 'Error inserting into DB');
 			return;
 		}
 		$require_redir = true;
-		module_hook('mod_blog_post_publish', null, array($blog, $id, t($_POST['title'])));
+		if ($_POST['is_draft'] == 0)
+			module_hook('mod_blog_post_publish', null, array($blog, $id, t($_POST['title'])));
 	}
 	else{
 		// Update
-		$ssc_database->query("UPDATE #__blog_post b SET title = '%s', body = '%s', urltext = '%s', modified = %d, is_draft = %d WHERE id = %d AND blog_id = %d", 
-				$_POST['title'], $_POST['body'], $_POST['url'], time(), $_POST['is_draft'], $id, $blog);
-		module_hook('mod_blog_post_update', null, array($blog, $id, t($_POST['title'])));
+		// Determine changes....
+		$result = $ssc_database->query("SELECT body FROM #__blog_post p WHERE id = %d AND blog_id = %d", $id, $blog);
+		if ($result && $data = $ssc_database->fetch_assoc($result))
+		{
+			$dirty = ($data['body'] == $_POST['body']);
+
+			if (!$dirty)
+			{
+				if ($_POST['repub'])
+				{
+					$ssc_database->query("UPDATE #__blog_post b SET title = '%s', urltext = '%s', is_draft = %d, created = %d, modified = %d WHERE id = %d AND blog_id = %d", 
+							$_POST['title'], $_POST['url'], $_POST['is_draft'] + ($_POST['is_draft'] ? $_POST['repub'] << 1 : 0), time(), time(), $id, $blog);
+				}
+				else
+				{
+					$ssc_database->query("UPDATE #__blog_post b SET title = '%s', urltext = '%s', is_draft = %d WHERE id = %d AND blog_id = %d", 
+							$_POST['title'], $_POST['url'], $_POST['is_draft'] + ($_POST['is_draft'] ? $_POST['repub'] << 1 : 0), $id, $blog);
+				}
+			}
+			else
+			{
+				if ($_POST['repub'])
+				{
+					$ssc_database->query("UPDATE #__blog_post b SET title = '%s', body = '%s', urltext = '%s', is_draft = %d, created = %d, modified = %d WHERE id = %d AND blog_id = %d", 
+							$_POST['title'], $_POST['body'], $_POST['url'], $_POST['is_draft'] + ($_POST['is_draft'] ? $_POST['repub'] << 1 : 0), time(), time(), $id, $blog);
+				}
+				else
+				{
+					$ssc_database->query("UPDATE #__blog_post b SET title = '%s', body = '%s', urltext = '%s', is_draft = %d WHERE id = %d AND blog_id = %d", 
+							$_POST['title'], $_POST['body'], $_POST['url'], $_POST['is_draft'] + ($_POST['is_draft'] ? $_POST['repub'] << 1 : 0), $id, $blog);
+				}
+			}
+
+			if ($_POST['is_draft'] == 0)
+			{
+				if ($_POST['repub'])
+					module_hook('mod_blog_post_publish', null, array($blog, $id, t($_POST['title'])));
+				else if ($dirty)
+					module_hook('mod_blog_post_update', null, array($blog, $id, t($_POST['title'])));
+			}
+		}
 	}
 
 	// Tags
