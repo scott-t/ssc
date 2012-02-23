@@ -12,10 +12,6 @@ function fbapp_mod_blog_post_publish($blog_id, $id, $title){
 		ssc_add_message(SSC_MSG_CRIT, "Facebook user secret key has not been set up yet!");
 		return;
 	}
-
-	$last_id = ssc_var_get('fbapp_blog_lastid', 0);
-	if ($id <= $last_id)
-		return;	// already sent
 	
 	$session_key = ssc_var_get('fbapp_blog_session', '');
 	if ($session_key == ''){
