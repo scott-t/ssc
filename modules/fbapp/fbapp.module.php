@@ -3,7 +3,7 @@
 
 // fbblog ssc module, module hook, blog module, post-publish hook
 function fbapp_mod_blog_post_publish($blog_id, $id, $title){
-	global $ssc_site_url, $ssc_database;
+	global $ssc_site_url, $ssc_database, $ssc_site_path;
 	
 	require_once 'facebook.php';
 	$api_key = "9c476aaa4b1654c09ede303a7d140a36";
@@ -52,6 +52,10 @@ function fbapp_mod_blog_post_publish($blog_id, $id, $title){
 
 				// Now match it up to the right path
 				if (strpos($path, "://") === false){
+
+					if ($path[0] == "/")
+						$path = substr($path, 1);
+
 					// Relative path
 					if (file_exists($ssc_site_path . "/images/$path.jpg") || file_exists($ssc_site_path . "/images/$path.png") || file_exists($ssc_site_path . "/images/$path")){
 						// Default to image directory base-dir
