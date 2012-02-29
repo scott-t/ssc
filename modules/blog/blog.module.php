@@ -978,7 +978,7 @@ function blog_post_submit(){
 		$result = $ssc_database->query("SELECT body FROM #__blog_post p WHERE id = %d AND blog_id = %d", $id, $blog);
 		if ($result && $data = $ssc_database->fetch_assoc($result))
 		{
-			$dirty = ($data['body'] == $_POST['body']);
+			$dirty = ($data['body'] != $_POST['body']);
 
 			if (!$dirty)
 			{
