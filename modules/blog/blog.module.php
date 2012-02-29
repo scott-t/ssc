@@ -298,7 +298,7 @@ function blog_content(){
 			if (count($_GET['param']) != 1)
 				ssc_not_found();	// Extra parameters
 				
-			$result = $ssc_database->query("SELECT created, urltext FROM #__blog_post WHERE id = %d AND p.is_draft = 0 LIMIT 1", (int)array_shift($_GET['param']));
+			$result = $ssc_database->query("SELECT created, urltext FROM #__blog_post WHERE id = %d AND is_draft = 0 LIMIT 1", (int)array_shift($_GET['param']));
 			if ($data = $ssc_database->fetch_object($result)){
 				ssc_redirect($_GET['path'] . date("/Y/m/d/", $data->created) . $data->urltext, 301);
 				return;
