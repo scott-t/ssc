@@ -448,7 +448,7 @@ function blog_content(){
 										array(	'!date' => date(ssc_var_get('date_med', SSC_DATE_MED), $data->created),
 												'!time' => date(ssc_var_get('time_short', SSC_TIME_SHORT), $data->created),
 												'!author' => 
-										(empty($data->site) ? $data->author : l($data->author, $data->site)))) . '</p>';
+										(empty($data->site) ? check_plain($data->author) : l(check_plain($data->author), $data->site)))) . '</p>';
 
 								$sub_hide = array('#value' => 'Hide comment', '#type' => 'submit');
 								$sub_show = array('#value' => 'Show comment', '#type' => 'submit');
