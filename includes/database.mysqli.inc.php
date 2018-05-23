@@ -370,7 +370,7 @@ class sscDatabaseMySQLi extends sscAbstractDatabase{
 		}
 
 		// Replace table name
-		$param[0] = preg_replace('/#__(\w+)/e', "sscAbstractDatabase::_set_table_prefix('$1')", $sql);
+		$param[0] = preg_replace_callback('/#__(\w+)/', function ($match) { return sscAbstractDatabase::_set_table_prefix($match[1]); }, $sql);
 
 		// Substitute in variables
 		$sql = call_user_func_array('sprintf', $param);
